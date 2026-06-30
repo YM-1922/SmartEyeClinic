@@ -1,0 +1,76 @@
+@{
+    ViewData["Title"] = "Create Invoice - Smart Eye Clinic";
+}
+
+<div class="mb-4">
+    <ul class="breadcrumb-custom mb-1">
+        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li><a asp-controller="Invoice" asp-action="Index">Invoices</a></li>
+        <li>Create Invoice</li>
+    </ul>
+    <h3 class="fw-bold text-dark mb-0">Create Patient Invoice</h3>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
+    </div>
+}
+
+<div class="card custom-card" style="max-width:700px;">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-file-invoice-dollar text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">Invoice Details</h5>
+        </div>
+    </div>
+    <div class="card-body-clean">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Appointment ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-calendar-check text-muted"></i></span>
+                        <input type="number" name="appointmentId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Linked Appointment ID" required />
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Patient ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-user-injured text-muted"></i></span>
+                        <input type="number" name="patientId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Patient ID number" required />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="form-label-custom">Total Amount ($)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-dollar-sign text-muted"></i></span>
+                        <input type="number" step="0.01" name="totalAmount" class="form-control form-control-custom border-start-0 ps-0" placeholder="0.00" required />
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label-custom">Tax (%)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-percent text-muted"></i></span>
+                        <input type="number" step="0.01" name="tax" class="form-control form-control-custom border-start-0 ps-0" placeholder="0.00" />
+                    </div>
+                </div>
+                <div class="col-md-4 mb-4">
+                    <label class="form-label-custom">Discount ($)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-tag text-muted"></i></span>
+                        <input type="number" step="0.01" name="discount" class="form-control form-control-custom border-start-0 ps-0" placeholder="0.00" />
+                    </div>
+                </div>
+            </div>
+            <div class="border-top pt-4 d-flex justify-content-end">
+                <a asp-action="Index" class="btn btn-custom btn-custom-secondary me-2"><i class="fa-solid fa-xmark"></i> Cancel</a>
+                <button type="submit" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-floppy-disk"></i> Generate Invoice</button>
+            </div>
+        </form>
+    </div>
+</div>

@@ -1,0 +1,89 @@
+@model List<SmartEyeClinic.Models.Doctor>
+@{
+    ViewData["Title"] = "Doctors - Smart Eye Clinic";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <ul class="breadcrumb-custom mb-1">
+            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li>Specialist Doctors</li>
+        </ul>
+        <h3 class="fw-bold text-dark mb-0">Specialist Doctors</h3>
+    </div>
+    <a asp-action="Create" class="btn btn-custom btn-custom-primary">
+        <i class="fa-solid fa-user-plus"></i> Add Doctor
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-custom d-flex align-items-center mb-4" role="alert">
+        <i class="fa-solid fa-circle-check fs-5 me-2"></i> <div>@TempData["Success"]</div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4" role="alert">
+        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
+    </div>
+}
+
+<div class="card custom-card">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-user-md text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">Medical Staff Directory</h5>
+        </div>
+        <div class="text-muted small">Total: @Model.Count doctors</div>
+    </div>
+    <div class="card-body-clean">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fa-solid fa-user-doctor text-muted fs-1 mb-3 d-block"></i>
+                <h5 class="fw-bold text-dark mb-2">No Doctors Registered</h5>
+                <p class="text-muted small mb-4">Start by adding your first specialist doctor.</p>
+                <a asp-action="Create" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-user-plus"></i> Add First Doctor</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive-custom">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>Doctor</th>
+                            <th>Specialization</th>
+                            <th>License Number</th>
+                            <th>Consultation Fee</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var d in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-3 text-white fw-bold text-center rounded-circle" style="width:40px;height:40px;line-height:40px;font-size:0.95rem;background:linear-gradient(135deg,#0F4C81,#00B4D8);">
+                                            @(d.User?.FullName?.Length > 0 ? d.User.FullName[0].ToString().ToUpper() : "D")
+                                        </div>
+                                        <div>
+                                            <span class="fw-bold text-dark d-block">Dr. @d.User?.FullName</span>
+                                            <span class="text-muted small">@d.User?.Email</span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge-custom badge-custom-success">@d.Specialization?.Name</span>
+                                </td>
+                                <td><span class="font-monospace text-secondary">@d.LicenseNumber</span></td>
+                                <td><span class="fw-bold text-success">@d.ConsultationFee.ToString("C")</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

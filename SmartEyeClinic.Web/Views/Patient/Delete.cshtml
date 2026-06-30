@@ -1,0 +1,67 @@
+@model SmartEyeClinic.Models.Patient
+@{
+    ViewData["Title"] = "Delete Patient - Smart Eye Clinic";
+}
+
+<!-- Page Header -->
+<div class="mb-4">
+    <ul class="breadcrumb-custom mb-1">
+        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li><a asp-controller="Patient" asp-action="Index">Patients Directory</a></li>
+        <li>Delete Patient</li>
+    </ul>
+    <h3 class="fw-bold text-dark mb-0">Delete Patient Record</h3>
+</div>
+
+<div class="card custom-card" style="max-width: 650px;">
+    <div class="card-header-clean" style="background: rgba(239,68,68,0.05); border-bottom-color: rgba(239,68,68,0.15);">
+        <div class="d-flex align-items-center">
+            <div class="p-2 bg-danger text-white rounded me-3" style="width:38px;height:38px;display:flex;align-items:center;justify-content:center;">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+            </div>
+            <div>
+                <h5 class="mb-0 text-danger">Confirm Permanent Deletion</h5>
+                <small class="text-muted">This action is irreversible and will remove all patient data.</small>
+            </div>
+        </div>
+    </div>
+    <div class="card-body-clean">
+
+        <!-- Patient Summary Card -->
+        <div class="d-flex align-items-center p-3 mb-4 rounded" style="background:#F8FAFC; border:1px solid #E2E8F0;">
+            <div class="me-3 bg-light text-primary fw-bold text-center rounded-circle" style="width:52px;height:52px;line-height:52px;font-size:1.3rem;">
+                @(Model.User?.FullName?.Length > 0 ? Model.User.FullName[0].ToString().ToUpper() : "P")
+            </div>
+            <div>
+                <span class="fw-bold text-dark d-block fs-6">@Model.User?.FullName</span>
+                <span class="text-muted small">@Model.User?.Email &nbsp;|&nbsp; ID: #@Model.Id</span>
+            </div>
+        </div>
+
+        <div class="table-responsive-custom mb-4">
+            <table class="table custom-table mb-0">
+                <tbody>
+                    <tr><th class="text-muted small fw-600" style="width:35%;">Full Name</th><td class="fw-bold">@Model.User?.FullName</td></tr>
+                    <tr><th class="text-muted small fw-600">Email</th><td>@Model.User?.Email</td></tr>
+                    <tr><th class="text-muted small fw-600">Phone</th><td>@Model.User?.PhoneNumber</td></tr>
+                    <tr><th class="text-muted small fw-600">National ID</th><td class="font-monospace">@Model.NationalId</td></tr>
+                    <tr><th class="text-muted small fw-600">Gender</th><td>@Model.Gender</td></tr>
+                    <tr><th class="text-muted small fw-600">Address</th><td>@(string.IsNullOrEmpty(Model.Address) ? "—" : Model.Address)</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <form asp-action="Delete" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="id" value="@Model.Id" />
+            <div class="d-flex justify-content-end gap-2 border-top pt-4">
+                <a asp-action="Index" class="btn btn-custom btn-custom-secondary">
+                    <i class="fa-solid fa-xmark"></i> Cancel
+                </a>
+                <button type="submit" class="btn btn-custom btn-custom-danger">
+                    <i class="fa-solid fa-trash-can"></i> Yes, Delete Patient
+                </button>
+            </div>
+        </form>
+    </div>
+</div>

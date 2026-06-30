@@ -1,0 +1,100 @@
+@model List<SmartEyeClinic.Models.PrescriptionItem>
+@{
+    ViewData["Title"] = "Prescriptions - Smart Eye Clinic";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <ul class="breadcrumb-custom mb-1">
+            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li>Prescriptions</li>
+        </ul>
+        <h3 class="fw-bold text-dark mb-0">Patient Prescriptions</h3>
+    </div>
+    <a asp-action="Create" class="btn btn-custom btn-custom-primary">
+        <i class="fa-solid fa-file-prescription"></i> Create Prescription
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-check fs-5 me-2"></i> <div>@TempData["Success"]</div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
+    </div>
+}
+
+<div class="card custom-card">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-file-prescription text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">Prescription Records</h5>
+        </div>
+        <div class="text-muted small">Total: @Model.Count items</div>
+    </div>
+    <div class="card-body-clean">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fa-solid fa-file-prescription text-muted fs-1 mb-3 d-block"></i>
+                <h5 class="fw-bold text-dark mb-2">No Prescriptions Found</h5>
+                <p class="text-muted small mb-4">Create prescriptions following clinical examinations.</p>
+                <a asp-action="Create" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-file-prescription"></i> Create Prescription</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive-custom">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Medicine</th>
+                            <th>Dosage</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in Model)
+                        {
+                            <tr>
+                                <td><span class="text-muted font-monospace small">#@p.Id</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-2 text-white fw-bold text-center rounded-circle" style="width:32px;height:32px;line-height:32px;font-size:0.8rem;background:#0F4C81;">
+                                            @(p.PrescriptionHeader?.Examination?.Appointment?.Patient?.User?.FullName?.Length > 0 ? p.PrescriptionHeader.Examination.Appointment.Patient.User.FullName[0].ToString().ToUpper() : "P")
+                                        </div>
+                                        <span class="fw-500">@p.PrescriptionHeader?.Examination?.Appointment?.Patient?.User?.FullName</span>
+                                    </div>
+                                </td>
+                                <td><span>Dr. @p.PrescriptionHeader?.Examination?.Appointment?.Doctor?.User?.FullName</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <i class="fa-solid fa-capsules text-warning me-2"></i>
+                                        <span class="fw-500">@p.Medicine?.Name</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge-custom badge-custom-success">@p.Dosage</span></td>
+                                <td>
+                                    @if (p.DurationDays.HasValue)
+                                    {
+                                        <span class="text-muted"><i class="fa-regular fa-clock me-1"></i>@p.DurationDays days</span>
+                                    }
+                                    else
+                                    { <span class="text-muted">—</span> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

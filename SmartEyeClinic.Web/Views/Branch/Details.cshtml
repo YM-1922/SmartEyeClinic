@@ -1,0 +1,124 @@
+@model SmartEyeClinic.Models.Branch
+@{
+    ViewData["Title"] = $"{Model.Name} - Smart Eye Clinic";
+}
+
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Branch" asp-action="Index">Branches</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Details</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">@Model.Name Details</h3>
+            <p class="text-muted small mb-0"><i class="fa-solid fa-location-dot me-1 text-primary"></i> @Model.Address</p>
+        </div>
+        <div class="d-flex gap-2">
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary px-3 py-2 border-0" style="background: var(--primary-color); border-radius: 8px;">
+                    <i class="fa-regular fa-pen-to-square me-1"></i> Edit
+                </a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger px-3 py-2 border-0" style="border-radius: 8px;">
+                    <i class="fa-solid fa-trash me-1"></i> Delete
+                </a>
+            }
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <!-- Staff List -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+                <div class="card-header bg-transparent border-bottom p-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-users text-primary me-2"></i> Receptionists Assigned</h5>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.Receptionists == null || !Model.Receptionists.Any())
+                    {
+                        <div class="text-center py-4">
+                            <i class="fa-solid fa-user-minus fs-1 text-muted mb-2 d-block"></i>
+                            <span class="text-muted small">No receptionist is currently assigned to this branch.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table custom-table small">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Shift Schedule</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var staff in Model.Receptionists)
+                                    {
+                                        <tr>
+                                            <td><strong>@staff.User.FullName</strong></td>
+                                            <td>
+                                                @(staff.ShiftStart.HasValue ? staff.ShiftStart.Value.ToString("hh:mm tt") : "-") - @(staff.ShiftEnd.HasValue ? staff.ShiftEnd.Value.ToString("hh:mm tt") : "-")
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Appointment Log -->
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+                <div class="card-header bg-transparent border-bottom p-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-calendar-check text-primary me-2"></i> Branch Visits</h5>
+                </div>
+                <div class="card-body p-4">
+                    @if (Model.Appointments == null || !Model.Appointments.Any())
+                    {
+                        <div class="text-center py-4">
+                            <i class="fa-solid fa-calendar-minus fs-1 text-muted mb-2 d-block"></i>
+                            <span class="text-muted small">No visits scheduled for this branch yet.</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table custom-table small">
+                                <thead>
+                                    <tr>
+                                        <th>Patient</th>
+                                        <th>Doctor</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var app in Model.Appointments.Take(10))
+                                    {
+                                        <tr>
+                                            <td><strong>@app.Patient.User.FullName</strong></td>
+                                            <td>Dr. @app.Doctor.User.FullName</td>
+                                            <td>@app.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")</td>
+                                            <td>
+                                                <span class="badge @(app.Status == "Scheduled" ? "bg-primary" : app.Status == "Completed" ? "bg-success" : "bg-danger") rounded-pill">@app.Status</span>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

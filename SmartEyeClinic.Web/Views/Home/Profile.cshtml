@@ -1,0 +1,150 @@
+@{
+    ViewData["Title"] = "User Profile - Smart Eye Clinic";
+}
+
+<!-- Page Header -->
+<div class="mb-4">
+    <ul class="breadcrumb-custom mb-1">
+        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li>User Profile</li>
+    </ul>
+    <h3 class="fw-bold text-dark mb-0">My Account Profile</h3>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: User Summary Card -->
+    <div class="col-lg-4">
+        <div class="card custom-card text-center py-4">
+            <div class="card-body">
+                <div class="position-relative d-inline-block mb-3">
+                    <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=180&auto=format&fit=crop" 
+                         alt="Avatar" class="rounded-circle img-thumbnail shadow-sm" style="width: 140px; height: 140px; object-fit: cover;" />
+                    <button class="btn btn-sm btn-primary position-absolute bottom-0 end-0 rounded-circle p-2 shadow" style="width: 36px; height: 36px; line-height: 20px;">
+                        <i class="fa-solid fa-camera"></i>
+                    </button>
+                </div>
+                <h4 class="fw-bold text-dark mb-1">Dr. Alexander Cooper</h4>
+                <p class="text-muted small mb-3">Senior Ophthalmologist & Surgeon</p>
+                <div class="d-flex justify-content-center gap-2 mb-4">
+                    <span class="badge-custom badge-custom-success"><i class="fa-solid fa-circle-check me-1"></i> Active Status</span>
+                    <span class="badge-custom" style="background: rgba(15,76,129,0.1); color: #0F4C81;"><i class="fa-solid fa-hospital me-1"></i> Main Branch</span>
+                </div>
+
+                <div class="border-top pt-3 text-start">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Account Role</span>
+                        <span class="fw-bold text-dark small">Administrator</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Specialization</span>
+                        <span class="fw-bold text-dark small">Vitreoretinal Surgery</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Member Since</span>
+                        <span class="fw-bold text-dark small">Mar 15, 2023</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small">Last Sign In</span>
+                        <span class="fw-bold text-dark small">Today at 08:32 AM</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card custom-card mt-4">
+            <div class="card-header-clean">
+                <h6 class="mb-0 fw-bold"><i class="fa-solid fa-shield-halved text-primary me-2"></i>Security Quick Links</h6>
+            </div>
+            <div class="card-body-clean">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-custom btn-custom-secondary text-start"><i class="fa-solid fa-key me-2 text-muted"></i>Change Password</button>
+                    <button class="btn btn-custom btn-custom-secondary text-start"><i class="fa-solid fa-mobile-screen me-2 text-muted"></i>Two-Factor Auth</button>
+                    <button class="btn btn-custom btn-custom-secondary text-start"><i class="fa-solid fa-user-shield me-2 text-muted"></i>Privacy Policies</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Profile Form / Security / Logs -->
+    <div class="col-lg-8">
+        <div class="card custom-card">
+            <div class="card-header-clean">
+                <h5 class="mb-0"><i class="fa-solid fa-address-card text-primary me-2"></i>Profile Information</h5>
+                <button class="btn btn-sm btn-outline-primary btn-custom"><i class="fa-solid fa-user-pen"></i> Edit Info</button>
+            </div>
+            <div class="card-body-clean">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label-custom">First Name</label>
+                        <input type="text" class="form-control form-control-custom" value="Alexander" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Last Name</label>
+                        <input type="text" class="form-control form-control-custom" value="Cooper" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Email Address</label>
+                        <input type="email" class="form-control form-control-custom" value="a.cooper@smarteye.com" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Mobile Number</label>
+                        <input type="text" class="form-control form-control-custom" value="+1 (555) 019-2834" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Clinic Branch Assignment</label>
+                        <input type="text" class="form-control form-control-custom" value="Cairo - Heliopolis Branch" readonly />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label-custom">Medical License ID</label>
+                        <input type="text" class="form-control form-control-custom" value="MD-9281-COP" readonly />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity History & Sign In Logs -->
+        <div class="card custom-card mt-4">
+            <div class="card-header-clean">
+                <h5 class="mb-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i>Recent Sign-In History</h5>
+            </div>
+            <div class="card-body-clean p-0">
+                <div class="table-responsive-custom">
+                    <table class="table custom-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Device / Browser</th>
+                                <th>IP Address</th>
+                                <th>Location</th>
+                                <th>Timestamp</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><i class="fa-solid fa-laptop text-primary me-2"></i> Chrome, Windows 11</td>
+                                <td>197.34.120.5</td>
+                                <td>Cairo, Egypt</td>
+                                <td>Today at 08:32 AM</td>
+                                <td><span class="badge-custom badge-custom-success">Current Session</span></td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa-solid fa-mobile-button text-muted me-2"></i> Safari, iPhone 14 Pro</td>
+                                <td>197.34.120.9</td>
+                                <td>Cairo, Egypt</td>
+                                <td>Yesterday at 09:15 PM</td>
+                                <td><span class="text-muted small">Success</span></td>
+                            </tr>
+                            <tr>
+                                <td><i class="fa-solid fa-laptop text-muted me-2"></i> Edge, macOS Sonoma</td>
+                                <td>102.15.80.224</td>
+                                <td>Alexandria, Egypt</td>
+                                <td>Jun 25, 2026 at 11:40 AM</td>
+                                <td><span class="text-muted small">Success</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

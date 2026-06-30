@@ -1,0 +1,170 @@
+@model SmartEyeClinic.Models.Appointment
+@{
+    ViewData["Title"] = $"Appointment #{Model.Id} Details - Smart Eye Clinic";
+}
+
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Appointment" asp-action="Index">Appointments</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Details</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">Appointment Details</h3>
+            <p class="text-muted small mb-0">Overview of schedule record #@Model.Id.</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary px-3 py-2 border-0" style="background: var(--primary-color); border-radius: 8px;">
+                <i class="fa-regular fa-pen-to-square me-1"></i> Edit
+            </a>
+            @if (User.IsInRole("Admin"))
+            {
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-danger px-3 py-2 border-0" style="border-radius: 8px;">
+                    <i class="fa-solid fa-trash me-1"></i> Delete
+                </a>
+            }
+        </div>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Details Card -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--card-bg);">
+                <div class="card-header bg-transparent border-bottom p-3 d-flex justify-content-between align-items-center">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-clock-rotate-left text-primary me-2"></i> Schedule Information</h5>
+                    <span class="badge @(Model.Status == "Scheduled" ? "bg-primary" : Model.Status == "Completed" ? "bg-success" : "bg-danger") px-3 py-2 rounded-pill">@Model.Status</span>
+                </div>
+                <div class="card-body p-4">
+                    <div class="row g-4 mb-3">
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">Appointment Date & Time</span>
+                            <strong class="text-dark fs-5">@Model.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted small d-block">Duration</span>
+                            <strong class="text-dark">@Model.DurationMinutes Minutes</strong>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted small d-block">Consultation Type</span>
+                            <span class="badge bg-light text-dark px-2.5 py-1.5 border">@Model.Type</span>
+                        </div>
+                    </div>
+
+                    <hr class="text-muted opacity-25 my-4" />
+
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block mb-1">Scheduled Doctor</span>
+                            <div class="d-flex align-items-center">
+                                <img src="https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=48&auto=format&fit=crop" class="rounded-circle me-2" style="width: 40px; height: 40px; object-fit: cover;" />
+                                <div>
+                                    <strong class="text-dark d-block">Dr. @Model.Doctor.User.FullName</strong>
+                                    <span class="text-muted small">Specialist</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block mb-1">Clinic Branch Location</span>
+                            <div class="d-flex align-items-center">
+                                <span class="bg-light text-primary rounded px-3 py-2.5 me-2"><i class="fa-solid fa-hospital fs-5"></i></span>
+                                <div>
+                                    <strong class="text-dark d-block">@Model.Branch.Name</strong>
+                                    <span class="text-muted small">@Model.Branch.Address</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="text-muted opacity-25 my-4" />
+
+                    <div class="mb-0">
+                        <span class="text-muted small d-block mb-1">Receptionist Notes</span>
+                        <div class="p-3 bg-light rounded-3 text-muted small">
+                            @(string.IsNullOrEmpty(Model.Notes) ? "No notes registered for this appointment." : Model.Notes)
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Operations/Action Buttons Panel -->
+            @if (Model.Status == "Scheduled")
+            {
+                <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+                    <div class="card-header bg-transparent border-bottom p-3">
+                        <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-list-check text-primary me-2"></i> Clinical Operations Workflow</h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="row g-3">
+                            @if (User.IsInRole("Doctor") || User.IsInRole("Admin"))
+                            {
+                                <div class="col-md-6">
+                                    <a asp-controller="Examination" asp-action="Create" asp-route-appointmentId="@Model.Id" class="btn btn-success w-100 py-2.5" style="border-radius: 8px;">
+                                        <i class="fa-solid fa-notes-medical me-2"></i> Record Medical Exam
+                                    </a>
+                                </div>
+                            }
+                            @if (User.IsInRole("Receptionist") || User.IsInRole("Admin"))
+                            {
+                                <div class="col-md-6">
+                                    <a asp-controller="Invoice" asp-action="Create" asp-route-appointmentId="@Model.Id" class="btn btn-outline-primary w-100 py-2.5" style="border-radius: 8px;">
+                                        <i class="fa-solid fa-file-invoice-dollar me-2"></i> Generate Bill Invoice
+                                    </a>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Patient Info Column -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+                <div class="card-header bg-transparent border-bottom p-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-regular fa-user text-primary me-2"></i> Patient Information</h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center mb-4">
+                        <img src="@(string.IsNullOrEmpty(Model.Patient.User.ProfilePicture) ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=96&auto=format&fit=crop" : Model.Patient.User.ProfilePicture)" 
+                             alt="Patient Profile" class="rounded-circle border mb-3" style="width: 80px; height: 80px; object-fit: cover;" />
+                        <h6 class="fw-bold mb-1">@Model.Patient.User.FullName</h6>
+                        <span class="text-muted small">Patient Account ID: #@Model.Patient.Id</span>
+                    </div>
+
+                    <div class="text-start">
+                        <div class="mb-2.5 small">
+                            <span class="text-muted d-block">Email</span>
+                            <strong class="text-dark">@Model.Patient.User.Email</strong>
+                        </div>
+                        <div class="mb-2.5 small">
+                            <span class="text-muted d-block">Phone</span>
+                            <strong class="text-dark">@(string.IsNullOrEmpty(Model.Patient.User.PhoneNumber) ? "N/A" : Model.Patient.User.PhoneNumber)</strong>
+                        </div>
+                        <div class="mb-2.5 small">
+                            <span class="text-muted d-block">National ID / Passport</span>
+                            <strong class="text-dark">@(string.IsNullOrEmpty(Model.Patient.NationalId) ? "N/A" : Model.Patient.NationalId)</strong>
+                        </div>
+                        <div class="small">
+                            <span class="text-muted d-block">Blood Group</span>
+                            <span class="badge bg-danger rounded-pill px-2.5">@(string.IsNullOrEmpty(Model.Patient.BloodType) ? "Unknown" : Model.Patient.BloodType)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

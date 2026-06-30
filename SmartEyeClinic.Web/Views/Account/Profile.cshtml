@@ -1,0 +1,166 @@
+@model SmartEyeClinic.Models.User
+@{
+    ViewData["Title"] = "My Profile - Smart Eye Clinic";
+}
+
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Profile</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">My Account Settings</h3>
+        <p class="text-muted small mb-0">Manage your profile information and account security.</p>
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        <!-- Sidebar profile info card -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 text-center p-4" style="background: var(--card-bg);">
+                <div class="position-relative d-inline-block mx-auto mb-3">
+                    <img src="@(string.IsNullOrEmpty(Model.ProfilePicture) ? "https://images.unsplash.com/photo-1622253692010-333f2da6031d?q=80&w=120&auto=format&fit=crop" : Model.ProfilePicture)" 
+                         alt="Avatar" class="rounded-circle border border-3 border-light shadow-sm" style="width: 110px; height: 110px; object-fit: cover;" />
+                    <span class="position-absolute bottom-0 end-0 bg-success border border-white rounded-circle p-2" style="width: 12px; height: 12px;" title="Online"></span>
+                </div>
+                
+                <h5 class="fw-bold mb-1">@Model.FullName</h5>
+                <span class="badge bg-light-primary text-primary fw-600 px-3 py-1.5 rounded-pill mb-3">@Model.Role.Name</span>
+                
+                <hr class="text-muted opacity-25" />
+                
+                <div class="text-start mt-3">
+                    <div class="d-flex align-items-center mb-2.5 small">
+                        <i class="fa-regular fa-envelope text-muted me-3" style="width: 16px;"></i>
+                        <span class="text-dark">@Model.Email</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2.5 small">
+                        <i class="fa-solid fa-phone text-muted me-3" style="width: 16px;"></i>
+                        <span class="text-dark">@(string.IsNullOrEmpty(Model.PhoneNumber) ? "Not Specified" : Model.PhoneNumber)</span>
+                    </div>
+                    <div class="d-flex align-items-center mb-2.5 small">
+                        <i class="fa-regular fa-calendar-days text-muted me-3" style="width: 16px;"></i>
+                        <span class="text-dark">Joined @Model.CreatedAt.ToString("MMMM yyyy")</span>
+                    </div>
+                </div>
+
+                @if (Model.Doctor != null)
+                {
+                    <hr class="text-muted opacity-25" />
+                    <div class="text-start">
+                        <h6 class="fw-bold small text-primary mb-2">Doctor Profile</h6>
+                        <div class="small mb-1"><strong class="text-muted">License:</strong> @Model.Doctor.LicenseNumber</div>
+                        <div class="small mb-1"><strong class="text-muted">Specialization:</strong> @Model.Doctor.Specialization.Name</div>
+                        <div class="small"><strong class="text-muted">Fee:</strong> $@Model.Doctor.ConsultationFee.ToString("F2")</div>
+                    </div>
+                }
+                else if (Model.Patient != null)
+                {
+                    <hr class="text-muted opacity-25" />
+                    <div class="text-start">
+                        <h6 class="fw-bold small text-primary mb-2">Patient Profile</h6>
+                        <div class="small mb-1"><strong class="text-muted">National ID:</strong> @Model.Patient.NationalId</div>
+                        <div class="small mb-1"><strong class="text-muted">Birth Date:</strong> @(Model.Patient.DateOfBirth.HasValue ? Model.Patient.DateOfBirth.Value.ToString("dd MMM yyyy") : "N/A")</div>
+                        <div class="small"><strong class="text-muted">Gender:</strong> @Model.Patient.Gender</div>
+                    </div>
+                }
+                else if (Model.Receptionist != null)
+                {
+                    <hr class="text-muted opacity-25" />
+                    <div class="text-start">
+                        <h6 class="fw-bold small text-primary mb-2">Receptionist Profile</h6>
+                        <div class="small mb-1"><strong class="text-muted">Branch:</strong> @Model.Receptionist.Branch.Name</div>
+                        <div class="small"><strong class="text-muted">Shift:</strong> @(Model.Receptionist.ShiftStart.HasValue ? Model.Receptionist.ShiftStart.Value.ToString("hh:mm tt") : "Not Set") - @(Model.Receptionist.ShiftEnd.HasValue ? Model.Receptionist.ShiftEnd.Value.ToString("hh:mm tt") : "Not Set")</div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Edit Profile and Change Password panels -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--card-bg);">
+                <div class="card-header bg-transparent border-bottom p-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-regular fa-pen-to-square text-primary me-2"></i> Update Personal Details</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="EditProfile" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-600">Full Name *</label>
+                                <input type="text" name="fullName" class="form-control" value="@Model.FullName" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-600">Phone Number</label>
+                                <input type="text" name="phoneNumber" class="form-control" value="@Model.PhoneNumber" />
+                            </div>
+                        </div>
+
+                        @if (Model.Patient != null)
+                        {
+                            <div class="mb-4">
+                                <label class="form-label small fw-600">Home Address</label>
+                                <input type="text" name="address" class="form-control" value="@Model.Patient.Address" />
+                            </div>
+                        }
+
+                        <button type="submit" class="btn btn-primary px-4 py-2" style="background: var(--primary-color); border: none; border-radius: 8px;">
+                            <i class="fa-solid fa-check me-2"></i> Save Changes
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+                <div class="card-header bg-transparent border-bottom p-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-shield-halved text-danger me-2"></i> Change Password</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form asp-action="ChangePassword" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-600">Current Password *</label>
+                            <input type="password" name="currentPassword" class="form-control" placeholder="••••••••" required />
+                        </div>
+                        <div class="row g-3 mb-4">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-600">New Password *</label>
+                                <input type="password" name="newPassword" class="form-control" placeholder="••••••••" required minlength="6" />
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-600">Confirm New Password *</label>
+                                <input type="password" name="confirmPassword" class="form-control" placeholder="••••••••" required />
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-danger px-4 py-2" style="border: none; border-radius: 8px;">
+                            <i class="fa-solid fa-lock me-2"></i> Update Password
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

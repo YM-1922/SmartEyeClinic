@@ -1,0 +1,69 @@
+@{
+    ViewData["Title"] = "Add Payment - Smart Eye Clinic";
+}
+
+<div class="mb-4">
+    <ul class="breadcrumb-custom mb-1">
+        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li><a asp-controller="Payment" asp-action="Index">Payments</a></li>
+        <li>Add Payment</li>
+    </ul>
+    <h3 class="fw-bold text-dark mb-0">Record Payment Transaction</h3>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
+    </div>
+}
+
+<div class="card custom-card" style="max-width:600px;">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-credit-card text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">Payment Transaction Details</h5>
+        </div>
+    </div>
+    <div class="card-body-clean">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Invoice ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-file-invoice-dollar text-muted"></i></span>
+                        <input type="number" name="invoiceId" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. 1" required />
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Payment Method ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-money-bill-wave text-muted"></i></span>
+                        <input type="number" name="paymentMethodId" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. 1" required />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Payment Amount ($)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-dollar-sign text-muted"></i></span>
+                        <input type="number" step="0.01" name="amount" class="form-control form-control-custom border-start-0 ps-0" placeholder="0.00" required />
+                    </div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <label class="form-label-custom">Transaction Reference</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-hashtag text-muted"></i></span>
+                        <input type="text" name="transactionRef" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. Txn-00123" />
+                    </div>
+                </div>
+            </div>
+            <div class="border-top pt-4 d-flex justify-content-end">
+                <a asp-action="Index" class="btn btn-custom btn-custom-secondary me-2"><i class="fa-solid fa-xmark"></i> Cancel</a>
+                <button type="submit" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-floppy-disk"></i> Save Transaction</button>
+            </div>
+        </form>
+    </div>
+</div>

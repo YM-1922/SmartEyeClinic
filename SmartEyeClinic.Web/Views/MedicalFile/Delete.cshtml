@@ -1,0 +1,58 @@
+@model SmartEyeClinic.Models.MedicalFile
+@{
+    ViewData["Title"] = $"Delete File - Smart Eye Clinic";
+}
+
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-controller="MedicalFile" asp-action="Index">Medical Files</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Delete</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+                <div class="card-header bg-transparent border-bottom text-center p-4">
+                    <div class="text-danger display-4 mb-3"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <h4 class="fw-bold text-dark">Confirm Document Deletion</h4>
+                    <p class="text-muted small mb-0">Are you sure you want to permanently delete this clinical document?</p>
+                </div>
+                <div class="card-body p-4">
+                    <div class="alert alert-warning small rounded-3 mb-4">
+                        <i class="fa-solid fa-triangle-exclamation me-2"></i><strong>Warning:</strong> Deleting file document <strong class="text-dark">@Model.FilePath.Split('/').Last()</strong> will remove it from the patient's medical history and erase it from clinical disk storage. This action cannot be undone.
+                    </div>
+
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="text-muted small">File ID</span>
+                            <span class="text-dark fw-bold">#@Model.Id</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="text-muted small">Patient Name</span>
+                            <span class="text-dark fw-bold">@Model.Patient.User.FullName</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="text-muted small">Document Format</span>
+                            <span class="badge bg-light text-primary border px-2">@Model.FileType</span>
+                        </li>
+                    </ul>
+
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger w-100 py-2.5" style="border-radius: 8px;">
+                                <i class="fa-solid fa-trash me-2"></i> Yes, Delete Document
+                            </button>
+                            <a asp-action="Index" class="btn btn-outline-secondary w-100 py-2.5" style="border-radius: 8px;">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

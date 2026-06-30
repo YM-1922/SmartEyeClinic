@@ -1,0 +1,81 @@
+@model IEnumerable<SmartEyeClinic.Models.Specialization>
+@{
+    ViewData["Title"] = "Specializations - Smart Eye Clinic";
+}
+
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Specializations</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h3 class="fw-bold text-dark mb-1">Clinical Specializations</h3>
+            <p class="text-muted small mb-0">Manage clinical ophthalmology specialization departments and areas.</p>
+        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <a asp-action="Create" class="btn btn-primary px-3 py-2 border-0" style="background: var(--primary-color); border-radius: 8px;">
+                <i class="fa-solid fa-plus me-1"></i> Add Specialization
+            </a>
+        }
+    </div>
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row g-4">
+        @foreach (var item in Model)
+        {
+            <div class="col-md-4">
+                <div class="card border-0 shadow-sm rounded-4 h-100" style="background: var(--card-bg);">
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center mb-3">
+                            <span class="bg-light text-primary rounded-circle px-3 py-2.5 me-3"><i class="fa-solid fa-tags fs-4"></i></span>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-0">@item.Name</h5>
+                                <span class="text-muted small">Dept Code: #@item.Id</span>
+                            </div>
+                        </div>
+
+                        <p class="text-muted small mb-4 flex-grow-1">@(string.IsNullOrEmpty(item.Description) ? "No department description entered." : item.Description)</p>
+
+                        <hr class="text-muted opacity-25" />
+
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <div class="small">
+                                <span class="text-muted d-block font-size-xs">Specialists</span>
+                                <strong class="text-dark">@item.Doctors.Count Doctors</strong>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" style="border-radius: 6px;">Details</a>
+                                @if (User.IsInRole("Admin"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;"><i class="fa-regular fa-pen-to-square"></i></a>
+                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" style="border-radius: 6px;"><i class="fa-solid fa-trash"></i></a>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

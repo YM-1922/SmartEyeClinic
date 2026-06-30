@@ -1,0 +1,92 @@
+@{
+    ViewData["Title"] = "Add Examination - Smart Eye Clinic";
+}
+
+<div class="mb-4">
+    <ul class="breadcrumb-custom mb-1">
+        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li><a asp-controller="Examination" asp-action="Index">Examinations</a></li>
+        <li>Add Examination</li>
+    </ul>
+    <h3 class="fw-bold text-dark mb-0">Record Clinical Examination</h3>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
+    </div>
+}
+
+<div class="card custom-card" style="max-width: 800px;">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-notes-medical text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">Examination Diagnostics</h5>
+        </div>
+    </div>
+    <div class="card-body-clean">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Appointment ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-calendar-check text-muted"></i></span>
+                        <input type="number" name="appointmentId" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. 1" required />
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Diagnosis</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-file-medical text-muted"></i></span>
+                        <input type="text" name="diagnosis" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. Myopia, Astigmatism" required />
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label-custom">Observed Symptoms</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-eye-dropper text-muted"></i></span>
+                    <input type="text" name="symptoms" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. Blurred vision, eye strain" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Visual Acuity Left (OS)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-eye text-muted"></i></span>
+                        <input type="text" name="visualAcuityLeft" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. 20/20" />
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Visual Acuity Right (OD)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-eye text-muted"></i></span>
+                        <input type="text" name="visualAcuityRight" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. 20/40" />
+                    </div>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label-custom">Intraocular Pressure (IOP)</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-gauge-high text-muted"></i></span>
+                    <input type="text" name="intraocularPressure" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. 15 mmHg" />
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label-custom">Treatment Plan & Recommendations</label>
+                <textarea name="treatmentPlan" class="form-control form-control-custom" rows="3" placeholder="Describe clinical treatment plan..."></textarea>
+            </div>
+
+            <div class="border-top pt-4 d-flex justify-content-end">
+                <a asp-action="Index" class="btn btn-custom btn-custom-secondary me-2"><i class="fa-solid fa-xmark"></i> Cancel</a>
+                <button type="submit" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-floppy-disk"></i> Save Examination</button>
+            </div>
+        </form>
+    </div>
+</div>

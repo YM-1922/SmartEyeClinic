@@ -1,0 +1,73 @@
+@{
+    ViewData["Title"] = "Create Prescription - Smart Eye Clinic";
+}
+
+<div class="mb-4">
+    <ul class="breadcrumb-custom mb-1">
+        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li><a asp-controller="Prescription" asp-action="Index">Prescriptions</a></li>
+        <li>Create Prescription</li>
+    </ul>
+    <h3 class="fw-bold text-dark mb-0">Issue Patient Prescription</h3>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
+    </div>
+}
+
+<div class="card custom-card" style="max-width:700px;">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-file-prescription text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">Prescription Details</h5>
+        </div>
+    </div>
+    <div class="card-body-clean">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Examination ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-notes-medical text-muted"></i></span>
+                        <input type="number" name="examinationId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Linked Examination ID" required />
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Medicine ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-pills text-muted"></i></span>
+                        <input type="number" name="medicineId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Medicine ID number" required />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Dosage Frequency</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-prescription-bottle text-muted"></i></span>
+                        <input type="text" name="dosage" class="form-control form-control-custom border-start-0 ps-0" placeholder="e.g. Twice daily" />
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Duration (Days)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-calendar-day text-muted"></i></span>
+                        <input type="number" name="durationDays" class="form-control form-control-custom border-start-0 ps-0" placeholder="Number of days" required />
+                    </div>
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label-custom">Instructions & Special Precautions</label>
+                <textarea name="instructions" class="form-control form-control-custom" rows="2" placeholder="e.g. Apply to left eye before sleeping, shake well..."></textarea>
+            </div>
+            <div class="border-top pt-4 d-flex justify-content-end">
+                <a asp-action="Index" class="btn btn-custom btn-custom-secondary me-2"><i class="fa-solid fa-xmark"></i> Cancel</a>
+                <button type="submit" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-floppy-disk"></i> Issue Prescription</button>
+            </div>
+        </form>
+    </div>
+</div>

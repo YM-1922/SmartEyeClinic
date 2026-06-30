@@ -1,0 +1,60 @@
+@{
+    ViewData["Title"] = "Book Appointment - Smart Eye Clinic";
+}
+
+<div class="mb-4">
+    <ul class="breadcrumb-custom mb-1">
+        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li><a asp-controller="Appointment" asp-action="Index">Appointments</a></li>
+        <li>Book Appointment</li>
+    </ul>
+    <h3 class="fw-bold text-dark mb-0">Book New Appointment</h3>
+</div>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
+    </div>
+}
+
+<div class="card custom-card" style="max-width:700px;">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-calendar-plus text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">Consultation Booking Details</h5>
+        </div>
+    </div>
+    <div class="card-body-clean">
+        <form asp-action="Create" method="post">
+            @Html.AntiForgeryToken()
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Patient ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-user-injured text-muted"></i></span>
+                        <input type="number" name="patientId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Patient ID number" required />
+                    </div>
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label class="form-label-custom">Doctor ID</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-user-md text-muted"></i></span>
+                        <input type="number" name="doctorId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Doctor ID number" required />
+                    </div>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label-custom">Branch ID</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-hospital text-muted"></i></span>
+                    <input type="number" name="branchId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Clinic branch ID" required />
+                </div>
+            </div>
+            <div class="border-top pt-4 d-flex justify-content-end">
+                <a asp-action="Index" class="btn btn-custom btn-custom-secondary me-2"><i class="fa-solid fa-xmark"></i> Cancel</a>
+                <button type="submit" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-floppy-disk"></i> Confirm Booking</button>
+            </div>
+        </form>
+    </div>
+</div>

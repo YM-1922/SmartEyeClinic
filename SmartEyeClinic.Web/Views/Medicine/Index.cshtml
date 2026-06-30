@@ -1,0 +1,80 @@
+@model List<SmartEyeClinic.Models.Medicine>
+@{
+    ViewData["Title"] = "Medicines - Smart Eye Clinic";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <ul class="breadcrumb-custom mb-1">
+            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li>Pharmacy Catalog</li>
+        </ul>
+        <h3 class="fw-bold text-dark mb-0">Pharmacy & Medicines Catalog</h3>
+    </div>
+    <a asp-action="Create" class="btn btn-custom btn-custom-primary">
+        <i class="fa-solid fa-pills"></i> Add Medicine
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-check fs-5 me-2"></i> <div>@TempData["Success"]</div>
+    </div>
+}
+
+<div class="card custom-card">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-pills text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">Medicine Database</h5>
+        </div>
+        <div class="text-muted small">Total: @Model.Count items</div>
+    </div>
+    <div class="card-body-clean">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fa-solid fa-pills text-muted fs-1 mb-3 d-block"></i>
+                <h5 class="fw-bold text-dark mb-2">No Medicines in Catalog</h5>
+                <p class="text-muted small mb-4">Add medicines to the pharmacy database.</p>
+                <a asp-action="Create" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-pills"></i> Add First Medicine</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive-custom">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>Medicine</th>
+                            <th>Manufacturer</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var m in Model)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="p-2 rounded me-3 text-warning" style="background:rgba(245,158,11,0.1);width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
+                                            <i class="fa-solid fa-capsules"></i>
+                                        </div>
+                                        <span class="fw-bold text-dark">@m.Name</span>
+                                    </div>
+                                </td>
+                                <td><span class="text-muted">@(m.Manufacturer ?? "—")</span></td>
+                                <td>
+                                    <span class="text-muted small" title="@m.Description">
+                                        @(m.Description?.Length > 60 ? m.Description.Substring(0, 60) + "..." : (m.Description ?? "—"))
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

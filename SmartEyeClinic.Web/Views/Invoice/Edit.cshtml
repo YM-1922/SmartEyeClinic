@@ -1,0 +1,145 @@
+@model SmartEyeClinic.Models.Invoice
+@{
+    ViewData["Title"] = $"Edit Invoice {Model.InvoiceNumber} - Smart Eye Clinic";
+    var appointments = ViewBag.Appointments as List<SmartEyeClinic.Models.Appointment>;
+    var patients = ViewBag.Patients as List<SmartEyeClinic.Models.Patient>;
+}
+
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Invoice" asp-action="Index">Invoices</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Invoice" asp-action="Details" asp-route-id="@Model.Id">@Model.InvoiceNumber</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">Edit Billing Invoice</h3>
+        <p class="text-muted small mb-0">Modify billing amounts, transaction details, and statuses for invoice record #@Model.Id.</p>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post" class="needs-validation" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+
+                <h5 class="fw-bold text-primary mb-3"><i class="fa-regular fa-id-card me-2"></i> Document Identifiers</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Invoice Number *</label>
+                        <input type="text" name="invoiceNumber" class="form-control" value="@Model.InvoiceNumber" required readonly="readonly" />
+                        <span class="text-muted font-size-xs">Auto-generated identifier. Cannot be modified.</span>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Patient *</label>
+                        <select name="patientId" class="form-select" required>
+                            <option value="">Select Patient...</option>
+                            @if (patients != null)
+                            {
+                                foreach (var pat in patients)
+                                {
+                                    if (pat.Id == Model.PatientId)
+                                    {
+                                        <option value="@pat.Id" selected="selected">@pat.User.FullName (@pat.User.Email)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@pat.Id">@pat.User.FullName (@pat.User.Email)</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label small fw-600">Select Appointment *</label>
+                        <select name="appointmentId" class="form-select" required>
+                            <option value="">Select Appointment...</option>
+                            @if (appointments != null)
+                            {
+                                foreach (var app in appointments)
+                                {
+                                    if (app.Id == Model.AppointmentId)
+                                    {
+                                        <option value="@app.Id" selected="selected">Appt #@app.Id - @app.Patient.User.FullName with Dr. @app.Doctor.User.FullName (@app.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt"))</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@app.Id">Appt #@app.Id - @app.Patient.User.FullName with Dr. @app.Doctor.User.FullName (@app.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt"))</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+                </div>
+
+                <h5 class="fw-bold text-primary mb-3"><i class="fa-solid fa-file-invoice-dollar me-2"></i> Financial Amounts ($)</h5>
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-600">Consultation Fee *</label>
+                        <input type="number" step="0.01" name="totalAmount" class="form-control" value="@Model.TotalAmount.ToString("F2")" required />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-600">Tax Add-on ($)</label>
+                        <input type="number" step="0.01" name="tax" class="form-control" value="@(Model.Tax.HasValue ? Model.Tax.Value.ToString("F2") : "0.00")" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-600">Discount Code / Amount ($)</label>
+                        <input type="number" step="0.01" name="discount" class="form-control" value="@(Model.Discount.HasValue ? Model.Discount.Value.ToString("F2") : "0.00")" />
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-600">Paid Amount *</label>
+                        <input type="number" step="0.01" name="paidAmount" class="form-control" value="@(Model.PaidAmount?.ToString("F2") ?? "0.00")" required />
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Invoice Status *</label>
+                        <select name="status" class="form-select" required>
+                            <option value="Unpaid" selected="@(Model.Status == "Unpaid" ? "selected" : null)">Unpaid</option>
+                            <option value="Partial" selected="@(Model.Status == "Partial" ? "selected" : null)">Partial Payment</option>
+                            <option value="Paid" selected="@(Model.Status == "Paid" ? "selected" : null)">Fully Settled</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4 py-2 border-0" style="background: var(--primary-color); border-radius: 8px;">
+                        <i class="fa-solid fa-check me-1"></i> Save Changes
+                    </button>
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary px-4 py-2" style="border-radius: 8px;">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Form Validation
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    </script>
+}

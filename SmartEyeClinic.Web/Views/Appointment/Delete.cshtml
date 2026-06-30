@@ -1,0 +1,72 @@
+@model SmartEyeClinic.Models.Appointment
+@{
+    ViewData["Title"] = $"Delete Appointment #{Model.Id} - Smart Eye Clinic";
+}
+
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Appointment" asp-action="Index">Appointments</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Appointment" asp-action="Details" asp-route-id="@Model.Id">#@Model.Id</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Delete</li>
+        </ol>
+    </nav>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-6">
+            <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+                <div class="card-header bg-transparent border-bottom text-center p-4">
+                    <div class="text-danger display-4 mb-3"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                    <h4 class="fw-bold text-dark">Confirm Appointment Deletion</h4>
+                    <p class="text-muted small mb-0">Are you sure you want to permanently cancel and remove this scheduling record?</p>
+                </div>
+                <div class="card-body p-4">
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger small rounded-3 mb-4">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning small rounded-3 mb-4">
+                            <i class="fa-solid fa-triangle-exclamation me-2"></i><strong>Warning:</strong> Deleting appointment record #@Model.Id will remove its check-in queue log. If a doctor has already recorded clinical examinations or generated invoice receipts for this appointment, SQL constraints will block this action.
+                        </div>
+                    }
+
+                    <ul class="list-group list-group-flush mb-4">
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="text-muted small">Patient Name</span>
+                            <span class="text-dark fw-bold">@Model.Patient.User.FullName</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="text-muted small">Assigned Doctor</span>
+                            <span class="text-dark">Dr. @Model.Doctor.User.FullName</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="text-muted small">Date & Time</span>
+                            <span class="text-dark">@Model.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center px-0 bg-transparent">
+                            <span class="text-muted small">Type</span>
+                            <span class="badge bg-light text-dark px-2 border">@Model.Type</span>
+                        </li>
+                    </ul>
+
+                    <form asp-action="Delete" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-danger w-100 py-2.5" style="border-radius: 8px;">
+                                <i class="fa-solid fa-trash me-2"></i> Yes, Delete Appointment
+                            </button>
+                            <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary w-100 py-2.5" style="border-radius: 8px;">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

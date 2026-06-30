@@ -1,0 +1,177 @@
+@model SmartEyeClinic.Models.Appointment
+@{
+    ViewData["Title"] = $"Edit Appointment #{Model.Id} - Smart Eye Clinic";
+    var patients = ViewBag.Patients as List<SmartEyeClinic.Models.Patient>;
+    var doctors = ViewBag.Doctors as List<SmartEyeClinic.Models.Doctor>;
+    var branches = ViewBag.Branches as List<SmartEyeClinic.Models.Branch>;
+}
+
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Appointment" asp-action="Index">Appointments</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Appointment" asp-action="Details" asp-route-id="@Model.Id">#@Model.Id</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Edit</li>
+        </ol>
+    </nav>
+
+    <!-- Header -->
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">Edit Appointment</h3>
+        <p class="text-muted small mb-0">Modify schedule records and state parameters for Appointment #@Model.Id.</p>
+    </div>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+        <div class="card-body p-4">
+            <form asp-action="Edit" method="post" class="needs-validation" novalidate>
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@Model.Id" />
+
+                <div class="row g-3 mb-4">
+                    <!-- Patient Select -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Patient *</label>
+                        <select name="patientId" class="form-select" required>
+                            <option value="">Select Patient...</option>
+                            @if (patients != null)
+                            {
+                                foreach (var pat in patients)
+                                {
+                                    if (pat.Id == Model.PatientId)
+                                    {
+                                        <option value="@pat.Id" selected="selected">@pat.User.FullName (@pat.User.Email)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@pat.Id">@pat.User.FullName (@pat.User.Email)</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Doctor Select -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Target Doctor *</label>
+                        <select name="doctorId" class="form-select" required>
+                            <option value="">Select Doctor...</option>
+                            @if (doctors != null)
+                            {
+                                foreach (var doc in doctors)
+                                {
+                                    if (doc.Id == Model.DoctorId)
+                                    {
+                                        <option value="@doc.Id" selected="selected">Dr. @doc.User.FullName (@doc.Specialization.Name)</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@doc.Id">Dr. @doc.User.FullName (@doc.Specialization.Name)</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Branch Select -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-600">Clinic Branch *</label>
+                        <select name="branchId" class="form-select" required>
+                            <option value="">Select Location...</option>
+                            @if (branches != null)
+                            {
+                                foreach (var br in branches)
+                                {
+                                    if (br.Id == Model.BranchId)
+                                    {
+                                        <option value="@br.Id" selected="selected">@br.Name</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@br.Id">@br.Name</option>
+                                    }
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Date & Time -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-600">Appointment Date & Time *</label>
+                        <input type="datetime-local" name="appointmentDateTime" class="form-control" 
+                               value="@Model.AppointmentDateTime.ToString("yyyy-MM-ddTHH:mm")" required />
+                    </div>
+
+                    <!-- Duration -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-600">Duration (Minutes) *</label>
+                        <input type="number" name="durationMinutes" class="form-control" value="@Model.DurationMinutes" min="5" max="180" required />
+                    </div>
+
+                    <!-- Consultation Type -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Consultation Type *</label>
+                        <select name="type" class="form-select" required>
+                            <option value="Consultation" selected="@(Model.Type == "Consultation" ? "selected" : null)">General Consultation</option>
+                            <option value="Follow-up" selected="@(Model.Type == "Follow-up" ? "selected" : null)">Clinical Follow-up</option>
+                            <option value="Surgery Pre-op" selected="@(Model.Type == "Surgery Pre-op" ? "selected" : null)">Surgery Pre-op Check</option>
+                            <option value="Laser Treatment" selected="@(Model.Type == "Laser Treatment" ? "selected" : null)">Laser Treatment Session</option>
+                        </select>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Appointment Status *</label>
+                        <select name="status" class="form-select" required>
+                            <option value="Scheduled" selected="@(Model.Status == "Scheduled" ? "selected" : null)">Scheduled</option>
+                            <option value="Completed" selected="@(Model.Status == "Completed" ? "selected" : null)">Completed</option>
+                            <option value="Cancelled" selected="@(Model.Status == "Cancelled" ? "selected" : null)">Cancelled</option>
+                        </select>
+                    </div>
+
+                    <!-- Notes -->
+                    <div class="col-12">
+                        <label class="form-label small fw-600">Booking / Reception Notes</label>
+                        <textarea name="notes" class="form-control" rows="4" placeholder="Enter clinical reason or notes...">@Model.Notes</textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4 py-2 border-0" style="background: var(--primary-color); border-radius: 8px;">
+                        <i class="fa-solid fa-check me-1"></i> Save Changes
+                    </button>
+                    <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary px-4 py-2" style="border-radius: 8px;">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Form Validation
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    </script>
+}

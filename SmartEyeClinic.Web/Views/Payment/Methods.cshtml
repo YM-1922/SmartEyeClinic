@@ -1,0 +1,65 @@
+@model List<SmartEyeClinic.Models.PaymentMethod>
+@{
+    ViewData["Title"] = "Payment Methods - Smart Eye Clinic";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <ul class="breadcrumb-custom mb-1">
+            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li><a asp-controller="Payment" asp-action="Index">Payments</a></li>
+            <li>Payment Methods</li>
+        </ul>
+        <h3 class="fw-bold text-dark mb-0">Payment Methods Configuration</h3>
+    </div>
+    <a asp-action="AddMethod" class="btn btn-custom btn-custom-primary">
+        <i class="fa-solid fa-plus"></i> Add Method
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-check fs-5 me-2"></i> <div>@TempData["Success"]</div>
+    </div>
+}
+
+<div class="card custom-card" style="max-width: 600px;">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-gears text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">Supported Methods</h5>
+        </div>
+    </div>
+    <div class="card-body-clean">
+        <div class="table-responsive-custom mb-4">
+            <table class="table custom-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">ID</th>
+                        <th>Method Name</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model)
+                    {
+                        <tr>
+                            <td><span class="text-muted font-monospace small">#@m.Id</span></td>
+                            <td>
+                                <div class="d-flex align-items-center">
+                                    <div class="p-2 rounded bg-light text-primary me-2" style="width:32px;height:32px;display:flex;align-items:center;justify-content:center;">
+                                        <i class="fa-solid fa-credit-card"></i>
+                                    </div>
+                                    <span class="fw-bold text-dark">@m.Name</span>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <a asp-action="Index" class="btn btn-custom btn-custom-secondary">
+            <i class="fa-solid fa-arrow-left"></i> Back to Payments
+        </a>
+    </div>
+</div>

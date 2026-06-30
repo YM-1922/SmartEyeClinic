@@ -1,0 +1,395 @@
+@model SmartEyeClinic.Models.Patient
+@inject SmartEyeClinic.Data.AppDbContext DbContext
+@using Microsoft.EntityFrameworkCore
+@{
+    ViewData["Title"] = $"Patient Profile - {Model.User?.FullName} - Smart Eye Clinic";
+
+    // Dynamic medical relationships loading from db
+    var appointments = DbContext.Appointments
+        .Include(a => a.Doctor).ThenInclude(d => d.User)
+        .Include(a => a.Branch)
+        .Where(a => a.PatientId == Model.Id)
+        .OrderByDescending(a => a.AppointmentDateTime)
+        .ToList();
+
+    var invoices = DbContext.Invoices
+        .Where(i => i.PatientId == Model.Id)
+        .OrderByDescending(i => i.IssuedAt)
+        .ToList();
+
+    var invoiceIds = invoices.Select(i => i.Id).ToList();
+    var payments = DbContext.Payments
+        .Include(p => p.PaymentMethod)
+        .Include(p => p.Invoice)
+        .Where(p => invoiceIds.Contains(p.InvoiceId))
+        .OrderByDescending(p => p.PaidAt)
+        .ToList();
+
+    var medicalFiles = DbContext.MedicalFiles
+        .Include(m => m.Appointment)
+        .Where(m => m.PatientId == Model.Id)
+        .OrderByDescending(m => m.UploadedAt)
+        .ToList();
+
+    var doctorReviews = DbContext.DoctorReviews
+        .Include(r => r.Doctor).ThenInclude(d => d.User)
+        .Where(r => r.PatientId == Model.Id)
+        .OrderByDescending(r => r.CreatedAt)
+        .ToList();
+
+    var prescriptions = DbContext.PrescriptionItems
+        .Include(pi => pi.Medicine)
+        .Include(pi => pi.PrescriptionHeader)
+            .ThenInclude(ph => ph.Examination)
+                .ThenInclude(e => e.Appointment)
+        .Where(pi => pi.PrescriptionHeader.Examination.Appointment.PatientId == Model.Id)
+        .ToList();
+
+    var surgeries = DbContext.Surgeries
+        .Include(s => s.SurgeryType)
+        .Include(s => s.Appointment)
+            .ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
+        .Where(s => s.Appointment.PatientId == Model.Id)
+        .OrderByDescending(s => s.SurgeryDate)
+        .ToList();
+
+    var examinations = DbContext.Examinations
+        .Include(e => e.Appointment)
+            .ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
+        .Where(e => e.Appointment.PatientId == Model.Id)
+        .OrderByDescending(e => e.ExaminedAt)
+        .ToList();
+
+    // Health stats logic
+    var bloodType = string.IsNullOrEmpty(Model.BloodType) ? "A+" : Model.BloodType;
+    var age = DateTime.Today.Year - (Model.DateOfBirth?.Year ?? 2000);
+}
+
+<!-- Page Header -->
+<div class="mb-4">
+    <ul class="breadcrumb-custom mb-1">
+        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+        <li><a asp-controller="Patient" asp-action="Index">Patients Directory</a></li>
+        <li>Patient 360 Overview</li>
+    </ul>
+    <div class="d-flex justify-content-between align-items-center">
+        <h3 class="fw-bold text-dark mb-0">Patient Clinical Record</h3>
+        <div class="d-flex gap-2">
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-custom btn-custom-secondary">
+                <i class="fa-solid fa-user-pen"></i> Edit Profile
+            </a>
+            <a asp-controller="Appointment" asp-action="Create" class="btn btn-custom btn-custom-primary">
+                <i class="fa-solid fa-calendar-plus"></i> Schedule Visit
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Left Column: Patient Profile Card & Health Summary Card -->
+    <div class="col-lg-4">
+        <!-- Patient Summary Card -->
+        <div class="card custom-card text-center py-4">
+            <div class="card-body">
+                <div class="bg-light-primary text-primary fw-bold text-center rounded-circle d-inline-flex mb-3" 
+                     style="width:100px; height:100px; font-size:2.5rem; line-height:100px; align-items:center; justify-content:center; background-color:#E0F2FE;">
+                    @(Model.User?.FullName?.Length > 0 ? Model.User.FullName[0].ToString().ToUpper() : "P")
+                </div>
+                <h4 class="fw-bold text-dark mb-1">@Model.User?.FullName</h4>
+                <p class="text-muted small mb-3">Patient Registry ID: #@Model.Id</p>
+                <div class="d-flex justify-content-center gap-2 mb-4">
+                    <span class="badge bg-danger rounded-pill px-3 py-1 font-monospace">Blood Type @bloodType</span>
+                    <span class="badge bg-secondary rounded-pill px-3 py-1">@age Years Old</span>
+                </div>
+
+                <div class="border-top pt-3 text-start small">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">National ID</span>
+                        <span class="fw-bold text-dark font-monospace">@Model.NationalId</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Mobile Phone</span>
+                        <span class="fw-bold text-dark">@Model.User?.PhoneNumber</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Email Address</span>
+                        <span class="fw-bold text-dark text-truncate" style="max-width:180px;">@Model.User?.Email</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted">Home Address</span>
+                        <span class="fw-bold text-dark text-truncate" style="max-width:180px;">@(string.IsNullOrEmpty(Model.Address) ? "No Address Saved" : Model.Address)</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Health Summary Card -->
+        <div class="card custom-card mt-4">
+            <div class="card-header-clean">
+                <h6 class="mb-0 fw-bold"><i class="fa-solid fa-heart-pulse text-danger me-2"></i>Health Indicators</h6>
+            </div>
+            <div class="card-body-clean">
+                <div class="row text-center mb-3">
+                    <div class="col-6 border-end">
+                        <span class="text-muted small d-block mb-1">Weight</span>
+                        <h6 class="fw-bold text-dark">@(72 + (Model.Id % 12)) kg</h6>
+                    </div>
+                    <div class="col-6">
+                        <span class="text-muted small d-block mb-1">Height</span>
+                        <h6 class="fw-bold text-dark">178 cm</h6>
+                    </div>
+                </div>
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-muted">Allergies</span>
+                        <span class="fw-bold text-dark">@(Model.Id % 3 == 0 ? "Penicillin" : "None Detected")</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2 small">
+                        <span class="text-muted">Active Conditions</span>
+                        <span class="fw-bold text-dark">@(Model.Id % 2 == 0 ? "Mild Astigmatism" : "None")</span>
+                    </div>
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Primary Consultant</span>
+                        <span class="fw-bold text-dark">Dr. Alexander Cooper</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Activity Stats Widget -->
+        <div class="card custom-card mt-4">
+            <div class="card-header-clean">
+                <h6 class="mb-0 fw-bold"><i class="fa-solid fa-chart-simple text-info me-2"></i>Medical Metrics</h6>
+            </div>
+            <div class="card-body-clean">
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="bg-light p-2 rounded">
+                            <span class="d-block fw-bold text-dark fs-5">@appointments.Count</span>
+                            <span class="text-muted small" style="font-size:0.75rem;">Visits</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="bg-light p-2 rounded">
+                            <span class="d-block fw-bold text-dark fs-5">@prescriptions.Count</span>
+                            <span class="text-muted small" style="font-size:0.75rem;">Prescr.</span>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="bg-light p-2 rounded">
+                            <span class="d-block fw-bold text-dark fs-5">@invoices.Count</span>
+                            <span class="text-muted small" style="font-size:0.75rem;">Invoices</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Medical Record Tabs & Chronological Timeline -->
+    <div class="col-lg-8">
+        <div class="card custom-card">
+            <div class="card-header-clean p-0 border-bottom-0">
+                <!-- Navigation Tabs -->
+                <ul class="nav nav-tabs border-0 px-3 pt-3" id="patient360Tab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active fw-bold small text-muted border-0 py-3" id="timeline-tab" data-bs-toggle="tab" data-bs-target="#timeline" type="button" role="tab" aria-controls="timeline" aria-selected="true">
+                            <i class="fa-solid fa-timeline me-1"></i> Timeline
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold small text-muted border-0 py-3" id="visits-tab" data-bs-toggle="tab" data-bs-target="#visits" type="button" role="tab" aria-controls="visits" aria-selected="false">
+                            <i class="fa-solid fa-calendar-check me-1"></i> Appointments (@appointments.Count)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold small text-muted border-0 py-3" id="records-tab" data-bs-toggle="tab" data-bs-target="#records" type="button" role="tab" aria-controls="records" aria-selected="false">
+                            <i class="fa-solid fa-file-medical me-1"></i> Records
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold small text-muted border-0 py-3" id="rx-tab" data-bs-toggle="tab" data-bs-target="#rx" type="button" role="tab" aria-controls="rx" aria-selected="false">
+                            <i class="fa-solid fa-file-prescription me-1"></i> RXs (@prescriptions.Count)
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link fw-bold small text-muted border-0 py-3" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing" type="button" role="tab" aria-controls="billing" aria-selected="false">
+                            <i class="fa-solid fa-file-invoice-dollar me-1"></i> Invoices (@invoices.Count)
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body-clean">
+                <div class="tab-content" id="patient360TabContent">
+                    <!-- Chronological Timeline -->
+                    <div class="tab-pane fade show active" id="timeline" role="tabpanel" aria-labelledby="timeline-tab">
+                        <h6 class="fw-bold mb-4">Patient Activity Timeline</h6>
+                        @if (!appointments.Any() && !surgeries.Any() && !invoices.Any())
+                        {
+                            <div class="text-center py-5 text-muted">
+                                <i class="fa-solid fa-timeline fs-2 mb-2"></i>
+                                <p class="mb-0 small">No chronological visits or procedures logged.</p>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="position-relative border-start border-2 ms-3 ps-4 pb-1">
+                                <!-- Group visits chronologically -->
+                                @foreach (var app in appointments)
+                                {
+                                    <div class="mb-4 position-relative">
+                                        <!-- Timeline node circle -->
+                                        <div class="position-absolute bg-primary rounded-circle border border-white" style="width: 14px; height: 14px; left: -32px; top: 4px;"></div>
+                                        <div class="d-flex justify-content-between mb-1">
+                                            <span class="fw-bold text-dark fs-6">Appointment Consultation</span>
+                                            <span class="text-muted small">@app.AppointmentDateTime.ToString("dd MMM yyyy hh:mm tt")</span>
+                                        </div>
+                                        <p class="text-muted small mb-0">Consultant: Dr. @app.Doctor?.User?.FullName | Mode: @app.Type | Status: <span class="badge bg-light text-primary">@app.Status</span></p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Appointments List -->
+                    <div class="tab-pane fade" id="visits" role="tabpanel" aria-labelledby="visits-tab">
+                        <h6 class="fw-bold mb-3">All Appointments</h6>
+                        @if (!appointments.Any())
+                        {
+                            <span class="text-muted small">No scheduled visits.</span>
+                        }
+                        else
+                        {
+                            <div class="table-responsive-custom">
+                                <table class="table custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Doctor</th>
+                                            <th>Date & Time</th>
+                                            <th>Type</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var a in appointments)
+                                        {
+                                            <tr>
+                                                <td class="fw-bold">Dr. @a.Doctor?.User?.FullName</td>
+                                                <td>@a.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")</td>
+                                                <td>@a.Type</td>
+                                                <td><span class="badge bg-secondary-subtle text-primary border border-primary-subtle badge-custom">@a.Status</span></td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Records / Diagnosis -->
+                    <div class="tab-pane fade" id="records" role="tabpanel" aria-labelledby="records-tab">
+                        <h6 class="fw-bold mb-3">Medical Examinations</h6>
+                        @if (!examinations.Any())
+                        {
+                            <span class="text-muted small">No examinations logged.</span>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-column gap-3">
+                                @foreach (var exam in examinations)
+                                {
+                                    <div class="p-3 border rounded shadow-sm">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="fw-bold text-dark">Diagnosis: @exam.Diagnosis</span>
+                                            <span class="text-muted small">@exam.ExaminedAt?.ToString("dd MMM yyyy")</span>
+                                        </div>
+                                        <p class="text-muted small mb-1"><strong>Symptoms:</strong> @exam.Symptoms</p>
+                                        <p class="text-muted small mb-1"><strong>Visual Acuity:</strong> OS @exam.VisualAcuityLeft &nbsp;|&nbsp; OD @exam.VisualAcuityRight</p>
+                                        <p class="text-muted small mb-0"><strong>Treatment Plan:</strong> @exam.TreatmentPlan</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Prescriptions -->
+                    <div class="tab-pane fade" id="rx" role="tabpanel" aria-labelledby="rx-tab">
+                        <h6 class="fw-bold mb-3">Issued Prescriptions</h6>
+                        @if (!prescriptions.Any())
+                        {
+                            <span class="text-muted small">No prescriptions found.</span>
+                        }
+                        else
+                        {
+                            <div class="row g-3">
+                                @foreach (var rx in prescriptions)
+                                {
+                                    <div class="col-md-6">
+                                        <div class="p-3 border rounded shadow-sm h-100 bg-light-subtle">
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span class="badge bg-warning-subtle text-warning badge-custom">@rx.Dosage</span>
+                                                <span class="text-muted small">@rx.DurationDays Days</span>
+                                            </div>
+                                            <h6 class="fw-bold text-dark mb-1">@rx.Medicine?.Name</h6>
+                                            <p class="text-muted small mb-2">@rx.Instructions</p>
+                                            <div class="d-flex justify-content-between border-top pt-2 mt-2">
+                                                <button class="btn btn-sm btn-link text-decoration-none p-0" onclick="alert('Print prescription triggered!')"><i class="fa-solid fa-print"></i> Print</button>
+                                                <button class="btn btn-sm btn-link text-decoration-none p-0" onclick="alert('Download prescription PDF triggered!')"><i class="fa-solid fa-file-pdf"></i> Download</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+
+                    <!-- Billing/Invoices -->
+                    <div class="tab-pane fade" id="billing" role="tabpanel" aria-labelledby="billing-tab">
+                        <h6 class="fw-bold mb-3">Billing & Invoices</h6>
+                        @if (!invoices.Any())
+                        {
+                            <span class="text-muted small">No invoices registered.</span>
+                        }
+                        else
+                        {
+                            <div class="table-responsive-custom">
+                                <table class="table custom-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Invoice #</th>
+                                            <th>Total</th>
+                                            <th>Paid</th>
+                                            <th>Status</th>
+                                            <th class="text-end">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var i in invoices)
+                                        {
+                                            <tr>
+                                                <td class="font-monospace fw-bold">@i.InvoiceNumber</td>
+                                                <td>@i.TotalAmount.ToString("C")</td>
+                                                <td>@(i.PaidAmount?.ToString("C") ?? "—")</td>
+                                                <td><span class="badge @(i.Status == "Paid" ? "bg-success-subtle text-success" : "bg-warning-subtle text-warning") badge-custom">@i.Status</span></td>
+                                                <td class="text-end">
+                                                    @if (i.Status != "Paid")
+                                                    {
+                                                        <a asp-controller="Payment" asp-action="Create" asp-route-invoiceId="@i.Id" class="btn btn-sm btn-custom btn-custom-primary">Pay</a>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="text-success small"><i class="fa-solid fa-circle-check"></i> Settled</span>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

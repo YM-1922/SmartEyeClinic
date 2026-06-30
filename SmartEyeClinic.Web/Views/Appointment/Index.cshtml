@@ -1,0 +1,100 @@
+@model List<SmartEyeClinic.Models.Appointment>
+@{
+    ViewData["Title"] = "Appointments - Smart Eye Clinic";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <ul class="breadcrumb-custom mb-1">
+            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
+            <li>Appointments</li>
+        </ul>
+        <h3 class="fw-bold text-dark mb-0">Appointment Schedule</h3>
+    </div>
+    <a asp-action="Create" class="btn btn-custom btn-custom-primary">
+        <i class="fa-solid fa-calendar-plus"></i> Book Appointment
+    </a>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-check fs-5 me-2"></i> <div>@TempData["Success"]</div>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4">
+        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
+    </div>
+}
+
+<div class="card custom-card">
+    <div class="card-header-clean">
+        <div class="d-flex align-items-center">
+            <i class="fa-solid fa-calendar-check text-primary me-2 fs-5"></i>
+            <h5 class="mb-0">All Consultations</h5>
+        </div>
+        <div class="text-muted small">Total: @Model.Count appointments</div>
+    </div>
+    <div class="card-body-clean">
+        @if (!Model.Any())
+        {
+            <div class="text-center py-5">
+                <i class="fa-regular fa-calendar text-muted fs-1 mb-3 d-block"></i>
+                <h5 class="fw-bold text-dark mb-2">No Appointments Scheduled</h5>
+                <p class="text-muted small mb-4">Start booking appointments for your patients.</p>
+                <a asp-action="Create" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-calendar-plus"></i> Book Now</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive-custom">
+                <table class="table custom-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date & Time</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var a in Model)
+                        {
+                            <tr>
+                                <td><span class="text-muted font-monospace small">#@a.Id</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="me-2 text-white fw-bold text-center rounded-circle" style="width:32px;height:32px;line-height:32px;font-size:0.8rem;background:#0F4C81;">
+                                            @(a.Patient?.User?.FullName?.Length > 0 ? a.Patient.User.FullName[0].ToString().ToUpper() : "P")
+                                        </div>
+                                        <span class="fw-500">@a.Patient?.User?.FullName</span>
+                                    </div>
+                                </td>
+                                <td><span class="text-dark">Dr. @a.Doctor?.User?.FullName</span></td>
+                                <td>
+                                    <span class="d-block">@a.AppointmentDateTime.ToString("dd MMM yyyy")</span>
+                                    <span class="text-muted small">@a.AppointmentDateTime.ToString("hh:mm tt")</span>
+                                </td>
+                                <td><span class="badge-custom" style="background:rgba(76,201,240,0.1);color:#0F4C81;">@a.Type</span></td>
+                                <td>
+                                    @if (a.Status == "Completed")
+                                    { <span class="badge-custom badge-custom-success">Completed</span> }
+                                    else if (a.Status == "Pending")
+                                    { <span class="badge-custom badge-custom-warning">Pending</span> }
+                                    else if (a.Status == "Cancelled")
+                                    { <span class="badge-custom badge-custom-danger">Cancelled</span> }
+                                    else
+                                    { <span class="badge-custom" style="background:#F1F5F9;color:#64748B;">@a.Status</span> }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
