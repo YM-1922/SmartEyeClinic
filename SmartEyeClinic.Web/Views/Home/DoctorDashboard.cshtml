@@ -158,6 +158,42 @@
 
     <!-- Sidebar -->
     <div class="col-lg-4">
+        <!-- Notifications Panel -->
+        <div class="table-card mb-4">
+            <div class="table-card-header">
+                <h5 class="table-title"><i class="bi bi-bell-fill text-warning"></i> Clinical Alerts</h5>
+                <span class="badge bg-light text-primary border small font-size-xs">Logs</span>
+            </div>
+            <div class="card-body-clean" style="max-height: 260px; overflow-y: auto; padding: 15px;">
+                @{
+                    var notifications = ViewBag.RecentNotifications as List<SmartEyeClinic.Models.Notification>;
+                }
+                @if (notifications == null || !notifications.Any())
+                {
+                    <div class="text-center py-4">
+                        <i class="bi bi-bell-slash text-muted fs-4"></i>
+                        <p class="small text-muted mb-0 mt-2">No clinical notifications.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var n in notifications)
+                        {
+                            var hasBeenRead = n.IsRead ?? false;
+                            <div class="p-2 rounded-3" style="font-size: 0.82rem; background: var(--bg); border-left: 3.5px solid @(hasBeenRead ? "var(--text-light)" : "var(--primary)");">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <strong class="text-dark">@n.Title</strong>
+                                    <span class="text-muted" style="font-size: 0.72rem;">@n.SentAt?.ToString("g")</span>
+                                </div>
+                                <div class="text-muted text-xs">@n.Message</div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
         <!-- Surgery Queue -->
         <div class="table-card mb-4">
             <div class="table-card-header">

@@ -279,11 +279,109 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Receptionist")]
+        public async Task<IActionResult> Approve(int id)
+        {
+            var appointment = await _context.Appointments.FindAsync(id);
+            if (appointment == null)
+            {
+                TempData["Error"] = "Appointment not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var result = await _appointmentService.UpdateAppointmentAsync(
+                appointment.Id,
+                appointment.PatientId,
+                appointment.DoctorId,
+                appointment.BranchId,
+                appointment.AppointmentDateTime,
+                appointment.DurationMinutes,
+                appointment.Type,
+                "Confirmed",
+                appointment.Notes);
+
+            if (result.Success)
+            {
+                TempData["Success"] = "Appointment confirmed successfully!";
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
+            }
+
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer))
+                return Redirect(referer);
+                
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Receptionist,Doctor")]
+        public async Task<IActionResult> Cancel(int id)
+        {
+            var appointment = await _context.Appointments.FindAsync(id);
+            if (appointment == null)
+            {
+                TempData["Error"] = "Appointment not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            var result = await _appointmentService.UpdateAppointmentAsync(
+                appointment.Id,
+                appointment.PatientId,
+                appointment.DoctorId,
+                appointment.BranchId,
+                appointment.AppointmentDateTime,
+                appointment.DurationMinutes,
+                appointment.Type,
+                "Cancelled",
+                appointment.Notes);
+
+            if (result.Success)
+            {
+                TempData["Success"] = "Appointment cancelled successfully!";
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
+            }
+
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer))
+                return Redirect(referer);
+
+            return RedirectToAction(nameof(Index));
+        }
+
         private async Task PopulateDropdownsAsync(DateTime? selectedDate = null, int? appointmentId = null)
         {
-            ViewBag.Patients = await _context.Patients.Include(p => p.User).AsNoTracking().OrderBy(p => p.User.FullName).ToListAsync();
-            ViewBag.Doctors = await _context.Doctors.Include(d => d.User).AsNoTracking().OrderBy(d => d.User.FullName).ToListAsync();
-            ViewBag.Branches = await _context.Branches.AsNoTracking().OrderBy(b => b.Name).ToListAsync();
+            ViewBag.Patients = await _context.Patients
+                .Include(p => p.User)
+                .AsNoTracking()
+                .OrderBy(p => p.User.FullName)
+                .ToListAsync();
+
+            ViewBag.Doctors = await _context.Doctors
+                .Include(d => d.User)
+                .Include(d => d.Specialization)
+                .Include(d => d.Schedules)
+                .AsNoTracking()
+                .OrderBy(d => d.User.FullName)
+                .ToListAsync();
+
+            ViewBag.Branches = await _context.Branches
+                .AsNoTracking()
+                .OrderBy(b => b.Name)
+                .ToListAsync();
+
+            ViewBag.Specializations = await _context.Specializations
+                .AsNoTracking()
+                .OrderBy(s => s.Name)
+                .ToListAsync();
         }
     }
 }

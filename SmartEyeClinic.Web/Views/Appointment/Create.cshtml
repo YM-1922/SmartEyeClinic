@@ -1,60 +1,319 @@
+@using SmartEyeClinic.Models
 @{
     ViewData["Title"] = "Book Appointment - Smart Eye Clinic";
+    var patients = ViewBag.Patients as List<Patient>;
+    var doctors = ViewBag.Doctors as List<Doctor>;
+    var branches = ViewBag.Branches as List<Branch>;
+    var specializations = ViewBag.Specializations as List<Specialization>;
+    var isPatient = User.IsInRole("Patient");
 }
 
-<div class="mb-4">
-    <ul class="breadcrumb-custom mb-1">
-        <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-        <li><a asp-controller="Appointment" asp-action="Index">Appointments</a></li>
-        <li>Book Appointment</li>
-    </ul>
-    <h3 class="fw-bold text-dark mb-0">Book New Appointment</h3>
-</div>
+<div class="container-fluid py-4">
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a asp-controller="Appointment" asp-action="Index">Appointments</a></li>
+            <li class="breadcrumb-item active" aria-current="page">Book Appointment</li>
+        </ol>
+    </nav>
 
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4">
-        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
+    <!-- Header -->
+    <div class="mb-4">
+        <h3 class="fw-bold text-dark mb-1">Book Consultation</h3>
+        <p class="text-muted small mb-0">Schedule an eye care consultation by selecting a specialist, clinic branch, and preferred slot.</p>
     </div>
-}
 
-<div class="card custom-card" style="max-width:700px;">
-    <div class="card-header-clean">
-        <div class="d-flex align-items-center">
-            <i class="fa-solid fa-calendar-plus text-primary me-2 fs-5"></i>
-            <h5 class="mb-0">Consultation Booking Details</h5>
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
+        <div class="card-body p-4">
+            <form asp-action="Create" method="post" class="needs-validation" novalidate id="appointmentForm">
+                @Html.AntiForgeryToken()
+
+                <div class="row g-3 mb-4">
+                    <!-- Patient Input (Visible only to Admin/Reception/Doctor) -->
+                    @if (isPatient)
+                    {
+                        <input type="hidden" name="patientId" value="0" /> <!-- Will be auto-resolved by controller -->
+                    }
+                    else
+                    {
+                        <div class="col-md-6">
+                            <label class="form-label small fw-600">Select Patient *</label>
+                            <select name="patientId" class="form-select select-custom" required>
+                                <option value="">Select Patient...</option>
+                                @if (patients != null)
+                                {
+                                    foreach (var pat in patients)
+                                    {
+                                        <option value="@pat.Id">@pat.User.FullName (@pat.User.Email)</option>
+                                    }
+                                }
+                            </select>
+                        </div>
+                    }
+
+                    <!-- Specialty Filter -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Medical Specialty</label>
+                        <select id="specialtyFilter" class="form-select select-custom">
+                            <option value="">All Specialties / Filter Doctors...</option>
+                            @if (specializations != null)
+                            {
+                                foreach (var spec in specializations)
+                                {
+                                    <option value="@spec.Id">@spec.Name</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Doctor Select -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Select Doctor *</label>
+                        <select name="doctorId" id="doctorSelect" class="form-select select-custom" required>
+                            <option value="">Select Doctor...</option>
+                            @if (doctors != null)
+                            {
+                                foreach (var doc in doctors)
+                                {
+                                    // Serialize schedule to data attribute
+                                    var schedulesJson = System.Text.Json.JsonSerializer.Serialize(doc.Schedules.Select(s => new {
+                                        s.DayOfWeek,
+                                        StartTime = s.StartTime.ToString("HH:mm"),
+                                        EndTime = s.EndTime.ToString("HH:mm")
+                                    }));
+                                    <option value="@doc.Id" 
+                                            data-specialty="@doc.SpecializationId" 
+                                            data-fee="@doc.ConsultationFee"
+                                            data-schedules='@schedulesJson'>
+                                        Dr. @doc.User.FullName (@doc.Specialization?.Name)
+                                    </option>
+                                }
+                            }
+                        </select>
+                        <!-- Dynamic Doctor Schedule Preview Panel -->
+                        <div id="doctorSchedulePanel" class="mt-2 p-3 rounded-3 bg-light-primary text-primary-custom d-none" style="border: 1px solid var(--border); font-size: 0.85rem;">
+                            <div class="fw-bold mb-1"><i class="fa-solid fa-clock-rotate-left me-1"></i> Doctor Working Schedule:</div>
+                            <ul class="mb-0 ps-3" id="scheduleList"></ul>
+                            <div class="mt-2 fw-bold text-success" id="feeDisplay"></div>
+                        </div>
+                    </div>
+
+                    <!-- Branch Select -->
+                    <div class="col-md-6">
+                        <label class="form-label small fw-600">Clinic Branch *</label>
+                        <select name="branchId" class="form-select select-custom" required>
+                            <option value="">Select Clinic Location...</option>
+                            @if (branches != null)
+                            {
+                                foreach (var br in branches)
+                                {
+                                    <option value="@br.Id">@br.Name (@br.Address)</option>
+                                }
+                            }
+                        </select>
+                    </div>
+
+                    <!-- Date & Time -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-600">Date & Preferred Time *</label>
+                        <input type="datetime-local" id="appointmentDateTime" name="appointmentDateTime" class="form-control input-custom" required />
+                        <div class="invalid-feedback text-danger small mt-1" id="dateTimeError">Please select a valid future date/time within working hours.</div>
+                    </div>
+
+                    <!-- Duration -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-600">Duration (Minutes) *</label>
+                        <input type="number" name="durationMinutes" class="form-control input-custom" value="30" min="15" max="120" required />
+                    </div>
+
+                    <!-- Type -->
+                    <div class="col-md-4">
+                        <label class="form-label small fw-600">Consultation Type *</label>
+                        <select name="type" class="form-select select-custom" required>
+                            <option value="Consultation">General Consultation</option>
+                            <option value="Follow-up">Clinical Follow-up</option>
+                            <option value="Surgery Pre-op">Surgery Pre-op Check</option>
+                            <option value="Laser Treatment">Laser Treatment Session</option>
+                        </select>
+                    </div>
+
+                    <!-- Status hidden for patients, default is Requested/Pending -->
+                    @if (isPatient)
+                    {
+                        <input type="hidden" name="status" value="Pending" />
+                    }
+                    else
+                    {
+                        <div class="col-md-6">
+                            <label class="form-label small fw-600">Status *</label>
+                            <select name="status" class="form-select select-custom" required>
+                                <option value="Pending" selected>Pending</option>
+                                <option value="Confirmed">Confirmed</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                    }
+
+                    <!-- Notes -->
+                    <div class="col-12">
+                        <label class="form-label small fw-600">Reason / Symptoms / Notes</label>
+                        <textarea name="notes" class="form-control input-custom" rows="3" placeholder="Explain symptoms, optical history, or notes..."></textarea>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn btn-primary px-4 py-2 border-0 btn-custom" id="submitBtn" style="border-radius: 8px;">
+                        <i class="fa-solid fa-calendar-check me-1"></i> Book Appointment
+                    </button>
+                    <a asp-action="Index" class="btn btn-outline-secondary px-4 py-2" style="border-radius: 8px;">Cancel</a>
+                </div>
+            </form>
         </div>
     </div>
-    <div class="card-body-clean">
-        <form asp-action="Create" method="post">
-            @Html.AntiForgeryToken()
-            <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label class="form-label-custom">Patient ID</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-user-injured text-muted"></i></span>
-                        <input type="number" name="patientId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Patient ID number" required />
-                    </div>
-                </div>
-                <div class="col-md-6 mb-3">
-                    <label class="form-label-custom">Doctor ID</label>
-                    <div class="input-group">
-                        <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-user-md text-muted"></i></span>
-                        <input type="number" name="doctorId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Doctor ID number" required />
-                    </div>
-                </div>
-            </div>
-            <div class="mb-3">
-                <label class="form-label-custom">Branch ID</label>
-                <div class="input-group">
-                    <span class="input-group-text bg-white border-end-0"><i class="fa-solid fa-hospital text-muted"></i></span>
-                    <input type="number" name="branchId" class="form-control form-control-custom border-start-0 ps-0" placeholder="Clinic branch ID" required />
-                </div>
-            </div>
-            <div class="border-top pt-4 d-flex justify-content-end">
-                <a asp-action="Index" class="btn btn-custom btn-custom-secondary me-2"><i class="fa-solid fa-xmark"></i> Cancel</a>
-                <button type="submit" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-floppy-disk"></i> Confirm Booking</button>
-            </div>
-        </form>
-    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const specialtyFilter = document.getElementById("specialtyFilter");
+            const doctorSelect = document.getElementById("doctorSelect");
+            const doctorSchedulePanel = document.getElementById("doctorSchedulePanel");
+            const scheduleList = document.getElementById("scheduleList");
+            const feeDisplay = document.getElementById("feeDisplay");
+            const dateTimeInput = document.getElementById("appointmentDateTime");
+            const appointmentForm = document.getElementById("appointmentForm");
+
+            // Filter Doctors by Specialty
+            specialtyFilter.addEventListener("change", function () {
+                const specId = this.value;
+                const options = doctorSelect.querySelectorAll("option");
+                
+                doctorSelect.value = "";
+                doctorSchedulePanel.classList.add("d-none");
+                
+                options.forEach(opt => {
+                    if (opt.value === "") return;
+                    const docSpec = opt.getAttribute("data-specialty");
+                    if (!specId || docSpec === specId) {
+                        opt.style.display = "";
+                    } else {
+                        opt.style.display = "none";
+                    }
+                });
+            });
+
+            // Doctor selection schedule display
+            let currentSchedules = [];
+            doctorSelect.addEventListener("change", function () {
+                const selectedOpt = this.options[this.selectedIndex];
+                if (!selectedOpt.value) {
+                    doctorSchedulePanel.classList.add("d-none");
+                    currentSchedules = [];
+                    return;
+                }
+                
+                const schedulesAttr = selectedOpt.getAttribute("data-schedules");
+                const feeAttr = selectedOpt.getAttribute("data-fee");
+                currentSchedules = JSON.parse(schedulesAttr || "[]");
+                
+                // Render schedule list
+                scheduleList.innerHTML = "";
+                if (currentSchedules.length > 0) {
+                    currentSchedules.forEach(s => {
+                        const li = document.createElement("li");
+                        li.textContent = `${s.DayOfWeek}: ${formatTime(s.StartTime)} - ${formatTime(s.EndTime)}`;
+                        scheduleList.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement("li");
+                    li.textContent = "No standard schedule registered.";
+                    scheduleList.appendChild(li);
+                }
+                
+                feeDisplay.textContent = `Consultation Fee: $${parseFloat(feeAttr).toFixed(2)}`;
+                doctorSchedulePanel.classList.remove("d-none");
+                
+                validateDateTime();
+            });
+
+            // Date validation helper
+            dateTimeInput.addEventListener("change", validateDateTime);
+
+            function validateDateTime() {
+                const dateTimeVal = dateTimeInput.value;
+                if (!dateTimeVal) return false;
+                
+                const selectedDate = new Date(dateTimeVal);
+                const now = new Date();
+                
+                // 1. Future Check
+                if (selectedDate <= now) {
+                    showDateError("Appointment time must be in the future.");
+                    return false;
+                }
+                
+                if (currentSchedules.length === 0) return true; // No schedule loaded
+                
+                const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+                const dayName = days[selectedDate.getDay()];
+                
+                // Find matching schedule
+                const match = currentSchedules.find(s => s.DayOfWeek.toLowerCase() === dayName.toLowerCase());
+                if (!match) {
+                    showDateError(`Doctor is not available on ${dayName}.`);
+                    return false;
+                }
+                
+                const hours = selectedDate.getHours();
+                const mins = selectedDate.getMinutes();
+                const selectedTimeStr = `${String(hours).padStart(2,'0')}:${String(mins).padStart(2,'0')}`;
+                
+                if (selectedTimeStr < match.StartTime || selectedTimeStr > match.EndTime) {
+                    showDateError(`Selected time (${formatTime(selectedTimeStr)}) is outside doctor's working hours (${formatTime(match.StartTime)} - ${formatTime(match.EndTime)}).`);
+                    return false;
+                }
+                
+                clearDateError();
+                return true;
+            }
+
+            function formatTime(time24) {
+                const parts = time24.split(":");
+                let hours = parseInt(parts[0]);
+                const mins = parts[1];
+                const ampm = hours >= 12 ? "PM" : "AM";
+                hours = hours % 12;
+                hours = hours ? hours : 12; // the hour '0' should be '12'
+                return `${hours}:${mins} ${ampm}`;
+            }
+
+            function showDateError(msg) {
+                dateTimeInput.classList.add("is-invalid");
+                document.getElementById("dateTimeError").textContent = msg;
+            }
+
+            function clearDateError() {
+                dateTimeInput.classList.remove("is-invalid");
+            }
+
+            // Form Submit Check
+            appointmentForm.addEventListener("submit", function (e) {
+                if (!validateDateTime() || !appointmentForm.checkValidity()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    appointmentForm.classList.add("was-validated");
+                }
+            });
+        });
+    </script>
+}

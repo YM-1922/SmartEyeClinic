@@ -1,3 +1,4 @@
+@inject SmartEyeClinic.Web.Services.NotificationService NotificationService
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
@@ -337,6 +338,16 @@
                                       User.IsInRole("Doctor") ? "Doctor" :
                                       User.IsInRole("Patient") ? "Patient" : "Receptionist";
 
+                        int unreadCount = 0;
+                        List<SmartEyeClinic.Models.Notification> headerNotifications = new();
+                        var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+                        if (userIdClaim != null)
+                        {
+                            var currentUserId = int.Parse(userIdClaim.Value);
+                            unreadCount = await NotificationService.GetUnreadNotificationsCountAsync(currentUserId);
+                            headerNotifications = await NotificationService.GetNotificationsForUserAsync(currentUserId);
+                        }
+
                         <!-- Theme Toggle -->
                         <button type="button" class="navbar-icon-btn" id="themeToggleBtn" title="Toggle Dark Mode">
                             <i class="fa-regular fa-moon" id="themeIcon"></i>
@@ -344,11 +355,50 @@
 
                         <div class="navbar-divider"></div>
 
-                        <!-- Notifications -->
-                        <a href="#" class="navbar-icon-btn" title="Notifications">
-                            <i class="fa-regular fa-bell"></i>
-                            <span class="nav-badge-dot"></span>
-                        </a>
+                        <!-- Notifications Dropdown -->
+                        <div class="dropdown me-2">
+                            <button type="button" class="navbar-icon-btn dropdown-toggle position-relative border-0 bg-transparent" id="notificationsDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Notifications">
+                                <i class="fa-regular fa-bell"></i>
+                                @if (unreadCount > 0)
+                                {
+                                    <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size: 0.65rem; padding: 4px 6px;">
+                                        @unreadCount
+                                    </span>
+                                }
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end premium-dropdown mt-2 p-0 shadow-lg" aria-labelledby="notificationsDropdown" style="width: 320px; max-height: 400px; overflow-y: auto; border: 1px solid var(--border);">
+                                <li class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
+                                    <span class="fw-bold text-dark text-sm"><i class="fa-solid fa-bell text-warning me-1"></i> Notifications</span>
+                                    @if (unreadCount > 0)
+                                    {
+                                        <button class="btn btn-link p-0 text-decoration-none text-xs font-weight-bold" onclick="markNotificationsAsRead(event)">Mark all read</button>
+                                    }
+                                </li>
+                                <li class="notification-items-container">
+                                    @if (!headerNotifications.Any())
+                                    {
+                                        <div class="text-center py-4 text-muted small">
+                                            <i class="fa-regular fa-bell-slash mb-2 fs-5 d-block"></i>
+                                            No notifications yet.
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        foreach (var n in headerNotifications)
+                                        {
+                                            var isUnread = n.IsRead == null || !n.IsRead.Value;
+                                            <div class="p-3 border-bottom position-relative" style="font-size: 0.8rem; background: @(isUnread ? "rgba(14,165,233,0.06)" : "transparent");">
+                                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                                    <span class="fw-bold @(isUnread ? "text-primary" : "text-dark")">@n.Title</span>
+                                                    <span class="text-muted" style="font-size:0.68rem;">@n.SentAt?.ToString("g")</span>
+                                                </div>
+                                                <div class="text-muted text-xs leading-normal">@n.Message</div>
+                                            </div>
+                                        }
+                                    }
+                                </li>
+                            </ul>
+                        </div>
 
                         <!-- User Dropdown -->
                         <div class="dropdown">
@@ -579,7 +629,31 @@
                 });
             }, 5000);
         });
+
+        function markNotificationsAsRead(event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            var token = $('#antiForgeryForm input[name="__RequestVerificationToken"]').val();
+            $.ajax({
+                url: '/Notification/MarkAllAsRead',
+                type: 'POST',
+                headers: {
+                    "RequestVerificationToken": token
+                },
+                success: function(response) {
+                    if (response.success) {
+                        window.location.reload();
+                    }
+                },
+                error: function(err) {
+                    console.error("Failed to mark notifications read", err);
+                }
+            });
+        }
     </script>
+    <form id="antiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

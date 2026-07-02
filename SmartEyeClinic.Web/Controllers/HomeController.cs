@@ -26,19 +26,22 @@ public class HomeController : Controller
         return View();
     }
 
-    [Authorize]
+    [AllowAnonymous]
     public IActionResult Index()
     {
-        if (User.IsInRole("Admin"))
-            return RedirectToAction(nameof(AdminDashboard));
-        if (User.IsInRole("Doctor"))
-            return RedirectToAction(nameof(DoctorDashboard));
-        if (User.IsInRole("Patient"))
-            return RedirectToAction(nameof(PatientDashboard));
-        if (User.IsInRole("Receptionist"))
-            return RedirectToAction(nameof(ReceptionistDashboard));
+        if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            if (User.IsInRole("Admin"))
+                return RedirectToAction(nameof(AdminDashboard));
+            if (User.IsInRole("Doctor"))
+                return RedirectToAction(nameof(DoctorDashboard));
+            if (User.IsInRole("Patient"))
+                return RedirectToAction(nameof(PatientDashboard));
+            if (User.IsInRole("Receptionist"))
+                return RedirectToAction(nameof(ReceptionistDashboard));
+        }
 
-        return View();
+        return RedirectToAction(nameof(Landing));
     }
 
     [Authorize(Roles = "Admin")]
@@ -69,6 +72,12 @@ public class HomeController : Controller
             .Take(5)
             .ToListAsync();
         ViewBag.RecentPayments = recentPayments;
+
+        // System Notifications
+        ViewBag.RecentNotifications = await _context.Notifications
+            .OrderByDescending(n => n.SentAt)
+            .Take(6)
+            .ToListAsync();
 
         return View();
     }
@@ -111,6 +120,18 @@ public class HomeController : Controller
             .Take(5)
             .ToListAsync();
         ViewBag.UpcomingSurgeries = upcomingSurgeries;
+
+        // Doctor's Notifications
+        var doctorUserClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(doctorUserClaim))
+        {
+            int docUserId = int.Parse(doctorUserClaim);
+            ViewBag.RecentNotifications = await _context.Notifications
+                .Where(n => n.UserId == docUserId)
+                .OrderByDescending(n => n.SentAt)
+                .Take(6)
+                .ToListAsync();
+        }
 
         return View();
     }
@@ -156,6 +177,18 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.Invoices = invoices;
 
+        // Patient's Notifications
+        var patientUserClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(patientUserClaim))
+        {
+            int patUserId = int.Parse(patientUserClaim);
+            ViewBag.RecentNotifications = await _context.Notifications
+                .Where(n => n.UserId == patUserId)
+                .OrderByDescending(n => n.SentAt)
+                .Take(6)
+                .ToListAsync();
+        }
+
         return View(patient);
     }
 
@@ -184,6 +217,18 @@ public class HomeController : Controller
         ViewBag.QueueTotal = await _context.Queues.CountAsync(q => q.CheckInTime.HasValue && q.CheckInTime.Value.Date == DateTime.Today);
         ViewBag.QueueWaiting = await _context.Queues.CountAsync(q => q.CheckInTime.HasValue && q.CheckInTime.Value.Date == DateTime.Today && q.Status == "Waiting");
         ViewBag.UnpaidInvoices = await _context.Invoices.CountAsync(i => i.Status == "Unpaid");
+
+        // Receptionist's Notifications
+        var recepUserClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(recepUserClaim))
+        {
+            int recepUserId = int.Parse(recepUserClaim);
+            ViewBag.RecentNotifications = await _context.Notifications
+                .Where(n => n.UserId == recepUserId)
+                .OrderByDescending(n => n.SentAt)
+                .Take(6)
+                .ToListAsync();
+        }
 
         return View();
     }

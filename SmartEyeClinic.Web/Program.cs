@@ -3,6 +3,7 @@ using SmartEyeClinic.Data;
 using SmartEyeClinic.Web.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SmartEyeClinic.Web.Data;
+using SmartEyeClinic.Web.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -31,11 +32,15 @@ builder.Services.AddScoped<MedicineService>();
 builder.Services.AddScoped<PrescriptionService>();
 builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<PaymentService>();
+builder.Services.AddScoped<NotificationService>();
 
 // ── MVC ───────────────────────────────────────────────────
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
+
+// ── Middleware Pipeline & Exception Handling ──────────────
+app.UseMiddleware<ExceptionHandlingMiddleware>();
 
 // ── Seed Database ─────────────────────────────────────────
 using (var scope = app.Services.CreateScope())

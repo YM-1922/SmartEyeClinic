@@ -10,10 +10,12 @@ namespace SmartEyeClinic.Web.Services
     public class AppointmentService
     {
         private readonly AppDbContext _context;
+        private readonly NotificationService _notificationService;
 
-        public AppointmentService(AppDbContext context)
+        public AppointmentService(AppDbContext context, NotificationService notificationService)
         {
             _context = context;
+            _notificationService = notificationService;
         }
 
         // Get All Appointments
@@ -50,6 +52,9 @@ namespace SmartEyeClinic.Web.Services
             string status, 
             string? notes)
         {
+            if (appointmentDateTime <= DateTime.Now)
+                return ServiceResult.Fail("Appointment date and time must be in the future!");
+
             if (!await _context.Patients.AnyAsync(p => p.Id == patientId))
                 return ServiceResult.Fail("Patient not found!");
 
@@ -58,6 +63,29 @@ namespace SmartEyeClinic.Web.Services
 
             if (!await _context.Branches.AnyAsync(b => b.Id == branchId))
                 return ServiceResult.Fail("Branch not found!");
+
+            // Doctor schedule validation
+            var dayOfWeekName = appointmentDateTime.DayOfWeek.ToString();
+            var timeOfDay = TimeOnly.FromDateTime(appointmentDateTime);
+            
+            var matchingSchedule = await _context.DoctorSchedules
+                .FirstOrDefaultAsync(s => s.DoctorId == doctorId && s.DayOfWeek == dayOfWeekName && s.IsAvailable == true);
+                
+            if (matchingSchedule == null)
+            {
+                var workDays = await _context.DoctorSchedules
+                    .Where(s => s.DoctorId == doctorId && s.IsAvailable == true)
+                    .Select(s => s.DayOfWeek)
+                    .ToListAsync();
+                
+                string daysStr = workDays.Any() ? string.Join(", ", workDays) : "No days scheduled";
+                return ServiceResult.Fail($"The selected doctor is not available on {dayOfWeekName}. Scheduled working days: {daysStr}");
+            }
+            
+            if (timeOfDay < matchingSchedule.StartTime || timeOfDay.AddMinutes(durationMinutes) > matchingSchedule.EndTime)
+            {
+                return ServiceResult.Fail($"The selected time is outside the doctor's working hours on {dayOfWeekName} ({matchingSchedule.StartTime:hh\\:mm\\ tt} - {matchingSchedule.EndTime:hh\\:mm\\ tt}).");
+            }
 
             // Double booking validation (Doctor)
             var endTime = appointmentDateTime.AddMinutes(durationMinutes);
@@ -86,6 +114,15 @@ namespace SmartEyeClinic.Web.Services
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
 
+            // Notify users
+            var patient = await _context.Patients.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == patientId);
+            var doctor = await _context.Doctors.Include(d => d.User).FirstOrDefaultAsync(d => d.Id == doctorId);
+            if (patient != null && doctor != null)
+            {
+                await _notificationService.CreateNotificationAsync(patient.User.Id, "Appointment Requested", $"Your appointment with Dr. {doctor.User.FullName} is registered and pending approval.", "Info");
+                await _notificationService.CreateNotificationAsync(doctor.User.Id, "New Request Received", $"New appointment booking request from patient {patient.User.FullName} for {appointmentDateTime:f}.", "Request");
+            }
+
             return ServiceResult.Ok();
         }
 
@@ -105,6 +142,9 @@ namespace SmartEyeClinic.Web.Services
             if (appointment == null)
                 return ServiceResult.Fail("Appointment not found!");
 
+            if (appointmentDateTime <= DateTime.Now)
+                return ServiceResult.Fail("Appointment date and time must be in the future!");
+
             if (!await _context.Patients.AnyAsync(p => p.Id == patientId))
                 return ServiceResult.Fail("Patient not found!");
 
@@ -113,6 +153,29 @@ namespace SmartEyeClinic.Web.Services
 
             if (!await _context.Branches.AnyAsync(b => b.Id == branchId))
                 return ServiceResult.Fail("Branch not found!");
+
+            // Doctor schedule validation
+            var dayOfWeekName = appointmentDateTime.DayOfWeek.ToString();
+            var timeOfDay = TimeOnly.FromDateTime(appointmentDateTime);
+            
+            var matchingSchedule = await _context.DoctorSchedules
+                .FirstOrDefaultAsync(s => s.DoctorId == doctorId && s.DayOfWeek == dayOfWeekName && s.IsAvailable == true);
+                
+            if (matchingSchedule == null)
+            {
+                var workDays = await _context.DoctorSchedules
+                    .Where(s => s.DoctorId == doctorId && s.IsAvailable == true)
+                    .Select(s => s.DayOfWeek)
+                    .ToListAsync();
+                
+                string daysStr = workDays.Any() ? string.Join(", ", workDays) : "No days scheduled";
+                return ServiceResult.Fail($"The selected doctor is not available on {dayOfWeekName}. Scheduled working days: {daysStr}");
+            }
+            
+            if (timeOfDay < matchingSchedule.StartTime || timeOfDay.AddMinutes(durationMinutes) > matchingSchedule.EndTime)
+            {
+                return ServiceResult.Fail($"The selected time is outside the doctor's working hours on {dayOfWeekName} ({matchingSchedule.StartTime:hh\\:mm\\ tt} - {matchingSchedule.EndTime:hh\\:mm\\ tt}).");
+            }
 
             // Check doctor conflict for other appointments
             var endTime = appointmentDateTime.AddMinutes(durationMinutes);
@@ -126,6 +189,9 @@ namespace SmartEyeClinic.Web.Services
             if (docBusy)
                 return ServiceResult.Fail("The selected doctor already has a scheduled appointment during this time window.");
 
+            var oldStatus = appointment.Status;
+            var oldDateTime = appointment.AppointmentDateTime;
+
             appointment.PatientId = patientId;
             appointment.DoctorId = doctorId;
             appointment.BranchId = branchId;
@@ -136,6 +202,28 @@ namespace SmartEyeClinic.Web.Services
             appointment.Notes = notes;
 
             await _context.SaveChangesAsync();
+
+            // Notify users of changes
+            var patient = await _context.Patients.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == patientId);
+            var doctor = await _context.Doctors.Include(d => d.User).FirstOrDefaultAsync(d => d.Id == doctorId);
+            if (patient != null && doctor != null)
+            {
+                if (oldStatus != status)
+                {
+                    string title = $"Appointment {status}";
+                    string message = $"Your appointment with Dr. {doctor.User.FullName} on {appointmentDateTime:f} is now {status}.";
+                    await _notificationService.CreateNotificationAsync(patient.User.Id, title, message, "StatusUpdate");
+                    await _notificationService.CreateNotificationAsync(doctor.User.Id, title, $"Appointment with {patient.User.FullName} status updated to {status}.", "StatusUpdate");
+                }
+                else if (oldDateTime != appointmentDateTime)
+                {
+                    string title = "Appointment Rescheduled";
+                    string message = $"Your appointment with Dr. {doctor.User.FullName} has been rescheduled to {appointmentDateTime:f}.";
+                    await _notificationService.CreateNotificationAsync(patient.User.Id, title, message, "Rescheduled");
+                    await _notificationService.CreateNotificationAsync(doctor.User.Id, title, $"Appointment with {patient.User.FullName} rescheduled to {appointmentDateTime:f}.", "Rescheduled");
+                }
+            }
+
             return ServiceResult.Ok();
         }
 

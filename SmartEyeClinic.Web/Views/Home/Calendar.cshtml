@@ -3,13 +3,48 @@
 @{
     ViewData["Title"] = "Clinical Planner";
 
-    // Load appointments for calendar view
-    var appointments = DbContext.Appointments
-        .Include(a => a.Patient).ThenInclude(p => p.User)
-        .Include(a => a.Doctor).ThenInclude(d => d.User)
-        .Include(a => a.Branch)
-        .OrderBy(a => a.AppointmentDateTime)
-        .ToList();
+    // Eager-load appointments matching the logged-in user's credentials to prevent data leakage
+    var appointments = new List<SmartEyeClinic.Models.Appointment>();
+
+    if (User.IsInRole("Admin") || User.IsInRole("Receptionist"))
+    {
+        appointments = DbContext.Appointments
+            .Include(a => a.Patient).ThenInclude(p => p.User)
+            .Include(a => a.Doctor).ThenInclude(d => d.User)
+            .Include(a => a.Branch)
+            .OrderBy(a => a.AppointmentDateTime)
+            .ToList();
+    }
+    else if (User.IsInRole("Doctor"))
+    {
+        var docIdClaim = User.FindFirst("DoctorId")?.Value;
+        if (docIdClaim != null)
+        {
+            int docId = int.Parse(docIdClaim);
+            appointments = DbContext.Appointments
+                .Include(a => a.Patient).ThenInclude(p => p.User)
+                .Include(a => a.Doctor).ThenInclude(d => d.User)
+                .Include(a => a.Branch)
+                .Where(a => a.DoctorId == docId)
+                .OrderBy(a => a.AppointmentDateTime)
+                .ToList();
+        }
+    }
+    else if (User.IsInRole("Patient"))
+    {
+        var patIdClaim = User.FindFirst("PatientId")?.Value;
+        if (patIdClaim != null)
+        {
+            int patId = int.Parse(patIdClaim);
+            appointments = DbContext.Appointments
+                .Include(a => a.Patient).ThenInclude(p => p.User)
+                .Include(a => a.Doctor).ThenInclude(d => d.User)
+                .Include(a => a.Branch)
+                .Where(a => a.PatientId == patId)
+                .OrderBy(a => a.AppointmentDateTime)
+                .ToList();
+        }
+    }
 }
 
 <!-- Page Header -->

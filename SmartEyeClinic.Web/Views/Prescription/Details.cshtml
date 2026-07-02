@@ -1,6 +1,8 @@
 @model SmartEyeClinic.Models.PrescriptionHeader
 @{
     ViewData["Title"] = $"Prescription Rx #{Model.Id} - Smart Eye Clinic";
+    var dob = Model.Examination?.Appointment?.Patient?.DateOfBirth;
+    var ageStr = dob.HasValue ? (DateTime.Now.Year - dob.Value.Year).ToString() : "N/A";
 }
 
 <div class="container-fluid py-4 no-print">
@@ -59,15 +61,15 @@
         <div class="row mb-5">
             <div class="col-6">
                 <h6 class="text-muted text-uppercase fw-bold small mb-2">Patient</h6>
-                <h5 class="fw-bold text-dark mb-1">@Model.Examination.Appointment.Patient.User.FullName</h5>
-                <span class="text-muted small d-block">Age: @(Model.Examination.Appointment.Patient.DateOfBirth.HasValue ? (DateTime.Now.Year - Model.Examination.Appointment.Patient.DateOfBirth.Value.Year).ToString() : "N/A")</span>
-                <span class="text-muted small d-block">Gender: @Model.Examination.Appointment.Patient.Gender</span>
+                <h5 class="fw-bold text-dark mb-1">@Model.Examination?.Appointment?.Patient?.User?.FullName</h5>
+                <span class="text-muted small d-block">Age: @ageStr</span>
+                <span class="text-muted small d-block">Gender: @Model.Examination?.Appointment?.Patient?.Gender</span>
             </div>
             <div class="col-6 text-end">
                 <h6 class="text-muted text-uppercase fw-bold small mb-2">Prescribing Ophthalmologist</h6>
-                <h5 class="fw-bold text-dark mb-1">Dr. @Model.Examination.Appointment.Doctor.User.FullName</h5>
-                <span class="text-muted small d-block">License: @Model.Examination.Appointment.Doctor.LicenseNumber</span>
-                <span class="text-muted small d-block">Specialization: @Model.Examination.Appointment.Doctor.Specialization.Name</span>
+                <h5 class="fw-bold text-dark mb-1">Dr. @Model.Examination?.Appointment?.Doctor?.User?.FullName</h5>
+                <span class="text-muted small d-block">License: @Model.Examination?.Appointment?.Doctor?.LicenseNumber</span>
+                <span class="text-muted small d-block">Specialization: @Model.Examination?.Appointment?.Doctor?.Specialization?.Name</span>
             </div>
         </div>
 

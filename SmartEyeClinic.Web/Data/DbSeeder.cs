@@ -106,6 +106,12 @@ namespace SmartEyeClinic.Web.Data
                 context.SaveChanges();
             }
 
+            // Get specialization references
+            generalSpec = context.Specializations.FirstOrDefault(s => s.Name == "General Ophthalmology");
+            var corneaSpec = context.Specializations.FirstOrDefault(s => s.Name == "Cornea & External Disease");
+            var retinaSpec = context.Specializations.FirstOrDefault(s => s.Name == "Retina & Vitreous");
+            var pediatricSpec = context.Specializations.FirstOrDefault(s => s.Name == "Pediatric Ophthalmology");
+
             // 7. Seed Users (Admin, Doctor, Patient, Receptionist)
             if (!context.Users.Any())
             {
@@ -122,8 +128,8 @@ namespace SmartEyeClinic.Web.Data
                 };
                 context.Users.Add(adminUser);
 
-                // Doctor User & Profile
-                var doctorUser = new User
+                // --- Doctor 1: Dr. Alexander Wright ---
+                var docUser1 = new User
                 {
                     FullName = "Dr. Alexander Wright",
                     Email = "doctor@smarteye.com",
@@ -133,29 +139,100 @@ namespace SmartEyeClinic.Web.Data
                     IsActive = true,
                     CreatedAt = DateTime.Now
                 };
-                context.Users.Add(doctorUser);
+                context.Users.Add(docUser1);
                 context.SaveChanges(); // Save to get User ID
 
-                var doctorProfile = new Doctor
+                var docProfile1 = new Doctor
                 {
-                    UserId = doctorUser.Id,
+                    UserId = docUser1.Id,
                     SpecializationId = generalSpec?.Id ?? 1,
                     LicenseNumber = "LIC-9988-OPH",
                     ConsultationFee = 150.00m,
                     Bio = "Dr. Alexander Wright has over 15 years of experience in clinical ophthalmology specializing in general eye health and advanced diagnostics."
                 };
-                context.Doctors.Add(doctorProfile);
+                context.Doctors.Add(docProfile1);
 
-                // Doctor schedule
-                var schedule = new DoctorSchedule
+                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile1, DayOfWeek = "Monday", StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0), IsAvailable = true });
+                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile1, DayOfWeek = "Friday", StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0), IsAvailable = true });
+
+                // --- Doctor 2: Dr. Clara Oswald ---
+                var docUser2 = new User
                 {
-                    Doctor = doctorProfile,
-                    DayOfWeek = "Monday",
-                    StartTime = new TimeOnly(9, 0),
-                    EndTime = new TimeOnly(17, 0),
-                    IsAvailable = true
+                    FullName = "Dr. Clara Oswald",
+                    Email = "clara@smarteye.com",
+                    PasswordHash = "doctor123",
+                    PhoneNumber = "555-9011",
+                    RoleId = doctorRole?.Id ?? 2,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now
                 };
-                context.DoctorSchedules.Add(schedule);
+                context.Users.Add(docUser2);
+                context.SaveChanges();
+
+                var docProfile2 = new Doctor
+                {
+                    UserId = docUser2.Id,
+                    SpecializationId = corneaSpec?.Id ?? 2,
+                    LicenseNumber = "LIC-1122-COR",
+                    ConsultationFee = 180.00m,
+                    Bio = "Dr. Clara Oswald is an expert in corneal transplant surgery, keratoconus management, and complex laser therapies."
+                };
+                context.Doctors.Add(docProfile2);
+
+                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile2, DayOfWeek = "Tuesday", StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(16, 0), IsAvailable = true });
+
+                // --- Doctor 3: Dr. Bruce Banner ---
+                var docUser3 = new User
+                {
+                    FullName = "Dr. Bruce Banner",
+                    Email = "bruce@smarteye.com",
+                    PasswordHash = "doctor123",
+                    PhoneNumber = "555-9012",
+                    RoleId = doctorRole?.Id ?? 2,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now
+                };
+                context.Users.Add(docUser3);
+                context.SaveChanges();
+
+                var docProfile3 = new Doctor
+                {
+                    UserId = docUser3.Id,
+                    SpecializationId = retinaSpec?.Id ?? 3,
+                    LicenseNumber = "LIC-3344-RET",
+                    ConsultationFee = 200.00m,
+                    Bio = "Dr. Bruce Banner specializes in diabetic retinopathy, macular degeneration treatments, and advanced vitreoretinal micro-surgeries."
+                };
+                context.Doctors.Add(docProfile3);
+
+                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile3, DayOfWeek = "Wednesday", StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(15, 0), IsAvailable = true });
+
+                // --- Doctor 4: Dr. Diana Prince ---
+                var docUser4 = new User
+                {
+                    FullName = "Dr. Diana Prince",
+                    Email = "diana@smarteye.com",
+                    PasswordHash = "doctor123",
+                    PhoneNumber = "555-9013",
+                    RoleId = doctorRole?.Id ?? 2,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now
+                };
+                context.Users.Add(docUser4);
+                context.SaveChanges();
+
+                var docProfile4 = new Doctor
+                {
+                    UserId = docUser4.Id,
+                    SpecializationId = pediatricSpec?.Id ?? 4,
+                    LicenseNumber = "LIC-5566-PED",
+                    ConsultationFee = 160.00m,
+                    Bio = "Dr. Diana Prince is dedicated to pediatric vision care, strabismus correction, and early childhood vision development."
+                };
+                context.Doctors.Add(docProfile4);
+
+                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile4, DayOfWeek = "Thursday", StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(14, 0), IsAvailable = true });
+
 
                 // Receptionist User & Profile
                 var receptionistUser = new User
@@ -203,6 +280,37 @@ namespace SmartEyeClinic.Web.Data
                     DateOfBirth = new DateOnly(1985, 6, 15)
                 };
                 context.Patients.Add(patientProfile);
+
+                context.SaveChanges();
+            }
+
+            // Check if we need to seed the additional doctors on an existing database
+            if (context.Users.Any() && !context.Users.Any(u => u.Email == "clara@smarteye.com"))
+            {
+                
+                // Seed Clara
+                var docUser2 = new User { FullName = "Dr. Clara Oswald", Email = "clara@smarteye.com", PasswordHash = "doctor123", PhoneNumber = "555-9011", RoleId = doctorRole?.Id ?? 2, IsActive = true, CreatedAt = DateTime.Now };
+                context.Users.Add(docUser2);
+                context.SaveChanges();
+                var docProfile2 = new Doctor { UserId = docUser2.Id, SpecializationId = corneaSpec?.Id ?? 2, LicenseNumber = "LIC-1122-COR", ConsultationFee = 180.00m, Bio = "Dr. Clara Oswald is an expert in corneal transplant surgery, keratoconus management, and complex laser therapies." };
+                context.Doctors.Add(docProfile2);
+                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile2, DayOfWeek = "Tuesday", StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(16, 0), IsAvailable = true });
+
+                // Seed Bruce
+                var docUser3 = new User { FullName = "Dr. Bruce Banner", Email = "bruce@smarteye.com", PasswordHash = "doctor123", PhoneNumber = "555-9012", RoleId = doctorRole?.Id ?? 2, IsActive = true, CreatedAt = DateTime.Now };
+                context.Users.Add(docUser3);
+                context.SaveChanges();
+                var docProfile3 = new Doctor { UserId = docUser3.Id, SpecializationId = retinaSpec?.Id ?? 3, LicenseNumber = "LIC-3344-RET", ConsultationFee = 200.00m, Bio = "Dr. Bruce Banner specializes in diabetic retinopathy, macular degeneration treatments, and advanced vitreoretinal micro-surgeries." };
+                context.Doctors.Add(docProfile3);
+                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile3, DayOfWeek = "Wednesday", StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(15, 0), IsAvailable = true });
+
+                // Seed Diana
+                var docUser4 = new User { FullName = "Dr. Diana Prince", Email = "diana@smarteye.com", PasswordHash = "doctor123", PhoneNumber = "555-9013", RoleId = doctorRole?.Id ?? 2, IsActive = true, CreatedAt = DateTime.Now };
+                context.Users.Add(docUser4);
+                context.SaveChanges();
+                var docProfile4 = new Doctor { UserId = docUser4.Id, SpecializationId = pediatricSpec?.Id ?? 4, LicenseNumber = "LIC-5566-PED", ConsultationFee = 160.00m, Bio = "Dr. Diana Prince is dedicated to pediatric vision care, strabismus correction, and early childhood vision development." };
+                context.Doctors.Add(docProfile4);
+                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile4, DayOfWeek = "Thursday", StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(14, 0), IsAvailable = true });
 
                 context.SaveChanges();
             }
