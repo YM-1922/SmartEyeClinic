@@ -19,11 +19,17 @@ public class HomeController : Controller
     [AllowAnonymous]
     public IActionResult Landing()
     {
-        if (User.Identity != null && User.Identity.IsAuthenticated)
-        {
-            return RedirectToAction(nameof(Index));
-        }
         return View();
+    }
+
+    [AllowAnonymous]
+    public async Task<IActionResult> DoctorAccountsReport()
+    {
+        var doctors = await _context.Doctors
+            .Include(d => d.User)
+            .Include(d => d.Specialization)
+            .ToListAsync();
+        return View(doctors);
     }
 
     [AllowAnonymous]
@@ -56,11 +62,25 @@ public class HomeController : Controller
         ViewBag.TodayAppointmentsCount = await _context.Appointments.CountAsync(a => a.AppointmentDateTime.Date == DateTime.Today);
         ViewBag.UnpaidInvoicesCount = await _context.Invoices.CountAsync(i => i.Status != "Paid");
 
+        // Lists to manage
+        ViewBag.DoctorsList = await _context.Doctors.Include(d => d.User).Include(d => d.Specialization).ToListAsync();
+        ViewBag.PatientsList = await _context.Patients.Include(p => p.User).Take(30).ToListAsync();
+        ViewBag.AppointmentsList = await _context.Appointments
+            .Include(a => a.Patient).ThenInclude(p => p.User)
+            .Include(a => a.Doctor).ThenInclude(d => d.User)
+            .OrderByDescending(a => a.AppointmentDateTime)
+            .Take(30).ToListAsync();
+        ViewBag.DepositsList = await _context.Appointments
+            .Include(a => a.Patient).ThenInclude(p => p.User)
+            .Where(a => a.DepositStatus == "Paid" || a.DepositStatus == "Pending")
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(30).ToListAsync();
+
         // Recent Audit Logs
         var auditLogs = await _context.AuditLogs
             .Include(al => al.User)
             .OrderByDescending(al => al.CreatedAt)
-            .Take(6)
+            .Take(10)
             .ToListAsync();
         ViewBag.RecentAudits = auditLogs;
 
@@ -69,14 +89,14 @@ public class HomeController : Controller
             .Include(p => p.Invoice).ThenInclude(i => i.Patient).ThenInclude(pat => pat.User)
             .Include(p => p.PaymentMethod)
             .OrderByDescending(p => p.PaidAt)
-            .Take(5)
+            .Take(10)
             .ToListAsync();
         ViewBag.RecentPayments = recentPayments;
 
         // System Notifications
         ViewBag.RecentNotifications = await _context.Notifications
             .OrderByDescending(n => n.SentAt)
-            .Take(6)
+            .Take(15)
             .ToListAsync();
 
         return View();
@@ -100,6 +120,31 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.TodayAppointments = todayAppointments;
 
+        // Fetch Pending Approvals (Pending Doctor Approval status)
+        var pendingApprovals = await _context.Appointments
+            .Include(a => a.Patient).ThenInclude(p => p.User)
+            .Include(a => a.Branch)
+            .Where(a => a.DoctorId == doctorId && a.Status == "Pending Doctor Approval")
+            .OrderBy(a => a.AppointmentDateTime)
+            .ToListAsync();
+        ViewBag.PendingApprovals = pendingApprovals;
+
+        // Fetch Deposit Confirmations (where deposit is Paid)
+        var confirmedDeposits = await _context.Appointments
+            .Include(a => a.Patient).ThenInclude(p => p.User)
+            .Where(a => a.DoctorId == doctorId && a.DepositStatus == "Paid")
+            .OrderByDescending(a => a.PaymentDate)
+            .ToListAsync();
+        ViewBag.ConfirmedDeposits = confirmedDeposits;
+
+        // Fetch Patient History (completed appointments)
+        var patientHistory = await _context.Appointments
+            .Include(a => a.Patient).ThenInclude(p => p.User)
+            .Where(a => a.DoctorId == doctorId && a.Status == "Completed")
+            .OrderByDescending(a => a.AppointmentDateTime)
+            .ToListAsync();
+        ViewBag.PatientHistory = patientHistory;
+
         // Stats for Doctor
         ViewBag.TotalMyPatients = await _context.Appointments
             .Where(a => a.DoctorId == doctorId)
@@ -107,7 +152,7 @@ public class HomeController : Controller
             .Distinct()
             .CountAsync();
         ViewBag.MyPendingAppointments = await _context.Appointments
-            .CountAsync(a => a.DoctorId == doctorId && a.Status == "Pending" && a.AppointmentDateTime.Date >= DateTime.Today);
+            .CountAsync(a => a.DoctorId == doctorId && a.Status == "Pending Doctor Approval");
         ViewBag.MySurgeries = await _context.Surgeries
             .CountAsync(s => s.DoctorId == doctorId);
 
@@ -129,7 +174,7 @@ public class HomeController : Controller
             ViewBag.RecentNotifications = await _context.Notifications
                 .Where(n => n.UserId == docUserId)
                 .OrderByDescending(n => n.SentAt)
-                .Take(6)
+                .Take(10)
                 .ToListAsync();
         }
 
@@ -154,10 +199,19 @@ public class HomeController : Controller
         var upcomingAppointments = await _context.Appointments
             .Include(a => a.Doctor).ThenInclude(d => d.User)
             .Include(a => a.Branch)
-            .Where(a => a.PatientId == patientId && a.AppointmentDateTime >= DateTime.Now && a.Status != "Cancelled")
+            .Where(a => a.PatientId == patientId && a.AppointmentDateTime >= DateTime.Now && a.Status != "Cancelled" && a.Status != "Rejected")
             .OrderBy(a => a.AppointmentDateTime)
             .ToListAsync();
         ViewBag.UpcomingAppointments = upcomingAppointments;
+
+        // Fetch appointment history
+        var appointmentHistory = await _context.Appointments
+            .Include(a => a.Doctor).ThenInclude(d => d.User)
+            .Include(a => a.Branch)
+            .Where(a => a.PatientId == patientId && (a.AppointmentDateTime < DateTime.Now || a.Status == "Completed" || a.Status == "Rejected"))
+            .OrderByDescending(a => a.AppointmentDateTime)
+            .ToListAsync();
+        ViewBag.AppointmentHistory = appointmentHistory;
 
         // Fetch prescriptions
         var prescriptions = await _context.PrescriptionHeaders
@@ -177,6 +231,13 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.Invoices = invoices;
 
+        // Fetch Medical Files
+        var medicalFiles = await _context.MedicalFiles
+            .Where(m => m.PatientId == patientId)
+            .OrderByDescending(m => m.UploadedAt)
+            .ToListAsync();
+        ViewBag.MedicalFiles = medicalFiles;
+
         // Patient's Notifications
         var patientUserClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!string.IsNullOrEmpty(patientUserClaim))
@@ -185,7 +246,7 @@ public class HomeController : Controller
             ViewBag.RecentNotifications = await _context.Notifications
                 .Where(n => n.UserId == patUserId)
                 .OrderByDescending(n => n.SentAt)
-                .Take(6)
+                .Take(10)
                 .ToListAsync();
         }
 
@@ -213,6 +274,39 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.TodayAppointments = todayApps;
 
+        // Fetch all appointments (paged/recent)
+        var allAppointments = await _context.Appointments
+            .Include(a => a.Patient).ThenInclude(p => p.User)
+            .Include(a => a.Doctor).ThenInclude(d => d.User)
+            .Include(a => a.Branch)
+            .OrderByDescending(a => a.AppointmentDateTime)
+            .Take(30)
+            .ToListAsync();
+        ViewBag.AllAppointments = allAppointments;
+
+        // Fetch recent payments and deposits
+        var deposits = await _context.Appointments
+            .Include(a => a.Patient).ThenInclude(p => p.User)
+            .Where(a => a.DepositAmount > 0)
+            .OrderByDescending(a => a.CreatedAt)
+            .Take(15)
+            .ToListAsync();
+        ViewBag.RecentDeposits = deposits;
+
+        // Fetch patients directory for search
+        var patients = await _context.Patients
+            .Include(p => p.User)
+            .Take(30)
+            .ToListAsync();
+        ViewBag.Patients = patients;
+
+        // Fetch doctors directory for search
+        var doctors = await _context.Doctors
+            .Include(d => d.User)
+            .Include(d => d.Specialization)
+            .ToListAsync();
+        ViewBag.Doctors = doctors;
+
         // Stats
         ViewBag.QueueTotal = await _context.Queues.CountAsync(q => q.CheckInTime.HasValue && q.CheckInTime.Value.Date == DateTime.Today);
         ViewBag.QueueWaiting = await _context.Queues.CountAsync(q => q.CheckInTime.HasValue && q.CheckInTime.Value.Date == DateTime.Today && q.Status == "Waiting");
@@ -226,7 +320,7 @@ public class HomeController : Controller
             ViewBag.RecentNotifications = await _context.Notifications
                 .Where(n => n.UserId == recepUserId)
                 .OrderByDescending(n => n.SentAt)
-                .Take(6)
+                .Take(10)
                 .ToListAsync();
         }
 

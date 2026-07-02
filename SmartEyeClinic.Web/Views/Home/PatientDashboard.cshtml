@@ -1,196 +1,302 @@
 @model SmartEyeClinic.Models.Patient
 @{
-    ViewData["Title"] = "Patient Portal";
-    var appointments = ViewBag.UpcomingAppointments as List<SmartEyeClinic.Models.Appointment>;
+    ViewData["Title"] = "Patient Portal Dashboard";
+    var upcomingAppointments = ViewBag.UpcomingAppointments as List<SmartEyeClinic.Models.Appointment>;
+    var appointmentHistory = ViewBag.AppointmentHistory as List<SmartEyeClinic.Models.Appointment>;
     var prescriptions = ViewBag.Prescriptions as List<SmartEyeClinic.Models.PrescriptionHeader>;
     var invoices = ViewBag.Invoices as List<SmartEyeClinic.Models.Invoice>;
+    var medicalFiles = ViewBag.MedicalFiles as List<SmartEyeClinic.Models.MedicalFile>;
 }
 
 <!-- Page Header -->
-<div class="page-header">
-    <div class="page-header-left">
-        <div class="breadcrumb-nav">
-            <a href="/"><i class="bi bi-house-door"></i> Home</a>
-            <span class="separator">/</span>
-            <span class="current">Patient Portal</span>
+<div class="page-header py-4 mb-4 border-bottom">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <div class="breadcrumb-nav small text-muted mb-2">
+                <a href="/" class="text-decoration-none text-muted"><i class="fa-solid fa-house"></i> Home</a>
+                <span class="mx-2">/</span>
+                <span class="text-primary font-weight-bold">Patient Portal</span>
+            </div>
+            <h1 class="page-title fw-800 text-dark mb-1"><i class="fa-solid fa-hospital-user text-primary me-2"></i>My Patient Portal</h1>
+            <p class="text-muted mb-0">Welcome back, <strong>@Model.User?.FullName</strong>. Access your clinical files, payments, and appointments.</p>
         </div>
-        <h1 class="page-title"><i class="bi bi-person-workspace text-secondary-custom me-2"></i>My Patient Portal</h1>
-        <p class="page-subtitle">Welcome back, <strong>@Model.User?.FullName</strong>. Access your prescriptions, invoices, and scheduling.</p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a asp-controller="Home" asp-action="Calendar" class="btn btn-primary btn-sm">
-            <i class="bi bi-calendar-plus"></i> Book New Consult
-        </a>
+        
+        <!-- Quick Actions Panel -->
+        <div class="d-flex gap-2">
+            <a asp-controller="Appointment" asp-action="Create" class="btn btn-primary rounded-pill px-4 fw-bold">
+                <i class="fa-solid fa-calendar-plus me-1"></i> Book Appointment
+            </a>
+            <a href="/#doctors" class="btn btn-outline-secondary rounded-pill px-4">
+                <i class="fa-solid fa-user-doctor me-1"></i> View Doctors
+            </a>
+            <a href="#appointments-section" class="btn btn-light rounded-pill px-4 border">
+                <i class="fa-solid fa-list-check me-1"></i> My Appointments
+            </a>
+        </div>
     </div>
 </div>
 
-<!-- KPI Cards -->
-<div class="row g-4 mb-4">
-    <!-- Next Appointment -->
-    <div class="col-md-4">
-        <div class="metric-card metric-gradient-primary">
-            <div class="metric-label">Next Appointment</div>
-            <div class="metric-value" style="font-size: 1.25rem; font-weight: 700; line-height: 1.4; padding: 6px 0;">
-                @(appointments != null && appointments.Any() ? appointments.First().AppointmentDateTime.ToString("dd MMM yyyy - hh:mm tt") : "No Scheduled Visits")
+<!-- Stats / KPIs -->
+<div class="row g-4 mb-5">
+    <!-- Next Consultation -->
+    <div class="col-lg-4 col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--primary) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Next Consultation</span>
+            <div class="fs-5 fw-bold text-dark mb-2">
+                @(upcomingAppointments != null && upcomingAppointments.Any() 
+                    ? upcomingAppointments.First().AppointmentDateTime.ToString("dd MMM yyyy - hh:mm tt") 
+                    : "No Scheduled Visits")
             </div>
-            <div class="metric-sub">
-                <i class="bi bi-clock"></i> 
-                @(appointments != null && appointments.Any() ? $"with Dr. {appointments.First().Doctor?.User?.FullName}" : "Book a slot anytime")
+            <div class="text-muted small">
+                <i class="fa-solid fa-user-doctor text-primary me-1"></i> 
+                @(upcomingAppointments != null && upcomingAppointments.Any() 
+                    ? $"with Dr. {upcomingAppointments.First().Doctor?.User?.FullName}" 
+                    : "Book a consultation slot anytime")
             </div>
-            <div class="metric-icon"><i class="bi bi-calendar2-heart"></i></div>
         </div>
     </div>
 
     <!-- Active Prescriptions -->
-    <div class="col-md-4">
-        <div class="metric-card metric-gradient-success">
-            <div class="metric-label">Active Prescriptions</div>
-            <div class="metric-value">@(prescriptions?.Count ?? 0)</div>
-            <div class="metric-sub"><i class="bi bi-prescription"></i> Issued by your specialists</div>
-            <div class="metric-icon"><i class="bi bi-prescription2"></i></div>
+    <div class="col-lg-4 col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--success) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">My Active Prescriptions</span>
+            <div class="fs-2 fw-bold text-dark mb-2">
+                @(prescriptions?.Count ?? 0)
+            </div>
+            <div class="text-muted small">
+                <i class="fa-solid fa-prescription text-success me-1"></i> Prescribed by your clinical specialists
+            </div>
         </div>
     </div>
 
-    <!-- Outstanding Balance -->
-    <div class="col-md-4">
-        <div class="metric-card metric-gradient-danger">
-            <div class="metric-label">Outstanding Balance</div>
-            <div class="metric-value">$@(invoices != null ? invoices.Where(i => i.Status != "Paid").Sum(i => i.TotalAmount).ToString("N2") : "0.00")</div>
-            <div class="metric-sub"><i class="bi bi-credit-card"></i> Invoices pending payment</div>
-            <div class="metric-icon"><i class="bi bi-file-earmark-medical"></i></div>
+    <!-- Deposit Summary / Unpaid balance -->
+    <div class="col-lg-4 col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--danger) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Unpaid Balance</span>
+            <div class="fs-2 fw-bold text-dark mb-2">
+                $@(invoices != null ? invoices.Where(i => i.Status != "Paid").Sum(i => i.TotalAmount).ToString("N2") : "0.00")
+            </div>
+            <div class="text-muted small">
+                <i class="fa-solid fa-wallet text-danger me-1"></i> Pending invoicing charges
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Main Panels -->
-<div class="row g-4">
-    <!-- Left Column: Appointments & Billing -->
-    <div class="col-lg-7">
+<div class="row g-4 mb-5" id="appointments-section">
+    <!-- Left Column: Appointments and Payments -->
+    <div class="col-lg-8">
         
-        <!-- Scheduled Consultations -->
-        <div class="table-card mb-4">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-calendar3"></i> My Scheduled Consultations</h5>
-                <span class="badge-status badge-primary">Upcoming</span>
+        <!-- Upcoming Appointments -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center px-4 pt-4">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Upcoming Consultations</h5>
+                <span class="badge bg-light-primary text-primary px-3 py-1 rounded-pill">Active Requests</span>
             </div>
-            @if (appointments == null || !appointments.Any())
-            {
-                <div class="empty-state">
-                    <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
-                    <h5>No Upcoming Visits</h5>
-                    <p>You do not have any scheduled appointments at this time.</p>
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive-custom">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Doctor</th>
-                                <th>Date &amp; Time</th>
-                                <th>Branch</th>
-                                <th>Status</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var app in appointments)
-                            {
-                                var aBadge = "";
-                                switch (app.Status)
-                                {
-                                    case "Confirmed": aBadge = "badge-success"; break;
-                                    case "Pending": aBadge = "badge-warning"; break;
-                                    case "Cancelled": aBadge = "badge-danger"; break;
-                                    default: aBadge = "badge-neutral"; break;
-                                }
+            <div class="card-body px-4 pb-4">
+                @if (upcomingAppointments == null || !upcomingAppointments.Any())
+                {
+                    <div class="text-center py-5">
+                        <div class="text-muted fs-1 mb-3"><i class="fa-solid fa-calendar-xmark text-light"></i></div>
+                        <h6 class="fw-bold text-dark">No Scheduled Visits</h6>
+                        <p class="text-muted text-sm mb-4">You do not have any upcoming consultations registered.</p>
+                        <a asp-controller="Appointment" asp-action="Create" class="btn btn-outline-primary btn-sm rounded-pill px-4">Book Now</a>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
                                 <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="avatar-initials avatar-sm">
-                                                @(app.Doctor?.User?.FullName?.Length > 0 ? app.Doctor.User.FullName[0].ToString().ToUpper() : "D")
-                                            </div>
-                                            <strong>Dr. @app.Doctor?.User?.FullName</strong>
-                                        </div>
-                                    </td>
-                                    <td><span class="fw-600 text-sm">@app.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")</span></td>
-                                    <td><span class="text-muted text-sm">@app.Branch?.Name</span></td>
-                                    <td><span class="badge-status @aBadge">@app.Status</span></td>
+                                    <th>Doctor</th>
+                                    <th>Date &amp; Time</th>
+                                    <th>Status</th>
+                                    <th>Deposit</th>
+                                    <th class="text-end">Actions</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
+                            </thead>
+                            <tbody>
+                                @foreach (var app in upcomingAppointments)
+                                {
+                                    var isPendingDeposit = app.Status == "Pending Deposit";
+                                    var statusBadge = app.Status switch
+                                    {
+                                        "Approved" => "bg-success text-white",
+                                        "Pending Doctor Approval" => "bg-warning text-dark",
+                                        "Pending Deposit" => "bg-info text-white",
+                                        _ => "bg-secondary text-white"
+                                    };
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center gap-2">
+                                                <div class="avatar-sm bg-light-primary text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">
+                                                    @(app.Doctor?.User?.FullName?.Length > 0 ? app.Doctor.User.FullName[0].ToString().ToUpper() : "D")
+                                                </div>
+                                                <span class="fw-bold text-dark">Dr. @app.Doctor?.User?.FullName</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span class="fw-bold text-dark d-block">@app.AppointmentDateTime.ToString("dd MMM yyyy")</span>
+                                            <span class="text-muted text-xs">@app.AppointmentDateTime.ToString("hh:mm tt") (@app.Branch?.Name)</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge rounded-pill px-3 py-1 @statusBadge">@app.Status</span>
+                                        </td>
+                                        <td>
+                                            @if (app.DepositStatus == "Paid")
+                                            {
+                                                <span class="badge bg-light-success text-success px-2 py-1 rounded-pill"><i class="fa-solid fa-circle-check"></i> Paid ($@app.DepositAmount)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-light-danger text-danger px-2 py-1 rounded-pill"><i class="fa-solid fa-circle-exclamation"></i> Pending ($@app.DepositAmount)</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">
+                                            @if (isPendingDeposit)
+                                            {
+                                                <form asp-controller="Appointment" asp-action="PayDeposit" asp-route-id="@app.Id" method="post" class="d-inline">
+                                                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-3 fw-bold shadow-sm">
+                                                        <i class="fa-solid fa-credit-card me-1"></i> Pay Deposit ($50.00)
+                                                    </button>
+                                                </form>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted text-xs"><i class="fa-solid fa-clock"></i> Waiting Review</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
         </div>
 
-        <!-- Billing & Receipts -->
-        <div class="table-card">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-credit-card-2-front"></i> Billing &amp; Invoices</h5>
-                <span class="badge-status badge-secondary">Invoicing</span>
+        <!-- Deposit Payments & Transactions -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+            <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center px-4 pt-4">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-wallet text-success me-2"></i>My Deposit Payments</h5>
+                <span class="badge bg-light-success text-success px-3 py-1 rounded-pill">Paid Deposits</span>
             </div>
-            @if (invoices == null || !invoices.Any())
-            {
-                <div class="empty-state">
-                    <div class="empty-state-icon"><i class="bi bi-receipt"></i></div>
-                    <h5>No Invoices Found</h5>
-                    <p>No bills or receipts have been logged on your account yet.</p>
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive-custom">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Invoice #</th>
-                                <th>Total</th>
-                                <th>Issued Date</th>
-                                <th>Status</th>
-                                <th class="text-end">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var i in invoices)
-                            {
-                                var statusBadge = i.Status == "Paid" ? "badge-success" : "badge-danger";
+            <div class="card-body px-4 pb-4">
+                @if (invoices == null || !invoices.Any())
+                {
+                    <div class="text-center py-5">
+                        <div class="text-muted fs-1 mb-2"><i class="fa-solid fa-receipt text-light"></i></div>
+                        <p class="text-muted text-sm mb-0">No deposit payments logged on your account yet.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle">
+                            <thead>
                                 <tr>
-                                    <td><span class="fw-700">#INV-@i.Id</span></td>
-                                    <td><span class="fw-700 text-dark">$@i.TotalAmount.ToString("N2")</span></td>
-                                    <td><span class="text-muted text-sm">@(i.IssuedAt.HasValue ? i.IssuedAt.Value.ToString("dd MMM yyyy") : "N/A")</span></td>
-                                    <td><span class="badge-status @statusBadge">@i.Status</span></td>
-                                    <td class="text-end">
-                                        <a asp-controller="Invoice" asp-action="Details" asp-route-id="@i.Id" class="btn btn-light btn-sm border">
-                                            <i class="bi bi-eye"></i> View Detail
-                                        </a>
-                                    </td>
+                                    <th>Invoice #</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Issued Date</th>
+                                    <th>Status</th>
                                 </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
+                            </thead>
+                            <tbody>
+                                @foreach (var inv in invoices)
+                                {
+                                    var invoiceStatusClass = inv.Status == "Paid" ? "bg-success" : "bg-danger";
+                                    <tr>
+                                        <td><span class="fw-bold font-monospace">@inv.InvoiceNumber</span></td>
+                                        <td><span class="text-muted text-sm">Deposit for consultation</span></td>
+                                        <td><span class="fw-bold text-dark">$@inv.TotalAmount.ToString("F2")</span></td>
+                                        <td><span class="text-muted text-sm">@(inv.IssuedAt?.ToString("dd MMM yyyy") ?? "N/A")</span></td>
+                                        <td><span class="badge rounded-pill px-3 py-1 text-white @invoiceStatusClass">@inv.Status</span></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
         </div>
+
+        <!-- Appointment History -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-header bg-transparent border-0 px-4 pt-4">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-clock-rotate-left text-muted me-2"></i>Consultation History</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (appointmentHistory == null || !appointmentHistory.Any())
+                {
+                    <p class="text-muted text-center py-4 text-sm mb-0">No past clinical consultations recorded.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Doctor</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Diagnosis / Prescription</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var app in appointmentHistory)
+                                {
+                                    var historyBadge = app.Status switch
+                                    {
+                                        "Completed" => "bg-light-success text-success",
+                                        "Rejected" => "bg-light-danger text-danger",
+                                        "Cancelled" => "bg-light-secondary text-muted",
+                                        _ => "bg-light text-dark"
+                                    };
+                                    <tr>
+                                        <td><span class="fw-bold text-dark">Dr. @app.Doctor?.User?.FullName</span></td>
+                                        <td><span class="text-muted text-sm">@app.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")</span></td>
+                                        <td><span class="badge rounded-pill @historyBadge">@app.Status</span></td>
+                                        <td>
+                                            @if (app.Status == "Completed")
+                                            {
+                                                <span class="text-success text-xs"><i class="fa-solid fa-file-invoice text-success me-1"></i> Patient History Updated</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted text-xs">N/A</span>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+
     </div>
 
-    <!-- Right Column: Alerts & Recent Prescriptions -->
-    <div class="col-lg-5">
-        <!-- Notifications Panel -->
-        <div class="table-card mb-4">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-bell-fill text-warning"></i> Recent Alerts</h5>
-                <span class="badge bg-light text-primary border small font-size-xs">Logs</span>
+    <!-- Right Column: Alerts, Prescriptions, Medical Files -->
+    <div class="col-lg-4">
+        
+        <!-- Alerts and Notifications -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+            <div class="card-header bg-transparent border-0 px-4 pt-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-bell text-warning me-2"></i>Recent Alerts</h5>
+                <span class="badge bg-light text-primary border small">Logs</span>
             </div>
-            <div class="card-body-clean" style="max-height: 300px; overflow-y: auto; padding: 15px;">
+            <div class="card-body px-4 pb-4" style="max-height: 280px; overflow-y: auto;">
                 @{
                     var notifications = ViewBag.RecentNotifications as List<SmartEyeClinic.Models.Notification>;
                 }
                 @if (notifications == null || !notifications.Any())
                 {
-                    <div class="text-center py-4">
-                        <i class="bi bi-bell-slash text-muted fs-4"></i>
-                        <p class="small text-muted mb-0 mt-2">No new alerts or reminders.</p>
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-bell-slash fs-4 mb-2"></i>
+                        <p class="small mb-0">No unread alerts.</p>
                     </div>
                 }
                 else
@@ -198,13 +304,12 @@
                     <div class="d-flex flex-column gap-2">
                         @foreach (var n in notifications)
                         {
-                            var hasBeenRead = n.IsRead ?? false;
-                            <div class="p-2 rounded-3" style="font-size: 0.82rem; background: var(--bg); border-left: 3.5px solid @(hasBeenRead ? "var(--text-light)" : "var(--primary)");">
+                            <div class="p-3 rounded border-start border-3 @(n.Type == "Warning" ? "border-warning bg-light-warning" : "border-primary bg-light")" style="font-size: 0.8rem;">
                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                     <strong class="text-dark">@n.Title</strong>
-                                    <span class="text-muted" style="font-size: 0.72rem;">@n.SentAt?.ToString("g")</span>
+                                    <span class="text-muted text-xs" style="font-size: 0.7rem;">@n.SentAt?.ToString("g")</span>
                                 </div>
-                                <div class="text-muted text-xs">@n.Message</div>
+                                <div class="text-muted">@n.Message</div>
                             </div>
                         }
                     </div>
@@ -212,18 +317,17 @@
             </div>
         </div>
 
-        <!-- Recent Prescriptions -->
-        <div class="table-card">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-prescription2 text-success"></i> Recent Prescriptions</h5>
+        <!-- Prescriptions -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+            <div class="card-header bg-transparent border-0 px-4 pt-4">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-prescription-bottle-medical text-success me-2"></i>Recent Prescriptions</h5>
             </div>
-            <div class="card-body-clean" style="max-height: 580px; overflow-y: auto;">
+            <div class="card-body px-4 pb-4" style="max-height: 380px; overflow-y: auto;">
                 @if (prescriptions == null || !prescriptions.Any())
                 {
-                    <div class="empty-state" style="padding: 40px 20px;">
-                        <div class="empty-state-icon"><i class="bi bi-capsule-therapeutic"></i></div>
-                        <h5>No Prescriptions</h5>
-                        <p>No prescriptions have been issued to your account yet.</p>
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-capsules fs-3 mb-2"></i>
+                        <p class="small mb-0">No active prescriptions.</p>
                     </div>
                 }
                 else
@@ -231,31 +335,25 @@
                     <div class="d-flex flex-column gap-3">
                         @foreach (var rx in prescriptions)
                         {
-                            <div class="p-3 rounded-3 border hover-shadow transition-all" style="background: var(--bg);">
+                            <div class="p-3 rounded border bg-light-primary" style="background: rgba(14,165,233,0.02);">
                                 <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <h6 class="fw-800 text-sm mb-0 text-dark">Prescription #RX-@rx.Id</h6>
-                                    <span class="text-xs text-muted">@(rx.CreatedAt.HasValue ? rx.CreatedAt.Value.ToString("dd MMM yyyy") : "N/A")</span>
+                                    <h6 class="fw-bold text-dark text-sm mb-0">Rx-@rx.Id</h6>
+                                    <span class="text-xs text-muted">@(rx.CreatedAt?.ToString("dd MMM yyyy") ?? "N/A")</span>
                                 </div>
                                 <div class="text-xs text-muted mb-2">
-                                    <i class="bi bi-person-badge"></i> Prescribed by: <strong>Dr. @rx.Examination?.Appointment?.Doctor?.User?.FullName</strong>
+                                    Prescribed by: <strong>Dr. @rx.Examination?.Appointment?.Doctor?.User?.FullName</strong>
                                 </div>
-                                
-                                <div class="p-3 bg-white rounded border mb-3">
-                                    <span class="text-xs text-muted fw-700 uppercase tracking-wide d-block mb-1">Medication Instructions:</span>
-                                    <ul class="mb-0 ps-3 small text-muted">
+                                <div class="p-2 bg-white rounded border text-xs mb-2">
+                                    <ul class="mb-0 ps-3 text-muted">
                                         @foreach (var item in rx.PrescriptionItems)
                                         {
-                                            <li>
-                                                <strong class="text-dark">@item.Medicine?.Name</strong> - @item.Dosage 
-                                                <span class="text-xs text-light-primary">(@item.DurationDays days)</span>
-                                            </li>
+                                            <li><strong>@item.Medicine?.Name</strong> - @item.Dosage</li>
                                         }
                                     </ul>
                                 </div>
-
                                 <div class="text-end">
-                                    <a asp-controller="Prescription" asp-action="Details" asp-route-id="@rx.Id" class="btn btn-light btn-sm border">
-                                        <i class="bi bi-printer"></i> View / Print Prescription
+                                    <a asp-controller="Prescription" asp-action="Details" asp-route-id="@rx.Id" class="btn btn-outline-primary btn-sm rounded-pill font-weight-bold">
+                                        <i class="fa-solid fa-print"></i> Print Details
                                     </a>
                                 </div>
                             </div>
@@ -264,5 +362,41 @@
                 }
             </div>
         </div>
+
+        <!-- Medical Files -->
+        <div class="card border-0 shadow-sm rounded-4 bg-white">
+            <div class="card-header bg-transparent border-0 px-4 pt-4 d-flex justify-content-between align-items-center">
+                <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-file-pdf text-danger me-2"></i>Uploaded Medical Files</h5>
+                <a asp-controller="MedicalFile" asp-action="Upload" class="btn btn-light btn-sm border rounded-pill"><i class="fa-solid fa-upload"></i> Upload</a>
+            </div>
+            <div class="card-body px-4 pb-4">
+                @if (medicalFiles == null || !medicalFiles.Any())
+                {
+                    <div class="text-center py-4 text-muted">
+                        <i class="fa-solid fa-folder-open fs-3 mb-2 text-light"></i>
+                        <p class="small mb-0">No clinical files uploaded.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2" style="max-height: 250px; overflow-y: auto;">
+                        @foreach (var file in medicalFiles)
+                        {
+                            <div class="p-2 bg-light rounded d-flex justify-content-between align-items-center border">
+                                <div class="d-flex align-items-center gap-2 overflow-hidden">
+                                    <i class="fa-solid fa-file-prescription text-danger fs-5"></i>
+                                    <div class="overflow-hidden">
+                                        <span class="fw-bold text-dark text-xs d-block text-truncate" style="max-width: 160px;">@(System.IO.Path.GetFileName(file.FilePath) ?? "Medical_File")</span>
+                                        <span class="text-muted" style="font-size: 0.65rem;">@(file.UploadedAt?.ToString("dd MMM yyyy") ?? "N/A")</span>
+                                    </div>
+                                </div>
+                                <a href="@file.FilePath" target="_blank" class="btn btn-light btn-sm border-0 bg-transparent text-primary"><i class="fa-solid fa-download"></i></a>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
     </div>
 </div>

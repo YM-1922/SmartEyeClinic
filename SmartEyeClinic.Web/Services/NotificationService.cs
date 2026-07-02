@@ -33,6 +33,47 @@ namespace SmartEyeClinic.Web.Services
             await _context.SaveChangesAsync();
         }
 
+        public async Task NotifyAllReceptionistsAsync(string title, string message, string type)
+        {
+            var receptionists = await _context.Receptionists.Include(r => r.User).ToListAsync();
+            foreach (var r in receptionists)
+            {
+                if (r.User != null)
+                {
+                    var notification = new Notification
+                    {
+                        UserId = r.User.Id,
+                        Title = title,
+                        Message = message,
+                        Type = type,
+                        IsRead = false,
+                        SentAt = DateTime.Now
+                    };
+                    _context.Notifications.Add(notification);
+                }
+            }
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task NotifyAllAdminsAsync(string title, string message, string type)
+        {
+            var admins = await _context.Users.Include(u => u.Role).Where(u => u.Role.Name == "Admin").ToListAsync();
+            foreach (var a in admins)
+            {
+                var notification = new Notification
+                {
+                    UserId = a.Id,
+                    Title = title,
+                    Message = message,
+                    Type = type,
+                    IsRead = false,
+                    SentAt = DateTime.Now
+                };
+                _context.Notifications.Add(notification);
+            }
+            await _context.SaveChangesAsync();
+        }
+
         public async Task<List<Notification>> GetNotificationsForUserAsync(int userId)
         {
             return await _context.Notifications

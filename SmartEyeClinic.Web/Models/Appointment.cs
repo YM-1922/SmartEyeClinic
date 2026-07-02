@@ -19,6 +19,11 @@ namespace SmartEyeClinic.Models
         public string? Notes { get; set; }
         public DateTime? CreatedAt { get; set; }
 
+        // Deposit fields
+        public decimal DepositAmount { get; set; }
+        public string DepositStatus { get; set; } = "Pending";
+        public DateTime? PaymentDate { get; set; }
+
         // Navigation properties
         public virtual Patient Patient { get; set; } = null!;
         public virtual Doctor Doctor { get; set; } = null!;

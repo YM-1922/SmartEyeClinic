@@ -1,0 +1,82 @@
+@model List<SmartEyeClinic.Models.Doctor>
+@{
+    Layout = "_LandingLayout";
+    ViewData["Title"] = "Seeded Doctor Accounts Report";
+}
+
+<div class="container py-5" style="margin-top: 100px;">
+    <div class="card border-0 shadow-lg p-5 rounded-4 bg-white mb-5" style="box-shadow: 0 10px 30px rgba(15,76,129,0.05) !important; border: 1px solid var(--border) !important;">
+        <div class="text-center mb-5">
+            <div class="section-badge">Developer Reference</div>
+            <h2 class="section-title text-dark">Seeded Doctor Accounts</h2>
+            <p class="section-subtitle mx-auto text-muted">Use the credentials below to log in and test different specialist roles and workflows.</p>
+        </div>
+
+        <div class="alert alert-info border-0 rounded-3 p-4 mb-5" style="background: rgba(14,165,233,0.06);">
+            <div class="d-flex gap-3 align-items-center">
+                <div class="fs-3 text-primary"><i class="fa-solid fa-circle-info"></i></div>
+                <div>
+                    <h6 class="fw-bold text-dark mb-1">Global Password Configuration</h6>
+                    <p class="text-muted text-sm mb-0">All newly seeded accounts utilize the secure password: <strong class="text-primary font-monospace">Doctor@@123</strong></p>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr class="table-light">
+                        <th>Doctor Name</th>
+                        <th>Email Address</th>
+                        <th>Seeded Password</th>
+                        <th>Specialty</th>
+                        <th>Consultation Fee</th>
+                        <th>Contact Number</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var doc in Model.Where(d => d.User != null && d.User.Email.Contains("doctor")).OrderBy(d => d.User.Email))
+                    {
+                        var isLegacy = doc.User.Email == "doctor@smarteye.com";
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="avatar-sm bg-light-primary text-primary" style="width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700;">
+                                        @(doc.User?.FullName?.Length > 0 ? doc.User.FullName[0].ToString().ToUpper() : "D")
+                                    </div>
+                                    <div>
+                                        <span class="fw-bold text-dark d-block">@doc.User?.FullName</span>
+                                        @if(isLegacy) {
+                                            <span class="badge bg-secondary text-xs">Legacy Test User</span>
+                                        }
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="font-monospace text-dark text-sm">@doc.User?.Email</span>
+                            </td>
+                            <td>
+                                <span class="font-monospace text-primary text-sm fw-bold">@(isLegacy ? "doctor123" : "Doctor@123")</span>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-primary border border-info rounded-pill py-1 px-3">@doc.Specialization?.Name</span>
+                            </td>
+                            <td>
+                                <span class="fw-bold text-dark">$@doc.ConsultationFee.ToString("F2")</span>
+                            </td>
+                            <td>
+                                <span class="text-muted text-sm"><i class="fa-solid fa-phone me-1"></i> @doc.User?.PhoneNumber</span>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="text-center mt-5">
+            <a href="/Account/Login" class="btn btn-primary btn-lg rounded-pill px-5">
+                Go to Sign In <i class="fa-solid fa-right-to-bracket ms-1"></i>
+            </a>
+        </div>
+    </div>
+</div>

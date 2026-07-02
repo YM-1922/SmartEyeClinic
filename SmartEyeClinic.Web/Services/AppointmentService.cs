@@ -106,9 +106,11 @@ namespace SmartEyeClinic.Web.Services
                 AppointmentDateTime = appointmentDateTime,
                 DurationMinutes = durationMinutes,
                 Type = type,
-                Status = status,
+                Status = "Pending Deposit",
                 Notes = notes,
-                CreatedAt = DateTime.Now
+                CreatedAt = DateTime.Now,
+                DepositAmount = 50.00m,
+                DepositStatus = "Pending"
             };
 
             _context.Appointments.Add(appointment);
@@ -119,9 +121,11 @@ namespace SmartEyeClinic.Web.Services
             var doctor = await _context.Doctors.Include(d => d.User).FirstOrDefaultAsync(d => d.Id == doctorId);
             if (patient != null && doctor != null)
             {
-                await _notificationService.CreateNotificationAsync(patient.User.Id, "Appointment Requested", $"Your appointment with Dr. {doctor.User.FullName} is registered and pending approval.", "Info");
-                await _notificationService.CreateNotificationAsync(doctor.User.Id, "New Request Received", $"New appointment booking request from patient {patient.User.FullName} for {appointmentDateTime:f}.", "Request");
+                await _notificationService.CreateNotificationAsync(patient.User.Id, "Appointment Created", $"Your appointment with Dr. {doctor.User.FullName} has been registered.", "Info");
+                await _notificationService.CreateNotificationAsync(patient.User.Id, "Deposit Required", $"A deposit payment of $50.00 is required to request doctor approval.", "Warning");
             }
+            await _notificationService.NotifyAllAdminsAsync("New Appointment", $"New appointment request created for patient {patient?.User?.FullName}.", "Info");
+            await _notificationService.NotifyAllReceptionistsAsync("New Appointment Booked", $"New appointment request booked for patient {patient?.User?.FullName}.", "Info");
 
             return ServiceResult.Ok();
         }
@@ -249,6 +253,141 @@ namespace SmartEyeClinic.Web.Services
 
             _context.Appointments.Remove(appointment);
             await _context.SaveChangesAsync();
+            return ServiceResult.Ok();
+        }
+
+        // Pay Deposit
+        public async Task<ServiceResult> PayDepositAsync(int id)
+        {
+            var appointment = await _context.Appointments
+                .Include(a => a.Patient).ThenInclude(p => p.User)
+                .Include(a => a.Doctor).ThenInclude(d => d.User)
+                .FirstOrDefaultAsync(a => a.Id == id);
+            
+            if (appointment == null)
+                return ServiceResult.Fail("Appointment not found!");
+
+            if (appointment.DepositStatus == "Paid")
+                return ServiceResult.Fail("Deposit has already been paid!");
+
+            appointment.DepositStatus = "Paid";
+            appointment.PaymentDate = DateTime.Now;
+            appointment.Status = "Pending Doctor Approval";
+
+            // Create Invoice
+            var invoice = new Invoice
+            {
+                AppointmentId = appointment.Id,
+                PatientId = appointment.PatientId,
+                InvoiceNumber = $"INV-{DateTime.Now.Ticks}",
+                TotalAmount = appointment.DepositAmount,
+                PaidAmount = appointment.DepositAmount,
+                Status = "Paid",
+                IssuedAt = DateTime.Now
+            };
+            _context.Invoices.Add(invoice);
+            await _context.SaveChangesAsync();
+
+            // Create Payment
+            var payment = new Payment
+            {
+                InvoiceId = invoice.Id,
+                PaymentMethodId = 1, // Default method (e.g. Card)
+                Amount = appointment.DepositAmount,
+                TransactionRef = $"TXN-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
+                PaidAt = DateTime.Now
+            };
+            _context.Payments.Add(payment);
+            await _context.SaveChangesAsync();
+
+            // Notify Patient
+            if (appointment.Patient?.User != null)
+            {
+                await _notificationService.CreateNotificationAsync(appointment.Patient.User.Id, "Deposit Received", $"We have received your deposit of ${appointment.DepositAmount:F2} for your appointment on {appointment.AppointmentDateTime:f}.", "Success");
+            }
+            // Notify Doctor
+            if (appointment.Doctor?.User != null)
+            {
+                await _notificationService.CreateNotificationAsync(appointment.Doctor.User.Id, "New Request Received", $"Deposit paid. New appointment request from {appointment.Patient?.User?.FullName} for {appointment.AppointmentDateTime:f} is ready for your review.", "Info");
+            }
+            // Notify Receptionist & Admin
+            await _notificationService.NotifyAllReceptionistsAsync("Deposit Paid", $"Deposit of ${appointment.DepositAmount:F2} paid by patient {appointment.Patient?.User?.FullName}.", "Info");
+            await _notificationService.NotifyAllAdminsAsync("Payment Activity", $"Deposit of ${appointment.DepositAmount:F2} paid for appointment #{appointment.Id}.", "Payment");
+
+            return ServiceResult.Ok();
+        }
+
+        // Approve Appointment
+        public async Task<ServiceResult> ApproveAppointmentAsync(int id)
+        {
+            var appointment = await _context.Appointments
+                .Include(a => a.Patient).ThenInclude(p => p.User)
+                .Include(a => a.Doctor).ThenInclude(d => d.User)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (appointment == null)
+                return ServiceResult.Fail("Appointment not found!");
+
+            if (appointment.DepositStatus != "Paid")
+                return ServiceResult.Fail("Appointment cannot be approved because the deposit has not been paid!");
+
+            appointment.Status = "Approved";
+            await _context.SaveChangesAsync();
+
+            // Notify Patient
+            if (appointment.Patient?.User != null)
+            {
+                await _notificationService.CreateNotificationAsync(appointment.Patient.User.Id, "Appointment Approved", $"Your appointment with Dr. {appointment.Doctor?.User?.FullName} has been approved.", "Success");
+            }
+            // Notify Receptionist
+            await _notificationService.NotifyAllReceptionistsAsync("Appointment Approved", $"Appointment #{appointment.Id} approved by Dr. {appointment.Doctor?.User?.FullName}.", "Info");
+
+            return ServiceResult.Ok();
+        }
+
+        // Reject Appointment
+        public async Task<ServiceResult> RejectAppointmentAsync(int id)
+        {
+            var appointment = await _context.Appointments
+                .Include(a => a.Patient).ThenInclude(p => p.User)
+                .Include(a => a.Doctor).ThenInclude(d => d.User)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (appointment == null)
+                return ServiceResult.Fail("Appointment not found!");
+
+            appointment.Status = "Rejected";
+            await _context.SaveChangesAsync();
+
+            // Notify Patient
+            if (appointment.Patient?.User != null)
+            {
+                await _notificationService.CreateNotificationAsync(appointment.Patient.User.Id, "Appointment Rejected", "Your appointment request was rejected. Please choose another available time.", "Warning");
+            }
+
+            return ServiceResult.Ok();
+        }
+
+        // Complete Appointment
+        public async Task<ServiceResult> CompleteAppointmentAsync(int id)
+        {
+            var appointment = await _context.Appointments
+                .Include(a => a.Patient).ThenInclude(p => p.User)
+                .Include(a => a.Doctor).ThenInclude(d => d.User)
+                .FirstOrDefaultAsync(a => a.Id == id);
+
+            if (appointment == null)
+                return ServiceResult.Fail("Appointment not found!");
+
+            appointment.Status = "Completed";
+            await _context.SaveChangesAsync();
+
+            // Notify Patient
+            if (appointment.Patient?.User != null)
+            {
+                await _notificationService.CreateNotificationAsync(appointment.Patient.User.Id, "Appointment Completed", "Your appointment has been marked as completed. Thank you for choosing Smart Eye Clinic.", "Success");
+            }
+
             return ServiceResult.Ok();
         }
     }

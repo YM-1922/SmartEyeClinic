@@ -1,88 +1,108 @@
 @{
-    ViewData["Title"] = "Receptionist Dashboard";
-    var queue        = ViewBag.ActiveQueue       as List<SmartEyeClinic.Models.Queue>;
-    var appointments = ViewBag.TodayAppointments as List<SmartEyeClinic.Models.Appointment>;
+    ViewData["Title"] = "Front Desk Operations";
+    var queue = ViewBag.ActiveQueue as List<SmartEyeClinic.Models.Queue>;
+    var todayApps = ViewBag.TodayAppointments as List<SmartEyeClinic.Models.Appointment>;
+    var allAppointments = ViewBag.AllAppointments as List<SmartEyeClinic.Models.Appointment>;
+    var recentDeposits = ViewBag.RecentDeposits as List<SmartEyeClinic.Models.Appointment>;
+    var patientsList = ViewBag.Patients as List<SmartEyeClinic.Models.Patient>;
+    var doctorsList = ViewBag.Doctors as List<SmartEyeClinic.Models.Doctor>;
 }
 
 <!-- Page Header -->
-<div class="page-header">
-    <div class="page-header-left">
-        <div class="breadcrumb-nav">
-            <a href="/"><i class="bi bi-house-door"></i> Home</a>
-            <span class="separator">/</span>
-            <span class="current">Receptionist Dashboard</span>
+<div class="page-header py-4 mb-4 border-bottom">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <div class="breadcrumb-nav small text-muted mb-2">
+                <a href="/" class="text-decoration-none text-muted"><i class="fa-solid fa-house"></i> Home</a>
+                <span class="mx-2">/</span>
+                <span class="text-primary font-weight-bold">Receptionist Dashboard</span>
+            </div>
+            <h1 class="page-title fw-800 text-dark mb-1"><i class="fa-solid fa-desktop text-primary me-2"></i>Front Desk Control</h1>
+            <p class="text-muted mb-0">Manage clinic queues, check-ins, medical scheduling, and deposit payments activity.</p>
         </div>
-        <h1 class="page-title"><i class="bi bi-person-lines-fill text-secondary-custom me-2"></i>Front Desk Operations</h1>
-        <p class="page-subtitle">Real-time patient queue, check-in management, and today's booking schedule.</p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a asp-controller="Patient"     asp-action="Create" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-person-plus"></i> Register Patient
-        </a>
-        <a asp-controller="Appointment" asp-action="Create" class="btn btn-primary btn-sm">
-            <i class="bi bi-calendar-plus"></i> Book Appointment
-        </a>
-    </div>
-</div>
-
-<!-- KPI Stats -->
-<div class="row g-4 mb-4">
-    <div class="col-md-4">
-        <div class="metric-card metric-gradient-primary">
-            <div class="metric-label">Today's Queue Total</div>
-            <div class="metric-value">@ViewBag.QueueTotal</div>
-            <div class="metric-sub"><i class="bi bi-people"></i> Patients checked in</div>
-            <div class="metric-icon"><i class="bi bi-people"></i></div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="metric-card metric-gradient-warning">
-            <div class="metric-label">Waiting Patients</div>
-            <div class="metric-value">@ViewBag.QueueWaiting</div>
-            <div class="metric-sub"><i class="bi bi-hourglass-split"></i> In the queue</div>
-            <div class="metric-icon"><i class="bi bi-person-waiting"></i></div>
-        </div>
-    </div>
-    <div class="col-md-4">
-        <div class="metric-card metric-gradient-danger">
-            <div class="metric-label">Unpaid Invoices</div>
-            <div class="metric-value">@ViewBag.UnpaidInvoices</div>
-            <div class="metric-sub"><i class="bi bi-receipt"></i> Pending settlement</div>
-            <div class="metric-icon"><i class="bi bi-file-earmark-text"></i></div>
+        <div class="d-flex gap-2">
+            <a asp-controller="Patient" asp-action="Create" class="btn btn-outline-primary rounded-pill px-4 fw-bold">
+                <i class="fa-solid fa-user-plus me-1"></i> Register Patient
+            </a>
+            <a asp-controller="Appointment" asp-action="Create" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fa-solid fa-calendar-check me-1"></i> Book Appointment
+            </a>
         </div>
     </div>
 </div>
 
-<!-- Main Content -->
-<div class="row g-4">
-    <!-- Active Queue -->
-    <div class="col-lg-7">
-        <div class="table-card h-100">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-list-ol"></i> Active Clinic Queue</h5>
-                <span class="badge-status badge-success">Live</span>
+<!-- Queue Stats -->
+<div class="row g-4 mb-5">
+    <div class="col-lg-4 col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--primary) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Checked In Today</span>
+            <div class="fs-2 fw-bold text-dark mb-2">@ViewBag.QueueTotal</div>
+            <div class="text-muted small"><i class="fa-solid fa-user-check text-primary me-1"></i> Patients in active queue</div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--warning) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Waiting in Queue</span>
+            <div class="fs-2 fw-bold text-dark mb-2">@ViewBag.QueueWaiting</div>
+            <div class="text-muted small"><i class="fa-solid fa-clock text-warning me-1"></i> Patients waiting to be called</div>
+        </div>
+    </div>
+    <div class="col-lg-4 col-md-6">
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--danger) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Unpaid Invoices</span>
+            <div class="fs-2 fw-bold text-dark mb-2">@ViewBag.UnpaidInvoices</div>
+            <div class="text-muted small"><i class="fa-solid fa-file-invoice-dollar text-danger me-1"></i> Pending invoicing records</div>
+        </div>
+    </div>
+</div>
+
+<!-- Tabs to Organize Front Desk Pages -->
+<div class="card border-0 shadow-sm rounded-4 bg-white mb-5">
+    <div class="card-header bg-transparent border-0 px-4 pt-4">
+        <ul class="nav nav-pills gap-2" id="receptionTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill px-4 fw-bold" id="queue-tab" data-bs-toggle="tab" data-bs-target="#queue-pane" type="button" role="tab"><i class="fa-solid fa-users-line me-2"></i>Live Queue</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold" id="appts-tab" data-bs-toggle="tab" data-bs-target="#appts-pane" type="button" role="tab"><i class="fa-solid fa-calendar-days me-2"></i>All Appointments</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold" id="deposits-tab" data-bs-toggle="tab" data-bs-target="#deposits-pane" type="button" role="tab"><i class="fa-solid fa-cash-register me-2"></i>Deposits &amp; Payments</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold" id="patients-tab" data-bs-toggle="tab" data-bs-target="#patients-pane" type="button" role="tab"><i class="fa-solid fa-id-card me-2"></i>Patients Directory</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold" id="doctors-tab" data-bs-toggle="tab" data-bs-target="#doctors-pane" type="button" role="tab"><i class="fa-solid fa-user-doctor me-2"></i>Doctors Schedules</button>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="card-body p-4 tab-content" id="receptionTabContent">
+        
+        <!-- PANE 1: Active Clinic Queue -->
+        <div class="tab-pane fade show active" id="queue-pane" role="tabpanel" aria-labelledby="queue-tab">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0">Checked-In Patients (Today)</h5>
+                <span class="badge bg-success px-3 py-1 rounded-pill">Active Flow</span>
             </div>
             @if (queue == null || !queue.Any())
             {
-                <div class="empty-state">
-                    <div class="empty-state-icon"><i class="bi bi-ticket-perforated"></i></div>
-                    <h5>Queue Is Empty</h5>
-                    <p>No patients are currently checked in. Check-in patients from today's appointments below.</p>
-                    <a asp-controller="Appointment" asp-action="Index" class="btn btn-primary btn-sm">
-                        <i class="bi bi-calendar2-week"></i> View Appointments
-                    </a>
+                <div class="text-center py-5 text-muted">
+                    <i class="fa-solid fa-ticket fs-2 mb-2 text-light"></i>
+                    <p class="small mb-0">No patients are currently checked in for examinations.</p>
                 </div>
             }
             else
             {
-                <div class="table-responsive-custom">
-                    <table class="custom-table">
+                <div class="table-responsive">
+                    <table class="table align-middle">
                         <thead>
                             <tr>
                                 <th>Token</th>
-                                <th>Patient</th>
-                                <th>Doctor</th>
-                                <th>Check-In</th>
+                                <th>Patient Name</th>
+                                <th>Specialist</th>
+                                <th>Check-In Time</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
@@ -91,31 +111,13 @@
                             {
                                 <tr>
                                     <td>
-                                        <span class="fw-800 px-3 py-1 rounded-2 text-white text-sm"
-                                              style="background: linear-gradient(135deg,var(--primary),var(--secondary));">
-                                            #@item.QueueNumber
-                                        </span>
+                                        <span class="badge bg-primary px-3 py-1 font-monospace fs-6">#@item.QueueNumber</span>
                                     </td>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="avatar-initials avatar-sm">
-                                                @(item.Appointment?.Patient?.User?.FullName?.Length > 0 ? item.Appointment.Patient.User.FullName[0].ToString().ToUpper() : "P")
-                                            </div>
-                                            <span class="fw-600">@item.Appointment?.Patient?.User?.FullName</span>
-                                        </div>
-                                    </td>
+                                    <td><span class="fw-bold text-dark">@item.Appointment?.Patient?.User?.FullName</span></td>
                                     <td>Dr. @item.Appointment?.Doctor?.User?.FullName</td>
-                                    <td class="text-sm text-muted">@item.CheckInTime?.ToString("hh:mm tt")</td>
+                                    <td><span class="text-muted text-sm">@item.CheckInTime?.ToString("hh:mm tt")</span></td>
                                     <td>
-                                        @{
-                                            var qBadge = item.Status switch {
-                                                "Waiting"   => "badge-warning",
-                                                "InProgress"=> "badge-info",
-                                                "Completed" => "badge-success",
-                                                _           => "badge-neutral"
-                                            };
-                                        }
-                                        <span class="badge-status @qBadge">@item.Status</span>
+                                        <span class="badge rounded-pill px-3 py-1 @(item.Status == "Waiting" ? "bg-warning text-dark" : "bg-info text-white")">@item.Status</span>
                                     </td>
                                 </tr>
                             }
@@ -124,114 +126,218 @@
                 </div>
             }
         </div>
-    </div>
 
-    <!-- Today's Appointments -->
-    <div class="col-lg-5 d-flex flex-column gap-4">
-        <div class="table-card">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-calendar-check"></i> Today's Bookings</h5>
-                <a asp-controller="Appointment" asp-action="Index" class="btn btn-light btn-sm">View All</a>
+        <!-- PANE 2: All Appointments -->
+        <div class="tab-pane fade" id="appts-pane" role="tabpanel" aria-labelledby="appts-tab">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0">Clinic Appointments Registry</h5>
+                <a asp-controller="Appointment" asp-action="Index" class="btn btn-sm btn-light border px-3 rounded-pill">Manage Booking Flow</a>
             </div>
-            <div class="card-body-clean" style="max-height: 380px; overflow-y: auto; padding: 15px;">
-                @if (appointments == null || !appointments.Any())
-                {
-                    <div class="empty-state" style="padding:40px 20px;">
-                        <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
-                        <h5>No Appointments Today</h5>
-                        <p>No appointments have been scheduled for today.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="d-flex flex-column gap-2">
-                        @foreach (var app in appointments)
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date &amp; Time</th>
+                            <th>Status</th>
+                            <th>Deposit status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in allAppointments)
                         {
-                            var appBadge = app.Status switch {
-                                "Confirmed" => "badge-success",
-                                "Pending"   => "badge-warning",
-                                "Cancelled" => "badge-danger",
-                                "Completed" => "badge-secondary",
-                                _           => "badge-neutral"
+                            var appBadge = app.Status switch
+                            {
+                                "Approved" => "bg-success text-white",
+                                "Pending Doctor Approval" => "bg-warning text-dark",
+                                "Pending Deposit" => "bg-info text-white",
+                                "Completed" => "bg-secondary text-white",
+                                _ => "bg-light text-dark"
                             };
-                            <div class="p-3 rounded-3 border hover-shadow transition-all bg-white">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div class="d-flex align-items-center gap-2">
-                                        <div class="avatar-initials avatar-sm">
-                                            @(app.Patient?.User?.FullName?.Length > 0 ? app.Patient.User.FullName[0].ToString().ToUpper() : "P")
-                                        </div>
-                                        <div>
-                                            <div class="fw-600 text-sm">@app.Patient?.User?.FullName</div>
-                                            <div class="text-xs text-muted font-monospace" style="font-size: 0.72rem;">Dr. @app.Doctor?.User?.FullName</div>
-                                        </div>
-                                    </div>
-                                    <span class="text-xs text-muted fw-600">@app.AppointmentDateTime.ToString("hh:mm tt")</span>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="badge-status @appBadge">@app.Status</span>
-                                    <div class="d-flex gap-1">
-                                        @if (app.Status == "Pending")
-                                        {
-                                            <form asp-controller="Appointment" asp-action="Approve" asp-route-id="@app.Id" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-success btn-xs py-1 px-2 text-xs" style="font-size: 0.72rem;" title="Confirm Appointment">
-                                                    <i class="bi bi-check-lg"></i> Approve
-                                                </button>
-                                            </form>
-                                            <form asp-controller="Appointment" asp-action="Cancel" asp-route-id="@app.Id" method="post" class="d-inline">
-                                                @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-outline-danger btn-xs py-1 px-2 text-xs" style="font-size: 0.72rem;" title="Cancel Appointment">
-                                                    <i class="bi bi-x-lg"></i>
-                                                </button>
-                                            </form>
-                                        }
-                                        <a asp-controller="Appointment" asp-action="Details" asp-route-id="@app.Id"
-                                           class="btn btn-outline-primary btn-xs py-1 px-2 text-xs" style="font-size: 0.72rem;">
-                                            <i class="bi bi-eye"></i> Details
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
+                            <tr>
+                                <td><span class="fw-bold text-dark">@app.Patient?.User?.FullName</span></td>
+                                <td>Dr. @app.Doctor?.User?.FullName</td>
+                                <td>
+                                    <span class="fw-bold text-dark d-block">@app.AppointmentDateTime.ToString("dd MMM yyyy")</span>
+                                    <span class="text-muted text-xs">@app.AppointmentDateTime.ToString("hh:mm tt") (@app.Branch?.Name)</span>
+                                </td>
+                                <td><span class="badge rounded-pill px-3 py-1 @appBadge">@app.Status</span></td>
+                                <td>
+                                    @if(app.DepositStatus == "Paid") {
+                                        <span class="badge bg-light-success text-success px-2 py-1 rounded-pill"><i class="fa-solid fa-circle-check"></i> Paid</span>
+                                    } else {
+                                        <span class="badge bg-light-danger text-danger px-2 py-1 rounded-pill"><i class="fa-solid fa-circle-exclamation"></i> Pending</span>
+                                    }
+                                </td>
+                            </tr>
                         }
-                    </div>
-                }
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- Receptionist Alerts -->
-        <div class="table-card">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-bell-fill text-warning"></i> Front Desk Alerts</h5>
-                <span class="badge bg-light text-primary border small font-size-xs">Logs</span>
-            </div>
-            <div class="card-body-clean" style="max-height: 250px; overflow-y: auto; padding: 15px;">
-                @{
-                    var notifications = ViewBag.RecentNotifications as List<SmartEyeClinic.Models.Notification>;
-                }
-                @if (notifications == null || !notifications.Any())
-                {
-                    <div class="text-center py-4">
-                        <i class="bi bi-bell-slash text-muted fs-4"></i>
-                        <p class="small text-muted mb-0 mt-2">No front desk alerts.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="d-flex flex-column gap-2">
-                        @foreach (var n in notifications)
+        <!-- PANE 3: Deposits & Payments -->
+        <div class="tab-pane fade" id="deposits-pane" role="tabpanel" aria-labelledby="deposits-tab">
+            <h5 class="fw-bold text-dark mb-4">Deposit Payments Log</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th>
+                            <th>Appointment Time</th>
+                            <th>Deposit Value</th>
+                            <th>Paid Status</th>
+                            <th>Transaction Ref</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in recentDeposits)
                         {
-                            var hasBeenRead = n.IsRead ?? false;
-                            <div class="p-2 rounded-3" style="font-size: 0.82rem; background: var(--bg); border-left: 3.5px solid @(hasBeenRead ? "var(--text-light)" : "var(--primary)");">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <strong class="text-dark">@n.Title</strong>
-                                    <span class="text-muted" style="font-size: 0.72rem;">@n.SentAt?.ToString("g")</span>
-                                </div>
-                                <div class="text-muted text-xs">@n.Message</div>
-                            </div>
+                            var hasPaid = app.DepositStatus == "Paid";
+                            <tr>
+                                <td><span class="fw-bold text-dark">@app.Patient?.User?.FullName</span></td>
+                                <td><span class="text-muted text-sm">@app.AppointmentDateTime.ToString("dd MMM yyyy, hh:mm tt")</span></td>
+                                <td><span class="fw-bold text-dark">$@app.DepositAmount.ToString("F2")</span></td>
+                                <td>
+                                    <span class="badge rounded-pill px-3 py-1 @(hasPaid ? "bg-success text-white" : "bg-danger text-white")">
+                                        @app.DepositStatus
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="font-monospace text-xs text-muted">@(app.PaymentDate?.Ticks.ToString().Substring(10) ?? "N/A")</span>
+                                </td>
+                                <td>
+                                    @if(!hasPaid) {
+                                        <form asp-controller="Appointment" asp-action="PayDeposit" asp-route-id="@app.Id" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-xs btn-success rounded-pill px-3"><i class="fa-solid fa-wallet"></i> Pay Now</button>
+                                        </form>
+                                    } else {
+                                        <span class="text-success text-xs"><i class="fa-solid fa-circle-check"></i> Settlement Complete</span>
+                                    }
+                                </td>
+                            </tr>
                         }
-                    </div>
-                }
+                    </tbody>
+                </table>
             </div>
         </div>
+
+        <!-- PANE 4: Patients Directory -->
+        <div class="tab-pane fade" id="patients-pane" role="tabpanel" aria-labelledby="patients-tab">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0">Registered Patients Catalog</h5>
+                <input type="text" id="patientSearchInput" onkeyup="filterPatientTable()" class="form-control rounded-pill w-25" placeholder="Search patients..." />
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle" id="patientsTable">
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th>
+                            <th>Contact Phone</th>
+                            <th>Gender</th>
+                            <th>National Identifier</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pat in patientsList)
+                        {
+                            <tr>
+                                <td><span class="fw-bold text-dark">@pat.User?.FullName</span></td>
+                                <td><span class="text-muted text-sm">@pat.User?.PhoneNumber</span></td>
+                                <td><span class="text-muted text-sm">@pat.Gender</span></td>
+                                <td><span class="font-monospace text-sm text-dark">@pat.NationalId</span></td>
+                                <td class="text-end">
+                                    <a asp-controller="Patient" asp-action="Details" asp-route-id="@pat.Id" class="btn btn-outline-primary btn-xs rounded-pill px-3">Open Profile</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PANE 5: Doctors Schedules -->
+        <div class="tab-pane fade" id="doctors-pane" role="tabpanel" aria-labelledby="doctors-tab">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0">Doctors Specialty &amp; Schedule Reference</h5>
+                <input type="text" id="doctorSearchInput" onkeyup="filterDoctorTable()" class="form-control rounded-pill w-25" placeholder="Search doctors..." />
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle" id="doctorsTable">
+                    <thead>
+                        <tr>
+                            <th>Doctor Name</th>
+                            <th>Clinical Specialty</th>
+                            <th>Contact Phone</th>
+                            <th>Availability Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in doctorsList)
+                        {
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <div class="avatar-sm bg-light-primary text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 32px; height: 32px;">
+                                            @(doc.User?.FullName?.Length > 0 ? doc.User.FullName[0].ToString().ToUpper() : "D")
+                                        </div>
+                                        <span class="fw-bold text-dark">Dr. @doc.User?.FullName</span>
+                                    </div>
+                                </td>
+                                <td><span class="badge bg-light text-primary border border-info rounded-pill">@doc.Specialization?.Name</span></td>
+                                <td><span class="text-muted text-sm">@doc.User?.PhoneNumber</span></td>
+                                <td>
+                                    <span class="text-xs text-muted"><i class="fa-solid fa-clock"></i> Weekly schedules seeded</span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
     </div>
 </div>
+
+<script>
+    function filterPatientTable() {
+        var input = document.getElementById("patientSearchInput");
+        var filter = input.value.toUpperCase();
+        var table = document.getElementById("patientsTable");
+        var tr = table.getElementsByTagName("tr");
+        for (var i = 1; i < tr.length; i++) {
+            var td = tr[i].getElementsByTagName("td")[0];
+            if (td) {
+                var txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+
+    function filterDoctorTable() {
+        var input = document.getElementById("doctorSearchInput");
+        var filter = input.value.toUpperCase();
+        var table = document.getElementById("doctorsTable");
+        var tr = table.getElementsByTagName("tr");
+        for (var i = 1; i < tr.length; i++) {
+            var tdName = tr[i].getElementsByTagName("td")[0];
+            var tdSpec = tr[i].getElementsByTagName("td")[1];
+            if (tdName || tdSpec) {
+                var nameVal = tdName ? (tdName.textContent || tdName.innerText) : "";
+                var specVal = tdSpec ? (tdSpec.textContent || tdSpec.innerText) : "";
+                if (nameVal.toUpperCase().indexOf(filter) > -1 || specVal.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+</script>

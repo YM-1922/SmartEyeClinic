@@ -13,19 +13,30 @@ namespace SmartEyeClinic.Web.Data
             // Ensure database is created
             context.Database.EnsureCreated();
 
+            Console.WriteLine("SEED_LOG: Starting Database Seeding Routine...");
+
             // 1. Seed Roles
-            if (!context.Roles.Any())
+            var roles = new[]
             {
-                var roles = new[]
+                new Role { Name = "Admin", Description = "System Administrator with full access" },
+                new Role { Name = "Doctor", Description = "Medical Specialists" },
+                new Role { Name = "Patient", Description = "Clinic Patients" },
+                new Role { Name = "Receptionist", Description = "Front Desk and Receptionist staff" }
+            };
+
+            foreach (var r in roles)
+            {
+                if (!context.Roles.Any(x => x.Name == r.Name))
                 {
-                    new Role { Name = "Admin", Description = "System Administrator with full access" },
-                    new Role { Name = "Doctor", Description = "Medical Specialists" },
-                    new Role { Name = "Patient", Description = "Clinic Patients" },
-                    new Role { Name = "Receptionist", Description = "Front Desk and Receptionist staff" }
-                };
-                context.Roles.AddRange(roles);
-                context.SaveChanges();
+                    context.Roles.Add(r);
+                    Console.WriteLine($"SEED_LOG: [CREATE] Role: {r.Name}");
+                }
+                else
+                {
+                    Console.WriteLine($"SEED_LOG: [SKIP] Role: {r.Name} (already exists)");
+                }
             }
+            context.SaveChanges();
 
             // Get role references
             var adminRole = context.Roles.FirstOrDefault(r => r.Name == "Admin");
@@ -34,286 +45,324 @@ namespace SmartEyeClinic.Web.Data
             var receptionistRole = context.Roles.FirstOrDefault(r => r.Name == "Receptionist");
 
             // 2. Seed Branches
-            if (!context.Branches.Any())
+            var branches = new[]
             {
-                var branches = new[]
+                new Branch { Name = "Main Downtown Branch", Address = "123 Medical Center Ave, Downtown", Phone = "555-0100" },
+                new Branch { Name = "North Medical Plaza", Address = "456 Skyline Drive, North District", Phone = "555-0200" },
+                new Branch { Name = "West Eye Center", Address = "789 Sunset Blvd, Westside", Phone = "555-0300" }
+            };
+
+            foreach (var b in branches)
+            {
+                if (!context.Branches.Any(x => x.Name == b.Name))
                 {
-                    new Branch { Name = "Main Downtown Branch", Address = "123 Medical Center Ave, Downtown", Phone = "555-0100" },
-                    new Branch { Name = "North Medical Plaza", Address = "456 Skyline Drive, North District", Phone = "555-0200" },
-                    new Branch { Name = "West Eye Center", Address = "789 Sunset Blvd, Westside", Phone = "555-0300" }
-                };
-                context.Branches.AddRange(branches);
-                context.SaveChanges();
+                    context.Branches.Add(b);
+                    Console.WriteLine($"SEED_LOG: [CREATE] Branch: {b.Name}");
+                }
+                else
+                {
+                    Console.WriteLine($"SEED_LOG: [SKIP] Branch: {b.Name} (already exists)");
+                }
             }
-            var mainBranch = context.Branches.FirstOrDefault();
+            context.SaveChanges();
+            var mainBranch = context.Branches.FirstOrDefault(b => b.Name == "Main Downtown Branch") ?? context.Branches.FirstOrDefault();
 
             // 3. Seed Specializations
-            if (!context.Specializations.Any())
+            var specsToSeed = new[]
             {
-                var specializations = new[]
+                ("Retina Specialist", "Specializes in vitreoretinal diseases, macular degeneration, and retinal surgery"),
+                ("Cataract Specialist", "Specializes in clouding of natural lens and premium lens implants"),
+                ("Glaucoma Specialist", "Specializes in high intraocular pressure and optic nerve management"),
+                ("Cornea Specialist", "Specializes in corneal diseases, transplants, and complex segment care"),
+                ("Pediatric Ophthalmologist", "Specializes in pediatric vision issues and strabismus"),
+                ("General Ophthalmologist", "Provides comprehensive clinical eye screenings and basic care"),
+                ("Refractive Surgery Specialist", "Specializes in laser vision correction, LASIK, and PRK procedures"),
+                ("Oculoplastic Specialist", "Specializes in cosmetic and reconstructive eyelid/orbital surgery"),
+                ("Neuro Ophthalmologist", "Specializes in visual system problems related to nervous system"),
+                ("Contact Lens Specialist", "Specializes in precision medical and corrective contact lens fitting")
+            };
+
+            foreach (var s in specsToSeed)
+            {
+                if (!context.Specializations.Any(x => x.Name == s.Item1))
                 {
-                    new Specialization { Name = "General Ophthalmology", Description = "Comprehensive eye examinations and basic care" },
-                    new Specialization { Name = "Cornea & External Disease", Description = "Corneal transplants and complex anterior segment care" },
-                    new Specialization { Name = "Retina & Vitreous", Description = "Macular degeneration, diabetic retinopathy, and retinal detachment" },
-                    new Specialization { Name = "Pediatric Ophthalmology", Description = "Strabismus and pediatric eye conditions" },
-                    new Specialization { Name = "Refractive Surgery & LASIK", Description = "Vision correction procedures" }
-                };
-                context.Specializations.AddRange(specializations);
-                context.SaveChanges();
+                    context.Specializations.Add(new Specialization { Name = s.Item1, Description = s.Item2 });
+                    Console.WriteLine($"SEED_LOG: [CREATE] Specialization: {s.Item1}");
+                }
+                else
+                {
+                    Console.WriteLine($"SEED_LOG: [SKIP] Specialization: {s.Item1} (already exists)");
+                }
             }
-            var generalSpec = context.Specializations.FirstOrDefault();
+            context.SaveChanges();
 
             // 4. Seed Payment Methods
-            if (!context.PaymentMethods.Any())
+            var methods = new[]
             {
-                var methods = new[]
+                new PaymentMethod { Name = "Cash" },
+                new PaymentMethod { Name = "Credit Card" },
+                new PaymentMethod { Name = "Insurance Claim" },
+                new PaymentMethod { Name = "Bank Transfer" }
+            };
+
+            foreach (var m in methods)
+            {
+                if (!context.PaymentMethods.Any(x => x.Name == m.Name))
                 {
-                    new PaymentMethod { Name = "Cash" },
-                    new PaymentMethod { Name = "Credit Card" },
-                    new PaymentMethod { Name = "Insurance Claim" },
-                    new PaymentMethod { Name = "Bank Transfer" }
-                };
-                context.PaymentMethods.AddRange(methods);
-                context.SaveChanges();
+                    context.PaymentMethods.Add(m);
+                    Console.WriteLine($"SEED_LOG: [CREATE] Payment Method: {m.Name}");
+                }
+                else
+                {
+                    Console.WriteLine($"SEED_LOG: [SKIP] Payment Method: {m.Name} (already exists)");
+                }
             }
+            context.SaveChanges();
 
             // 5. Seed Medicines
-            if (!context.Medicines.Any())
+            var medicines = new[]
             {
-                var medicines = new[]
+                new Medicine { Name = "Artificial Tears Drops", Description = "Lubricant eye drops for dry eye relief", Manufacturer = "OcuCare Labs" },
+                new Medicine { Name = "Tobramycin Ophthalmic 0.3%", Description = "Antibiotic eye drops for bacterial infections", Manufacturer = "PharmaOptics" },
+                new Medicine { Name = "Latanoprost 0.005% Drops", Description = "Prostaglandin analog for glaucoma pressure reduction", Manufacturer = "GlaucoMed" },
+                new Medicine { Name = "Timolol Maleate 0.5%", Description = "Beta-blocker eye drops for ocular hypertension", Manufacturer = "BetaShield" },
+                new Medicine { Name = "Pataday Olopatadine 0.2%", Description = "Antihistamine drops for ocular allergies", Manufacturer = "Alcon" }
+            };
+
+            foreach (var med in medicines)
+            {
+                if (!context.Medicines.Any(x => x.Name == med.Name))
                 {
-                    new Medicine { Name = "Artificial Tears Drops", Description = "Lubricant eye drops for dry eye relief", Manufacturer = "OcuCare Labs" },
-                    new Medicine { Name = "Tobramycin Ophthalmic 0.3%", Description = "Antibiotic eye drops for bacterial infections", Manufacturer = "PharmaOptics" },
-                    new Medicine { Name = "Latanoprost 0.005% Drops", Description = "Prostaglandin analog for glaucoma pressure reduction", Manufacturer = "GlaucoMed" },
-                    new Medicine { Name = "Timolol Maleate 0.5%", Description = "Beta-blocker eye drops for ocular hypertension", Manufacturer = "BetaShield" },
-                    new Medicine { Name = "Pataday Olopatadine 0.2%", Description = "Antihistamine drops for ocular allergies", Manufacturer = "Alcon" }
-                };
-                context.Medicines.AddRange(medicines);
-                context.SaveChanges();
+                    context.Medicines.Add(med);
+                    Console.WriteLine($"SEED_LOG: [CREATE] Medicine: {med.Name}");
+                }
+                else
+                {
+                    Console.WriteLine($"SEED_LOG: [SKIP] Medicine: {med.Name} (already exists)");
+                }
             }
+            context.SaveChanges();
 
             // 6. Seed Surgery Types
-            if (!context.SurgeryTypes.Any())
+            var surgeryTypes = new[]
             {
-                var surgeryTypes = new[]
+                new SurgeryType { Name = "Phacoemulsification (Cataract)", Description = "Ultrasound removal of cloudy lens and intraocular lens implantation" },
+                new SurgeryType { Name = "LASIK Vision Correction", Description = "Laser resurfacing of cornea to correct myopia/astigmatism" },
+                new SurgeryType { Name = "Trabeculectomy (Glaucoma)", Description = "Creating a new drainage pathway to lower eye pressure" },
+                new SurgeryType { Name = "Vitrectomy", Description = "Removal of vitreous gel to treat retinal tears or diabetic bleeding" }
+            };
+
+            foreach (var st in surgeryTypes)
+            {
+                if (!context.SurgeryTypes.Any(x => x.Name == st.Name))
                 {
-                    new SurgeryType { Name = "Phacoemulsification (Cataract)", Description = "Ultrasound removal of cloudy lens and intraocular lens implantation" },
-                    new SurgeryType { Name = "LASIK Vision Correction", Description = "Laser resurfacing of cornea to correct myopia/astigmatism" },
-                    new SurgeryType { Name = "Trabeculectomy (Glaucoma)", Description = "Creating a new drainage pathway to lower eye pressure" },
-                    new SurgeryType { Name = "Vitrectomy", Description = "Removal of vitreous gel to treat retinal tears or diabetic bleeding" }
-                };
-                context.SurgeryTypes.AddRange(surgeryTypes);
-                context.SaveChanges();
+                    context.SurgeryTypes.Add(st);
+                    Console.WriteLine($"SEED_LOG: [CREATE] Surgery Type: {st.Name}");
+                }
+                else
+                {
+                    Console.WriteLine($"SEED_LOG: [SKIP] Surgery Type: {st.Name} (already exists)");
+                }
+            }
+            context.SaveChanges();
+
+            // 7. Seed Admin User
+            var adminUser = GetOrCreateUser(context, "Admin Principal", "admin@smarteye.com", "admin123", "555-9000", adminRole?.Id ?? 1);
+
+            // 8. Seed Receptionist User & Profile
+            var receptionistUser = GetOrCreateUser(context, "Sarah Connor", "receptionist@smarteye.com", "recep123", "555-9100", receptionistRole?.Id ?? 4);
+            GetOrCreateReceptionist(context, receptionistUser.Id, mainBranch?.Id ?? 1, new TimeOnly(8, 0), new TimeOnly(16, 0));
+
+            // 9. Seed Patient User & Profile
+            var patientUser = GetOrCreateUser(context, "John Doe", "patient@smarteye.com", "patient123", "555-9200", patientRole?.Id ?? 3);
+            GetOrCreatePatient(context, patientUser.Id, "NAT-11223344", "Male", "742 Evergreen Terrace, Springfield", new DateOnly(1985, 6, 15));
+
+            // 10. Seed the 10 Doctor Accounts
+            var doctorsToSeed = new[]
+            {
+                new { Name = "Dr. Alexander Wright", Email = "doctor1@smarteye.com", Phone = "555-9001", License = "LIC-ALEX-OPH", Specialty = "General Ophthalmologist", Bio = "Dr. Alexander Wright is highly experienced in general clinical ophthalmology and diagnostics.", Days = new[]{"Monday", "Friday"}, Start = 9, End = 17 },
+                new { Name = "Dr. Clara Oswald", Email = "doctor2@smarteye.com", Phone = "555-9002", License = "LIC-CLARA-OPH", Specialty = "Cornea Specialist", Bio = "Dr. Clara Oswald is an expert in corneal transplants and refractive anterior therapies.", Days = new[]{"Tuesday"}, Start = 10, End = 16 },
+                new { Name = "Dr. Bruce Banner", Email = "doctor3@smarteye.com", Phone = "555-9003", License = "LIC-BRUCE-OPH", Specialty = "Retina Specialist", Bio = "Dr. Bruce Banner specializes in macular degeneration and vitreoretinal operations.", Days = new[]{"Wednesday"}, Start = 8, End = 15 },
+                new { Name = "Dr. Diana Prince", Email = "doctor4@smarteye.com", Phone = "555-9004", License = "LIC-DIANA-OPH", Specialty = "Pediatric Ophthalmologist", Bio = "Dr. Diana Prince is dedicated to pediatric strabismus and childhood vision checkups.", Days = new[]{"Thursday"}, Start = 9, End = 14 },
+                new { Name = "Dr. Tony Stark", Email = "doctor5@smarteye.com", Phone = "555-9005", License = "LIC-TONY-OPH", Specialty = "Cataract Specialist", Bio = "Dr. Tony Stark specializes in high-precision ultrasonic cataract surgery and premium lens implants.", Days = new[]{"Monday", "Wednesday"}, Start = 9, End = 16 },
+                new { Name = "Dr. Steve Rogers", Email = "doctor6@smarteye.com", Phone = "555-9006", License = "LIC-STEVE-OPH", Specialty = "Glaucoma Specialist", Bio = "Dr. Steve Rogers is an expert in advanced eye pressure control and glaucoma micro-shunts.", Days = new[]{"Tuesday", "Thursday"}, Start = 10, End = 17 },
+                new { Name = "Dr. Natasha Romanoff", Email = "doctor7@smarteye.com", Phone = "555-9007", License = "LIC-NATASHA-OPH", Specialty = "Refractive Surgery Specialist", Bio = "Dr. Natasha Romanoff specializes in blade-free LASIK and laser vision correction solutions.", Days = new[]{"Friday"}, Start = 9, End = 15 },
+                new { Name = "Dr. Clint Barton", Email = "doctor8@smarteye.com", Phone = "555-9008", License = "LIC-CLINT-OPH", Specialty = "Oculoplastic Specialist", Bio = "Dr. Clint Barton focuses on reconstructive eyelids and orbital aesthetic surgeries.", Days = new[]{"Monday"}, Start = 11, End = 17 },
+                new { Name = "Dr. Wanda Maximoff", Email = "doctor9@smarteye.com", Phone = "555-9009", License = "LIC-WANDA-OPH", Specialty = "Neuro Ophthalmologist", Bio = "Dr. Wanda Maximoff specializes in complex optic nerve pathways and visual nervous system disorders.", Days = new[]{"Wednesday"}, Start = 9, End = 15 },
+                new { Name = "Dr. Stephen Strange", Email = "doctor10@smarteye.com", Phone = "555-9010", License = "LIC-STEPHEN-OPH", Specialty = "Contact Lens Specialist", Bio = "Dr. Stephen Strange is a certified expert in medical rigid contacts and astigmatism fitting.", Days = new[]{"Thursday"}, Start = 8, End = 16 }
+            };
+
+            foreach (var docInfo in doctorsToSeed)
+            {
+                var docUser = GetOrCreateUser(context, docInfo.Name, docInfo.Email, "Doctor@123", docInfo.Phone, doctorRole?.Id ?? 2);
+                var spec = context.Specializations.FirstOrDefault(s => s.Name == docInfo.Specialty);
+                var fee = 150.00m + (docUser.Id % 5) * 10;
+                var doctor = GetOrCreateDoctor(context, docUser.Id, spec?.Id ?? 1, docInfo.License, fee, docInfo.Bio);
+
+                foreach (var day in docInfo.Days)
+                {
+                    CreateDoctorScheduleIfNotExists(context, doctor.Id, day, new TimeOnly(docInfo.Start, 0), new TimeOnly(docInfo.End, 0));
+                }
+
+                // Print account to Seed Log console for developers to easily find
+                Console.WriteLine($"SEED_LOG: Seeding Doctor Profile Complete: {docInfo.Name} | Email: {docInfo.Email} | Password: Doctor@123 | Specialty: {docInfo.Specialty}");
             }
 
-            // Get specialization references
-            generalSpec = context.Specializations.FirstOrDefault(s => s.Name == "General Ophthalmology");
-            var corneaSpec = context.Specializations.FirstOrDefault(s => s.Name == "Cornea & External Disease");
-            var retinaSpec = context.Specializations.FirstOrDefault(s => s.Name == "Retina & Vitreous");
-            var pediatricSpec = context.Specializations.FirstOrDefault(s => s.Name == "Pediatric Ophthalmology");
+            // 11. Seed Legacy Doctor User & Profile
+            var legacyDocUser = GetOrCreateUser(context, "Dr. Alexander Wright Legacy", "doctor@smarteye.com", "doctor123", "555-9999", doctorRole?.Id ?? 2);
+            var generalSpec = context.Specializations.FirstOrDefault(s => s.Name == "General Ophthalmologist") ?? context.Specializations.FirstOrDefault();
+            GetOrCreateDoctor(context, legacyDocUser.Id, generalSpec?.Id ?? 1, "LIC-LEGACY-OPH", 150.00m, "Legacy account for testing.");
 
-            // 7. Seed Users (Admin, Doctor, Patient, Receptionist)
-            if (!context.Users.Any())
+            Console.WriteLine("SEED_LOG: Database Seeding Routine Completed Successfully.");
+        }
+
+        private static User GetOrCreateUser(AppDbContext context, string fullName, string email, string passwordHash, string phoneNumber, int roleId)
+        {
+            // 1. Check by email
+            var user = context.Users.FirstOrDefault(u => u.Email == email);
+            if (user != null)
             {
-                // Admin User
-                var adminUser = new User
-                {
-                    FullName = "Admin Principal",
-                    Email = "admin@smarteye.com",
-                    PasswordHash = "admin123", // plaintext verification for ease
-                    PhoneNumber = "555-9000",
-                    RoleId = adminRole?.Id ?? 1,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                };
-                context.Users.Add(adminUser);
-
-                // --- Doctor 1: Dr. Alexander Wright ---
-                var docUser1 = new User
-                {
-                    FullName = "Dr. Alexander Wright",
-                    Email = "doctor@smarteye.com",
-                    PasswordHash = "doctor123",
-                    PhoneNumber = "555-9001",
-                    RoleId = doctorRole?.Id ?? 2,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                };
-                context.Users.Add(docUser1);
-                context.SaveChanges(); // Save to get User ID
-
-                var docProfile1 = new Doctor
-                {
-                    UserId = docUser1.Id,
-                    SpecializationId = generalSpec?.Id ?? 1,
-                    LicenseNumber = "LIC-9988-OPH",
-                    ConsultationFee = 150.00m,
-                    Bio = "Dr. Alexander Wright has over 15 years of experience in clinical ophthalmology specializing in general eye health and advanced diagnostics."
-                };
-                context.Doctors.Add(docProfile1);
-
-                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile1, DayOfWeek = "Monday", StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0), IsAvailable = true });
-                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile1, DayOfWeek = "Friday", StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(17, 0), IsAvailable = true });
-
-                // --- Doctor 2: Dr. Clara Oswald ---
-                var docUser2 = new User
-                {
-                    FullName = "Dr. Clara Oswald",
-                    Email = "clara@smarteye.com",
-                    PasswordHash = "doctor123",
-                    PhoneNumber = "555-9011",
-                    RoleId = doctorRole?.Id ?? 2,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                };
-                context.Users.Add(docUser2);
-                context.SaveChanges();
-
-                var docProfile2 = new Doctor
-                {
-                    UserId = docUser2.Id,
-                    SpecializationId = corneaSpec?.Id ?? 2,
-                    LicenseNumber = "LIC-1122-COR",
-                    ConsultationFee = 180.00m,
-                    Bio = "Dr. Clara Oswald is an expert in corneal transplant surgery, keratoconus management, and complex laser therapies."
-                };
-                context.Doctors.Add(docProfile2);
-
-                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile2, DayOfWeek = "Tuesday", StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(16, 0), IsAvailable = true });
-
-                // --- Doctor 3: Dr. Bruce Banner ---
-                var docUser3 = new User
-                {
-                    FullName = "Dr. Bruce Banner",
-                    Email = "bruce@smarteye.com",
-                    PasswordHash = "doctor123",
-                    PhoneNumber = "555-9012",
-                    RoleId = doctorRole?.Id ?? 2,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                };
-                context.Users.Add(docUser3);
-                context.SaveChanges();
-
-                var docProfile3 = new Doctor
-                {
-                    UserId = docUser3.Id,
-                    SpecializationId = retinaSpec?.Id ?? 3,
-                    LicenseNumber = "LIC-3344-RET",
-                    ConsultationFee = 200.00m,
-                    Bio = "Dr. Bruce Banner specializes in diabetic retinopathy, macular degeneration treatments, and advanced vitreoretinal micro-surgeries."
-                };
-                context.Doctors.Add(docProfile3);
-
-                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile3, DayOfWeek = "Wednesday", StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(15, 0), IsAvailable = true });
-
-                // --- Doctor 4: Dr. Diana Prince ---
-                var docUser4 = new User
-                {
-                    FullName = "Dr. Diana Prince",
-                    Email = "diana@smarteye.com",
-                    PasswordHash = "doctor123",
-                    PhoneNumber = "555-9013",
-                    RoleId = doctorRole?.Id ?? 2,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                };
-                context.Users.Add(docUser4);
-                context.SaveChanges();
-
-                var docProfile4 = new Doctor
-                {
-                    UserId = docUser4.Id,
-                    SpecializationId = pediatricSpec?.Id ?? 4,
-                    LicenseNumber = "LIC-5566-PED",
-                    ConsultationFee = 160.00m,
-                    Bio = "Dr. Diana Prince is dedicated to pediatric vision care, strabismus correction, and early childhood vision development."
-                };
-                context.Doctors.Add(docProfile4);
-
-                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile4, DayOfWeek = "Thursday", StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(14, 0), IsAvailable = true });
-
-
-                // Receptionist User & Profile
-                var receptionistUser = new User
-                {
-                    FullName = "Sarah Connor",
-                    Email = "receptionist@smarteye.com",
-                    PasswordHash = "recep123",
-                    PhoneNumber = "555-9002",
-                    RoleId = receptionistRole?.Id ?? 4,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                };
-                context.Users.Add(receptionistUser);
-                context.SaveChanges(); // Save to get User ID
-
-                var receptionistProfile = new Receptionist
-                {
-                    UserId = receptionistUser.Id,
-                    BranchId = mainBranch?.Id ?? 1,
-                    ShiftStart = new TimeOnly(8, 0),
-                    ShiftEnd = new TimeOnly(16, 0)
-                };
-                context.Receptionists.Add(receptionistProfile);
-
-                // Patient User & Profile
-                var patientUser = new User
-                {
-                    FullName = "John Doe",
-                    Email = "patient@smarteye.com",
-                    PasswordHash = "patient123",
-                    PhoneNumber = "555-9003",
-                    RoleId = patientRole?.Id ?? 3,
-                    IsActive = true,
-                    CreatedAt = DateTime.Now
-                };
-                context.Users.Add(patientUser);
-                context.SaveChanges(); // Save to get User ID
-
-                var patientProfile = new Patient
-                {
-                    UserId = patientUser.Id,
-                    NationalId = "NAT-11223344",
-                    Gender = "Male",
-                    Address = "742 Evergreen Terrace, Springfield",
-                    DateOfBirth = new DateOnly(1985, 6, 15)
-                };
-                context.Patients.Add(patientProfile);
-
-                context.SaveChanges();
+                Console.WriteLine($"SEED_LOG: [SKIP] User creation: {email} (exists by email)");
+                return user;
             }
 
-            // Check if we need to seed the additional doctors on an existing database
-            if (context.Users.Any() && !context.Users.Any(u => u.Email == "clara@smarteye.com"))
+            // 2. Check by phone number
+            if (!string.IsNullOrEmpty(phoneNumber))
             {
-                
-                // Seed Clara
-                var docUser2 = new User { FullName = "Dr. Clara Oswald", Email = "clara@smarteye.com", PasswordHash = "doctor123", PhoneNumber = "555-9011", RoleId = doctorRole?.Id ?? 2, IsActive = true, CreatedAt = DateTime.Now };
-                context.Users.Add(docUser2);
-                context.SaveChanges();
-                var docProfile2 = new Doctor { UserId = docUser2.Id, SpecializationId = corneaSpec?.Id ?? 2, LicenseNumber = "LIC-1122-COR", ConsultationFee = 180.00m, Bio = "Dr. Clara Oswald is an expert in corneal transplant surgery, keratoconus management, and complex laser therapies." };
-                context.Doctors.Add(docProfile2);
-                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile2, DayOfWeek = "Tuesday", StartTime = new TimeOnly(10, 0), EndTime = new TimeOnly(16, 0), IsAvailable = true });
-
-                // Seed Bruce
-                var docUser3 = new User { FullName = "Dr. Bruce Banner", Email = "bruce@smarteye.com", PasswordHash = "doctor123", PhoneNumber = "555-9012", RoleId = doctorRole?.Id ?? 2, IsActive = true, CreatedAt = DateTime.Now };
-                context.Users.Add(docUser3);
-                context.SaveChanges();
-                var docProfile3 = new Doctor { UserId = docUser3.Id, SpecializationId = retinaSpec?.Id ?? 3, LicenseNumber = "LIC-3344-RET", ConsultationFee = 200.00m, Bio = "Dr. Bruce Banner specializes in diabetic retinopathy, macular degeneration treatments, and advanced vitreoretinal micro-surgeries." };
-                context.Doctors.Add(docProfile3);
-                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile3, DayOfWeek = "Wednesday", StartTime = new TimeOnly(8, 0), EndTime = new TimeOnly(15, 0), IsAvailable = true });
-
-                // Seed Diana
-                var docUser4 = new User { FullName = "Dr. Diana Prince", Email = "diana@smarteye.com", PasswordHash = "doctor123", PhoneNumber = "555-9013", RoleId = doctorRole?.Id ?? 2, IsActive = true, CreatedAt = DateTime.Now };
-                context.Users.Add(docUser4);
-                context.SaveChanges();
-                var docProfile4 = new Doctor { UserId = docUser4.Id, SpecializationId = pediatricSpec?.Id ?? 4, LicenseNumber = "LIC-5566-PED", ConsultationFee = 160.00m, Bio = "Dr. Diana Prince is dedicated to pediatric vision care, strabismus correction, and early childhood vision development." };
-                context.Doctors.Add(docProfile4);
-                context.DoctorSchedules.Add(new DoctorSchedule { Doctor = docProfile4, DayOfWeek = "Thursday", StartTime = new TimeOnly(9, 0), EndTime = new TimeOnly(14, 0), IsAvailable = true });
-
-                context.SaveChanges();
+                user = context.Users.FirstOrDefault(u => u.PhoneNumber == phoneNumber);
+                if (user != null)
+                {
+                    Console.WriteLine($"SEED_LOG: [SKIP] User creation: {fullName} (exists by phone {phoneNumber}). Mapping to existing user email: {user.Email}");
+                    return user;
+                }
             }
+
+            // 3. Create new user
+            user = new User
+            {
+                FullName = fullName,
+                Email = email,
+                PasswordHash = passwordHash,
+                PhoneNumber = phoneNumber,
+                RoleId = roleId,
+                IsActive = true,
+                CreatedAt = DateTime.Now
+            };
+            context.Users.Add(user);
+            context.SaveChanges();
+            Console.WriteLine($"SEED_LOG: [CREATE] User: {email} (phone: {phoneNumber})");
+            return user;
+        }
+
+        private static Receptionist GetOrCreateReceptionist(AppDbContext context, int userId, int branchId, TimeOnly shiftStart, TimeOnly shiftEnd)
+        {
+            var receptionist = context.Receptionists.FirstOrDefault(r => r.UserId == userId);
+            if (receptionist != null)
+            {
+                Console.WriteLine($"SEED_LOG: [SKIP] Receptionist Profile for UserId: {userId} (already exists)");
+                return receptionist;
+            }
+
+            receptionist = new Receptionist
+            {
+                UserId = userId,
+                BranchId = branchId,
+                ShiftStart = shiftStart,
+                ShiftEnd = shiftEnd
+            };
+            context.Receptionists.Add(receptionist);
+            context.SaveChanges();
+            Console.WriteLine($"SEED_LOG: [CREATE] Receptionist Profile for UserId: {userId}");
+            return receptionist;
+        }
+
+        private static Patient GetOrCreatePatient(AppDbContext context, int userId, string nationalId, string gender, string address, DateOnly dateOfBirth)
+        {
+            var patient = context.Patients.FirstOrDefault(p => p.UserId == userId);
+            if (patient != null)
+            {
+                Console.WriteLine($"SEED_LOG: [SKIP] Patient Profile for UserId: {userId} (already exists)");
+                return patient;
+            }
+
+            // Verify NationalId is not taken
+            if (!string.IsNullOrEmpty(nationalId))
+            {
+                var existingByNat = context.Patients.FirstOrDefault(p => p.NationalId == nationalId);
+                if (existingByNat != null)
+                {
+                    var newNationalId = $"NAT-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
+                    Console.WriteLine($"SEED_LOG: [WARNING] Patient NationalId {nationalId} already taken by UserId {existingByNat.UserId}. Re-generating unique NationalId: {newNationalId}");
+                    nationalId = newNationalId;
+                }
+            }
+
+            patient = new Patient
+            {
+                UserId = userId,
+                NationalId = nationalId,
+                Gender = gender,
+                Address = address,
+                DateOfBirth = dateOfBirth
+            };
+            context.Patients.Add(patient);
+            context.SaveChanges();
+            Console.WriteLine($"SEED_LOG: [CREATE] Patient Profile for UserId: {userId} (NationalId: {nationalId})");
+            return patient;
+        }
+
+        private static Doctor GetOrCreateDoctor(AppDbContext context, int userId, int specializationId, string licenseNumber, decimal consultationFee, string bio)
+        {
+            var doctor = context.Doctors.FirstOrDefault(d => d.UserId == userId);
+            if (doctor != null)
+            {
+                Console.WriteLine($"SEED_LOG: [SKIP] Doctor Profile for UserId: {userId} (already exists)");
+                return doctor;
+            }
+
+            // Verify LicenseNumber is not taken
+            var existingByLic = context.Doctors.FirstOrDefault(d => d.LicenseNumber == licenseNumber);
+            if (existingByLic != null)
+            {
+                var newLicense = $"LIC-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}-OPH";
+                Console.WriteLine($"SEED_LOG: [WARNING] Doctor LicenseNumber {licenseNumber} already taken by doctor ID {existingByLic.Id}. Re-generating unique LicenseNumber: {newLicense}");
+                licenseNumber = newLicense;
+            }
+
+            doctor = new Doctor
+            {
+                UserId = userId,
+                SpecializationId = specializationId,
+                LicenseNumber = licenseNumber,
+                ConsultationFee = consultationFee,
+                Bio = bio
+            };
+            context.Doctors.Add(doctor);
+            context.SaveChanges();
+            Console.WriteLine($"SEED_LOG: [CREATE] Doctor Profile for UserId: {userId} (License: {licenseNumber})");
+            return doctor;
+        }
+
+        private static void CreateDoctorScheduleIfNotExists(AppDbContext context, int doctorId, string dayOfWeek, TimeOnly startTime, TimeOnly endTime)
+        {
+            var exists = context.DoctorSchedules.Any(ds => ds.DoctorId == doctorId && ds.DayOfWeek == dayOfWeek);
+            if (exists)
+            {
+                Console.WriteLine($"SEED_LOG: [SKIP] Schedule for DoctorId: {doctorId} on {dayOfWeek} (already exists)");
+                return;
+            }
+
+            var schedule = new DoctorSchedule
+            {
+                DoctorId = doctorId,
+                DayOfWeek = dayOfWeek,
+                StartTime = startTime,
+                EndTime = endTime,
+                IsAvailable = true
+            };
+            context.DoctorSchedules.Add(schedule);
+            context.SaveChanges();
+            Console.WriteLine($"SEED_LOG: [CREATE] Schedule for DoctorId: {doctorId} on {dayOfWeek}");
         }
     }
 }

@@ -1,376 +1,423 @@
 @{
     ViewData["Title"] = "Admin Dashboard";
-    var audits   = ViewBag.RecentAudits  as List<SmartEyeClinic.Models.AuditLog>;
+    var audits = ViewBag.RecentAudits as List<SmartEyeClinic.Models.AuditLog>;
     var payments = ViewBag.RecentPayments as List<SmartEyeClinic.Models.Payment>;
+    var doctorsList = ViewBag.DoctorsList as List<SmartEyeClinic.Models.Doctor>;
+    var patientsList = ViewBag.PatientsList as List<SmartEyeClinic.Models.Patient>;
+    var appointmentsList = ViewBag.AppointmentsList as List<SmartEyeClinic.Models.Appointment>;
+    var depositsList = ViewBag.DepositsList as List<SmartEyeClinic.Models.Appointment>;
+    var notificationsList = ViewBag.RecentNotifications as List<SmartEyeClinic.Models.Notification>;
 }
 
 <!-- Page Header -->
-<div class="page-header">
-    <div class="page-header-left">
-        <div class="breadcrumb-nav">
-            <a href="/"><i class="bi bi-house-door"></i> Home</a>
-            <span class="separator">/</span>
-            <span class="current">Admin Dashboard</span>
+<div class="page-header py-4 mb-4 border-bottom">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <div class="breadcrumb-nav small text-muted mb-2">
+                <a href="/" class="text-decoration-none text-muted"><i class="fa-solid fa-house"></i> Home</a>
+                <span class="mx-2">/</span>
+                <span class="text-primary font-weight-bold">Administrative Dashboard</span>
+            </div>
+            <h1 class="page-title fw-800 text-dark mb-1"><i class="fa-solid fa-gauge-high text-primary me-2"></i>Administrative Control Center</h1>
+            <p class="text-muted mb-0">Clinic-wide clinical performance, billing audits, system seeder logs, and user roles control.</p>
         </div>
-        <h1 class="page-title"><i class="bi bi-speedometer2 text-secondary-custom me-2"></i>Administrative Control Room</h1>
-        <p class="page-subtitle">Clinic-wide performance KPIs, revenue analytics, and audit intelligence.</p>
-    </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a asp-controller="Patient"      asp-action="Create" class="btn btn-outline-primary btn-sm">
-            <i class="bi bi-person-plus"></i> New Patient
-        </a>
-        <a asp-controller="Doctor"       asp-action="Create" class="btn btn-primary btn-sm">
-            <i class="bi bi-person-badge"></i> Add Doctor
-        </a>
+        <div class="d-flex gap-2">
+            <a asp-controller="Patient" asp-action="Create" class="btn btn-outline-primary rounded-pill px-4 fw-bold">
+                <i class="fa-solid fa-user-plus me-1"></i> New Patient
+            </a>
+            <a asp-controller="Doctor" asp-action="Create" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                <i class="fa-solid fa-user-doctor me-1"></i> Add Doctor
+            </a>
+        </div>
     </div>
 </div>
 
-<!-- Primary KPI Cards -->
+<!-- Primary KPIs -->
 <div class="row g-4 mb-4">
     <div class="col-xl-3 col-md-6">
-        <div class="metric-card metric-gradient-primary">
-            <div class="metric-label">Total Patients</div>
-            <div class="metric-value">@ViewBag.TotalPatients</div>
-            <div class="metric-sub"><i class="bi bi-people"></i> Registered clinic cases</div>
-            <div class="metric-icon"><i class="bi bi-hospital"></i></div>
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--primary) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Total Patients</span>
+            <div class="fs-2 fw-bold text-dark mb-1">@ViewBag.TotalPatients</div>
+            <div class="text-muted small"><i class="fa-solid fa-hospital-user text-primary me-1"></i> Clinic patient profiles</div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="metric-card metric-gradient-secondary">
-            <div class="metric-label">Active Specialists</div>
-            <div class="metric-value">@ViewBag.TotalDoctors</div>
-            <div class="metric-sub"><i class="bi bi-person-badge"></i> Clinical staff</div>
-            <div class="metric-icon"><i class="bi bi-person-badge"></i></div>
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--success) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Active Specialists</span>
+            <div class="fs-2 fw-bold text-dark mb-1">@ViewBag.TotalDoctors</div>
+            <div class="text-muted small"><i class="fa-solid fa-user-md text-success me-1"></i> Board-certified staff</div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="metric-card metric-gradient-accent">
-            <div class="metric-label">Total Bookings</div>
-            <div class="metric-value">@ViewBag.TotalAppointments</div>
-            <div class="metric-sub"><i class="bi bi-calendar-check"></i> Consultations logged</div>
-            <div class="metric-icon"><i class="bi bi-calendar2-week"></i></div>
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--warning) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Total Bookings</span>
+            <div class="fs-2 fw-bold text-dark mb-1">@ViewBag.TotalAppointments</div>
+            <div class="text-muted small"><i class="fa-solid fa-calendar-check text-warning me-1"></i> Scheduled logs</div>
         </div>
     </div>
     <div class="col-xl-3 col-md-6">
-        <div class="metric-card metric-gradient-success">
-            <div class="metric-label">Total Revenue</div>
-            <div class="metric-value">$@(((decimal)ViewBag.TotalRevenue).ToString("N0"))</div>
-            <div class="metric-sub"><i class="bi bi-wallet2"></i> Gross payments settled</div>
-            <div class="metric-icon"><i class="bi bi-currency-dollar"></i></div>
+        <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--danger) !important;">
+            <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Clinic Revenue</span>
+            <div class="fs-2 fw-bold text-dark mb-1">$@(((decimal)ViewBag.TotalRevenue).ToString("N2"))</div>
+            <div class="text-muted small"><i class="fa-solid fa-credit-card text-danger me-1"></i> Gross revenue settled</div>
         </div>
     </div>
 </div>
 
-<!-- Secondary KPI Row -->
-<div class="row g-3 mb-4">
+<!-- Secondary Stats Row -->
+<div class="row g-3 mb-5">
     <div class="col-md-4">
-        <div class="custom-card p-4 d-flex align-items-center gap-4">
-            <div class="avatar-initials avatar-lg" style="background: linear-gradient(135deg,rgba(59,130,246,0.15),rgba(59,130,246,0.08)); color: var(--info);">
-                <i class="bi bi-calendar-day fs-4"></i>
-            </div>
-            <div>
-                <div class="text-xs text-muted text-uppercase fw-700 mb-1">Today's Visits</div>
-                <div class="fw-800" style="font-size:2rem; color:var(--text);">@ViewBag.TodayAppointmentsCount</div>
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--radius-md);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="avatar-sm bg-light-primary text-primary rounded d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                    <i class="fa-solid fa-calendar-day"></i>
+                </div>
+                <div>
+                    <span class="text-muted text-xs uppercase d-block">Today's Visits</span>
+                    <span class="fw-bold fs-4 text-dark">@ViewBag.TodayAppointmentsCount</span>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="custom-card p-4 d-flex align-items-center gap-4">
-            <div class="avatar-initials avatar-lg" style="background: rgba(239,68,68,0.1); color: var(--danger);">
-                <i class="bi bi-scissors fs-4"></i>
-            </div>
-            <div>
-                <div class="text-xs text-muted text-uppercase fw-700 mb-1">Surgeries Scheduled</div>
-                <div class="fw-800" style="font-size:2rem; color:var(--text);">@ViewBag.TotalSurgeries</div>
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--radius-md);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="avatar-sm bg-light-danger text-danger rounded d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                    <i class="fa-solid fa-hand-holding-medical"></i>
+                </div>
+                <div>
+                    <span class="text-muted text-xs uppercase d-block">Surgeries Scheduled</span>
+                    <span class="fw-bold fs-4 text-dark">@ViewBag.TotalSurgeries</span>
+                </div>
             </div>
         </div>
     </div>
     <div class="col-md-4">
-        <div class="custom-card p-4 d-flex align-items-center gap-4">
-            <div class="avatar-initials avatar-lg" style="background: rgba(245,158,11,0.1); color: var(--warning);">
-                <i class="bi bi-receipt fs-4"></i>
-            </div>
-            <div>
-                <div class="text-xs text-muted text-uppercase fw-700 mb-1">Unpaid Invoices</div>
-                <div class="fw-800" style="font-size:2rem; color:var(--text);">@ViewBag.UnpaidInvoicesCount</div>
+        <div class="card border-0 shadow-sm p-3 bg-white" style="border-radius: var(--radius-md);">
+            <div class="d-flex align-items-center gap-3">
+                <div class="avatar-sm bg-light-warning text-warning rounded d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; font-size: 1.25rem;">
+                    <i class="fa-solid fa-receipt"></i>
+                </div>
+                <div>
+                    <span class="text-muted text-xs uppercase d-block">Unpaid Invoices</span>
+                    <span class="fw-bold fs-4 text-dark">@ViewBag.UnpaidInvoicesCount</span>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Main Content Grid -->
-<div class="row g-4">
-    <!-- Revenue Chart + Payments -->
-    <div class="col-lg-7">
-
-        <!-- Revenue Chart -->
-        <div class="table-card mb-4">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-graph-up"></i> Revenue Flow &amp; Appointment Traffic</h5>
-                <div class="d-flex gap-2">
-                    <span class="pill pill-primary">Monthly</span>
-                </div>
+<!-- Tabs for Admin Management views -->
+<div class="card border-0 shadow-sm rounded-4 bg-white mb-5">
+    <div class="card-header bg-transparent border-0 px-4 pt-4">
+        <ul class="nav nav-pills gap-2" id="adminTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active rounded-pill px-4 fw-bold" id="doc-tab" data-bs-toggle="tab" data-bs-target="#doc-pane" type="button" role="tab"><i class="fa-solid fa-user-doctor me-2"></i>Doctors</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold" id="pat-tab" data-bs-toggle="tab" data-bs-target="#pat-pane" type="button" role="tab"><i class="fa-solid fa-users me-2"></i>Patients</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold" id="app-tab" data-bs-toggle="tab" data-bs-target="#app-pane" type="button" role="tab"><i class="fa-solid fa-calendar-days me-2"></i>Appointments</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold" id="dep-tab" data-bs-toggle="tab" data-bs-target="#dep-pane" type="button" role="tab"><i class="fa-solid fa-wallet me-2"></i>Deposits</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold" id="notif-tab" data-bs-toggle="tab" data-bs-target="#notif-pane" type="button" role="tab"><i class="fa-solid fa-bell me-2"></i>System Alerts</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link rounded-pill px-4 fw-bold text-info" id="seed-tab" data-bs-toggle="tab" data-bs-target="#seed-pane" type="button" role="tab"><i class="fa-solid fa-bug me-2"></i>Seed Logs</button>
+            </li>
+        </ul>
+    </div>
+    
+    <div class="card-body p-4 tab-content" id="adminTabContent">
+        
+        <!-- PANE 1: Doctors -->
+        <div class="tab-pane fade show active" id="doc-pane" role="tabpanel" aria-labelledby="doc-tab">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0">Doctors List</h5>
+                <a asp-controller="Doctor" asp-action="Index" class="btn btn-sm btn-light border rounded-pill px-3">Doctor CRUD Flow</a>
             </div>
-            <div class="card-body-clean">
-                <div style="height: 260px; position: relative;">
-                    <canvas id="revenueChart"></canvas>
-                </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Doctor</th>
+                            <th>Specialty</th>
+                            <th>License</th>
+                            <th>Fee</th>
+                            <th>Phone</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var doc in doctorsList)
+                        {
+                            <tr>
+                                <td><span class="fw-bold text-dark">Dr. @doc.User?.FullName</span></td>
+                                <td><span class="badge bg-light text-primary border border-info rounded-pill">@doc.Specialization?.Name</span></td>
+                                <td><span class="font-monospace text-xs text-muted">@doc.LicenseNumber</span></td>
+                                <td><span class="fw-bold text-dark">$@doc.ConsultationFee</span></td>
+                                <td><span class="text-muted text-sm">@doc.User?.PhoneNumber</span></td>
+                                <td class="text-end">
+                                    <a asp-controller="Doctor" asp-action="Details" asp-route-id="@doc.Id" class="btn btn-outline-primary btn-xs rounded-pill">View</a>
+                                    <a asp-controller="Doctor" asp-action="Edit" asp-route-id="@doc.Id" class="btn btn-light btn-xs border rounded-pill text-warning"><i class="fa-solid fa-edit"></i></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- Recent Payments -->
-        <div class="table-card">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-cash-stack"></i> Recent Payments</h5>
-                <a asp-controller="Payment" asp-action="Index" class="btn btn-light btn-sm">
-                    <i class="bi bi-arrow-right"></i> View All
+        <!-- PANE 2: Patients -->
+        <div class="tab-pane fade" id="pat-pane" role="tabpanel" aria-labelledby="pat-tab">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h5 class="fw-bold text-dark mb-0">Patients Directory</h5>
+                <a asp-controller="Patient" asp-action="Index" class="btn btn-sm btn-light border rounded-pill px-3">Patients CRUD Flow</a>
+            </div>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Patient Name</th>
+                            <th>Email</th>
+                            <th>National ID</th>
+                            <th>Contact</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var pat in patientsList)
+                        {
+                            <tr>
+                                <td><span class="fw-bold text-dark">@pat.User?.FullName</span></td>
+                                <td><span class="text-sm text-muted">@pat.User?.Email</span></td>
+                                <td><span class="font-monospace text-sm text-dark">@pat.NationalId</span></td>
+                                <td><span class="text-muted text-sm">@pat.User?.PhoneNumber</span></td>
+                                <td class="text-end">
+                                    <a asp-controller="Patient" asp-action="Details" asp-route-id="@pat.Id" class="btn btn-outline-primary btn-xs rounded-pill">Profile</a>
+                                    <a asp-controller="Patient" asp-action="Edit" asp-route-id="@pat.Id" class="btn btn-light btn-xs border rounded-pill text-warning"><i class="fa-solid fa-edit"></i></a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PANE 3: Appointments -->
+        <div class="tab-pane fade" id="app-pane" role="tabpanel" aria-labelledby="app-tab">
+            <h5 class="fw-bold text-dark mb-4">Appointments Logs</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Date &amp; Time</th>
+                            <th>Status</th>
+                            <th>Deposit Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in appointmentsList)
+                        {
+                            var appBadge = app.Status switch
+                            {
+                                "Approved" => "bg-success text-white",
+                                "Pending Doctor Approval" => "bg-warning text-dark",
+                                "Pending Deposit" => "bg-info text-white",
+                                "Completed" => "bg-secondary text-white",
+                                _ => "bg-light text-dark"
+                            };
+                            <tr>
+                                <td><span class="fw-bold text-dark">@app.Patient?.User?.FullName</span></td>
+                                <td>Dr. @app.Doctor?.User?.FullName</td>
+                                <td>
+                                    <span class="fw-bold text-dark d-block">@app.AppointmentDateTime.ToString("dd MMM yyyy")</span>
+                                    <span class="text-muted text-xs">@app.AppointmentDateTime.ToString("hh:mm tt")</span>
+                                </td>
+                                <td><span class="badge rounded-pill px-3 py-1 @appBadge">@app.Status</span></td>
+                                <td>
+                                    @if(app.DepositStatus == "Paid") {
+                                        <span class="badge bg-light-success text-success px-2 py-1 rounded-pill"><i class="fa-solid fa-circle-check"></i> Paid ($@app.DepositAmount)</span>
+                                    } else {
+                                        <span class="badge bg-light-danger text-danger px-2 py-1 rounded-pill"><i class="fa-solid fa-circle-exclamation"></i> Pending ($@app.DepositAmount)</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PANE 4: Deposits -->
+        <div class="tab-pane fade" id="dep-pane" role="tabpanel" aria-labelledby="dep-tab">
+            <h5 class="fw-bold text-dark mb-4">Deposit Payments Log</h5>
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Doctor</th>
+                            <th>Booking Date</th>
+                            <th>Deposit Amount</th>
+                            <th>Paid Status</th>
+                            <th>Payment Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var app in depositsList)
+                        {
+                            <tr>
+                                <td><span class="fw-bold text-dark">@app.Patient?.User?.FullName</span></td>
+                                <td>Dr. @app.Doctor?.User?.FullName</td>
+                                <td><span class="text-muted text-sm">@app.AppointmentDateTime.ToString("g")</span></td>
+                                <td><span class="fw-bold text-dark">$@app.DepositAmount.ToString("F2")</span></td>
+                                <td>
+                                    <span class="badge rounded-pill px-3 py-1 @(app.DepositStatus == "Paid" ? "bg-success" : "bg-danger")">
+                                        @app.DepositStatus
+                                    </span>
+                                </td>
+                                <td><span class="text-muted text-xs">@(app.PaymentDate?.ToString("g") ?? "N/A")</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PANE 5: System Alerts -->
+        <div class="tab-pane fade" id="notif-pane" role="tabpanel" aria-labelledby="notif-tab">
+            <h5 class="fw-bold text-dark mb-4">System-Wide Logged Notifications</h5>
+            <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr>
+                            <th>Recipient</th>
+                            <th>Alert Title</th>
+                            <th>Alert Message</th>
+                            <th>Sent Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var n in notificationsList)
+                        {
+                            <tr>
+                                <td><span class="fw-bold text-dark text-xs">@n.UserId</span></td>
+                                <td><span class="badge bg-light text-primary border rounded-pill">@n.Title</span></td>
+                                <td><span class="text-muted text-xs">@n.Message</span></td>
+                                <td><span class="text-muted text-xs">@n.SentAt?.ToString("g")</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- PANE 6: Seed Logs / Doctor Accounts -->
+        <div class="tab-pane fade" id="seed-pane" role="tabpanel" aria-labelledby="seed-tab">
+            <div class="alert alert-info border-0 p-4 rounded-3" style="background: rgba(14,165,233,0.05);">
+                <h6 class="fw-bold text-dark"><i class="fa-solid fa-circle-info me-2 text-primary"></i>Developer Seed Catalog</h6>
+                <p class="text-muted text-sm mb-3">Below are the credentials for the generated ophthalmologists used to log in and inspect clinical workflows.</p>
+                <a href="/Home/DoctorAccountsReport" class="btn btn-primary btn-sm rounded-pill fw-bold px-4" target="_blank">
+                    Open Accounts Reference Report <i class="fa-solid fa-arrow-up-right-from-square ms-1"></i>
                 </a>
             </div>
-            @if (payments == null || !payments.Any())
-            {
-                <div class="empty-state">
-                    <div class="empty-state-icon"><i class="bi bi-receipt"></i></div>
-                    <h5>No Recent Payments</h5>
-                    <p>Payment records will appear here once transactions are processed.</p>
-                </div>
-            }
-            else
-            {
-                <div class="table-responsive-custom">
-                    <table class="custom-table">
-                        <thead>
-                            <tr>
-                                <th>Patient</th>
-                                <th>Amount</th>
-                                <th>Method</th>
-                                <th>Date</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var p in payments)
-                            {
-                                <tr>
-                                    <td>
-                                        <div class="d-flex align-items-center gap-2">
-                                            <div class="avatar-initials avatar-sm">
-                                                @(p.Invoice?.Patient?.User?.FullName?.Length > 0 ? p.Invoice.Patient.User.FullName[0].ToString().ToUpper() : "P")
-                                            </div>
-                                            <strong>@p.Invoice?.Patient?.User?.FullName</strong>
-                                        </div>
-                                    </td>
-                                    <td><span class="text-success fw-700">$@p.Amount.ToString("F2")</span></td>
-                                    <td><span class="badge-status badge-secondary">@p.PaymentMethod?.Name</span></td>
-                                    <td class="text-muted text-sm">@(p.PaidAt.HasValue ? p.PaidAt.Value.ToString("dd MMM yyyy") : "N/A")</td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
-    </div>
-
-    <!-- Audit Log + Quick Actions -->
-    <div class="col-lg-5">
-        <!-- Notifications Panel -->
-        <div class="table-card mb-4">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-bell-fill text-warning"></i> System Notifications</h5>
-                <span class="badge bg-light text-primary border small font-size-xs">Logs</span>
-            </div>
-            <div class="card-body-clean" style="max-height: 260px; overflow-y: auto; padding: 15px;">
-                @{
-                    var notifications = ViewBag.RecentNotifications as List<SmartEyeClinic.Models.Notification>;
-                }
-                @if (notifications == null || !notifications.Any())
-                {
-                    <div class="text-center py-4">
-                        <i class="bi bi-bell-slash text-muted fs-4"></i>
-                        <p class="small text-muted mb-0 mt-2">No system notifications.</p>
-                    </div>
-                }
-                else
-                {
-                    <div class="d-flex flex-column gap-2">
-                        @foreach (var n in notifications)
+            
+            <div class="table-responsive">
+                <table class="table table-sm align-middle">
+                    <thead>
+                        <tr class="table-light">
+                            <th>Doctor Name</th>
+                            <th>Email Address</th>
+                            <th>Password</th>
+                            <th>Specialty</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int j = 1; j <= 10; j++)
                         {
-                            var hasBeenRead = n.IsRead ?? false;
-                            <div class="p-2 rounded-3" style="font-size: 0.82rem; background: var(--bg); border-left: 3.5px solid @(hasBeenRead ? "var(--text-light)" : "var(--primary)");">
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <strong class="text-dark">@n.Title</strong>
-                                    <span class="text-muted" style="font-size: 0.72rem;">@n.SentAt?.ToString("g")</span>
-                                </div>
-                                <div class="text-muted text-xs">@n.Message</div>
-                            </div>
+                            var email = $"doctor{j}@@smarteye.com";
+                            var docObj = doctorsList.FirstOrDefault(d => d.User != null && d.User.Email == email);
+                            <tr>
+                                <td><span class="fw-bold text-dark">@(docObj?.User?.FullName ?? $"Doctor {j}")</span></td>
+                                <td><span class="font-monospace text-xs text-dark">@email</span></td>
+                                <td><span class="font-monospace text-primary text-xs fw-bold">Doctor@@123</span></td>
+                                <td><span class="badge bg-light text-primary border border-info text-xs">@(docObj?.Specialization?.Name ?? "Specialist")</span></td>
+                            </tr>
                         }
-                    </div>
-                }
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- Security Audit Log -->
-        <div class="table-card mb-4">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-shield-check"></i> Security Audit Trail</h5>
-                <span class="badge-status badge-danger">Live</span>
-            </div>
-            <div class="card-body-clean" style="max-height: 280px; overflow-y: auto;">
-                @if (audits == null || !audits.Any())
-                {
-                    <div class="empty-state" style="padding: 40px 20px;">
-                        <div class="empty-state-icon"><i class="bi bi-shield-lock"></i></div>
-                        <h5>No Recent Events</h5>
-                        <p>Audit events will appear as staff interact with the system.</p>
-                    </div>
-                }
-                else
-                {
-                    <ul class="list-unstyled mb-0 ps-3" style="border-left: 2px solid var(--border);">
+    </div>
+</div>
+
+<!-- Recent Audits & Payments Lists in Footer Grid -->
+<div class="row g-4">
+    <!-- Audit Logs -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+            <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-receipt text-muted me-2"></i>Recent System Audit Activity</h5>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm align-middle table-hover">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Table</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
                         @foreach (var audit in audits)
                         {
-                            <li class="mb-3 ps-3 position-relative">
-                                <span class="position-absolute rounded-circle bg-primary"
-                                      style="left:-7px; top:5px; width:10px; height:10px; border:2px solid var(--card-bg);"></span>
-                                <div class="d-flex justify-content-between align-items-start">
-                                    <div>
-                                        <div class="fw-600 text-sm">@audit.Action</div>
-                                        <div class="text-xs text-muted">
-                                            @(string.IsNullOrEmpty(audit.TableName) ? "" : $"[{audit.TableName}] ·")
-                                            @(audit.User?.FullName ?? "System")
-                                        </div>
-                                    </div>
-                                    <span class="text-xs text-muted">@audit.CreatedAt?.ToString("hh:mm tt")</span>
-                                </div>
-                            </li>
+                            <tr>
+                                <td><span class="fw-bold text-dark text-xs">@audit.User?.FullName</span></td>
+                                <td><span class="badge bg-light-info text-info text-xs">@audit.Action</span></td>
+                                <td><span class="text-muted text-xs">@audit.TableName</span></td>
+                                <td><span class="text-muted text-xs">@(audit.CreatedAt?.ToString("g") ?? "N/A")</span></td>
+                            </tr>
                         }
-                    </ul>
-                }
+                    </tbody>
+                </table>
             </div>
         </div>
-
-        <!-- Management Modules -->
-        <div class="table-card">
-            <div class="table-card-header">
-                <h5 class="table-title"><i class="bi bi-grid"></i> Management Modules</h5>
-            </div>
-            <div class="card-body-clean">
-                <div class="row g-2">
-                    <div class="col-6">
-                        <a asp-controller="Branch" asp-action="Index"
-                           class="d-block p-3 rounded-3 text-decoration-none border hover-shadow transition-all"
-                           style="background:var(--bg);">
-                            <i class="bi bi-building text-info fs-4 mb-2 d-block"></i>
-                            <span class="fw-700 text-sm d-block" style="color:var(--text)">Branches</span>
-                            <span class="text-xs text-muted">Clinic Sites</span>
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a asp-controller="Specialization" asp-action="Index"
-                           class="d-block p-3 rounded-3 text-decoration-none border hover-shadow transition-all"
-                           style="background:var(--bg);">
-                            <i class="bi bi-tags text-warning fs-4 mb-2 d-block"></i>
-                            <span class="fw-700 text-sm d-block" style="color:var(--text)">Specializations</span>
-                            <span class="text-xs text-muted">Ocular Fields</span>
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a asp-controller="Medicine" asp-action="Index"
-                           class="d-block p-3 rounded-3 text-decoration-none border hover-shadow transition-all"
-                           style="background:var(--bg);">
-                            <i class="bi bi-capsule text-success fs-4 mb-2 d-block"></i>
-                            <span class="fw-700 text-sm d-block" style="color:var(--text)">Medicines</span>
-                            <span class="text-xs text-muted">Pharmacy</span>
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a asp-controller="Payment" asp-action="Index"
-                           class="d-block p-3 rounded-3 text-decoration-none border hover-shadow transition-all"
-                           style="background:var(--bg);">
-                            <i class="bi bi-credit-card text-primary fs-4 mb-2 d-block"></i>
-                            <span class="fw-700 text-sm d-block" style="color:var(--text)">Payments</span>
-                            <span class="text-xs text-muted">Settlements</span>
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a asp-controller="Patient" asp-action="Index"
-                           class="d-block p-3 rounded-3 text-decoration-none border hover-shadow transition-all"
-                           style="background:var(--bg);">
-                            <i class="bi bi-people text-secondary-custom fs-4 mb-2 d-block"></i>
-                            <span class="fw-700 text-sm d-block" style="color:var(--text)">Patients</span>
-                            <span class="text-xs text-muted">Manage All</span>
-                        </a>
-                    </div>
-                    <div class="col-6">
-                        <a asp-controller="Doctor" asp-action="Index"
-                           class="d-block p-3 rounded-3 text-decoration-none border hover-shadow transition-all"
-                           style="background:var(--bg);">
-                            <i class="bi bi-person-badge text-danger fs-4 mb-2 d-block"></i>
-                            <span class="fw-700 text-sm d-block" style="color:var(--text)">Doctors</span>
-                            <span class="text-xs text-muted">Staff Panel</span>
-                        </a>
-                    </div>
-                </div>
+    </div>
+    
+    <!-- Billing Transactions -->
+    <div class="col-lg-6">
+        <div class="card border-0 shadow-sm rounded-4 bg-white p-4">
+            <h5 class="fw-bold text-dark mb-4"><i class="fa-solid fa-cash-register text-success me-2"></i>Recent Transaction Activity</h5>
+            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                <table class="table table-sm align-middle table-hover">
+                    <thead>
+                        <tr>
+                            <th>Patient</th>
+                            <th>Amount</th>
+                            <th>Method</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var p in payments)
+                        {
+                            <tr>
+                                <td><span class="fw-bold text-dark text-xs">@p.Invoice?.Patient?.User?.FullName</span></td>
+                                <td><span class="fw-bold text-success text-xs">$@p.Amount</span></td>
+                                <td><span class="badge bg-light text-primary border border-info text-xs">@p.PaymentMethod?.Name</span></td>
+                                <td><span class="text-muted text-xs">@(p.PaidAt?.ToString("g") ?? "N/A")</span></td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 </div>
-
-@section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            var ctx = document.getElementById('revenueChart').getContext('2d');
-
-            var isDark = document.body.classList.contains('dark-theme');
-            var gridColor = isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)';
-            var labelColor = isDark ? '#94A3B8' : '#64748B';
-
-            var g1 = ctx.createLinearGradient(0, 0, 0, 240);
-            g1.addColorStop(0, 'rgba(15,76,129,0.35)');
-            g1.addColorStop(1, 'rgba(15,76,129,0.01)');
-
-            var g2 = ctx.createLinearGradient(0, 0, 0, 240);
-            g2.addColorStop(0, 'rgba(0,180,216,0.3)');
-            g2.addColorStop(1, 'rgba(0,180,216,0.01)');
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Current'],
-                    datasets: [
-                        {
-                            label: 'Revenue ($)',
-                            data: [3100, 4200, 3900, 5100, 5800, 6200, 7000, @((decimal)ViewBag.TotalRevenue)],
-                            borderColor: '#0F4C81',
-                            backgroundColor: g1,
-                            fill: true, tension: 0.4, borderWidth: 2.5,
-                            pointBackgroundColor: '#0F4C81', pointRadius: 4, pointHoverRadius: 6
-                        },
-                        {
-                            label: 'Appointments',
-                            data: [110, 140, 130, 180, 210, 240, 265, @(ViewBag.TotalAppointments ?? 0)],
-                            borderColor: '#00B4D8',
-                            backgroundColor: g2,
-                            fill: true, tension: 0.4, borderWidth: 2,
-                            pointBackgroundColor: '#00B4D8', pointRadius: 3, pointHoverRadius: 5,
-                            yAxisID: 'y1'
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    interaction: { mode: 'index', intersect: false },
-                    plugins: {
-                        legend: { labels: { color: labelColor, font: { size: 12, family: 'Inter' }, usePointStyle: true } },
-                        tooltip: { mode: 'index' }
-                    },
-                    scales: {
-                        x:  { grid: { color: gridColor }, ticks: { color: labelColor } },
-                        y:  { position: 'left',  grid: { color: gridColor }, ticks: { color: labelColor } },
-                        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { color: labelColor } }
-                    }
-                }
-            });
-        });
-    </script>
-}

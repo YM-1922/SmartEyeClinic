@@ -281,30 +281,79 @@ namespace SmartEyeClinic.Web.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        [Authorize(Roles = "Admin,Receptionist")]
+        [Authorize(Roles = "Admin,Receptionist,Doctor")]
         public async Task<IActionResult> Approve(int id)
         {
-            var appointment = await _context.Appointments.FindAsync(id);
-            if (appointment == null)
-            {
-                TempData["Error"] = "Appointment not found.";
-                return RedirectToAction(nameof(Index));
-            }
-
-            var result = await _appointmentService.UpdateAppointmentAsync(
-                appointment.Id,
-                appointment.PatientId,
-                appointment.DoctorId,
-                appointment.BranchId,
-                appointment.AppointmentDateTime,
-                appointment.DurationMinutes,
-                appointment.Type,
-                "Confirmed",
-                appointment.Notes);
-
+            var result = await _appointmentService.ApproveAppointmentAsync(id);
             if (result.Success)
             {
-                TempData["Success"] = "Appointment confirmed successfully!";
+                TempData["Success"] = "Appointment approved successfully!";
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
+            }
+
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer))
+                return Redirect(referer);
+                
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Doctor")]
+        public async Task<IActionResult> Reject(int id)
+        {
+            var result = await _appointmentService.RejectAppointmentAsync(id);
+            if (result.Success)
+            {
+                TempData["Success"] = "Appointment request rejected.";
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
+            }
+
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer))
+                return Redirect(referer);
+                
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin,Receptionist,Doctor")]
+        public async Task<IActionResult> Complete(int id)
+        {
+            var result = await _appointmentService.CompleteAppointmentAsync(id);
+            if (result.Success)
+            {
+                TempData["Success"] = "Appointment marked as completed successfully!";
+            }
+            else
+            {
+                TempData["Error"] = result.Message;
+            }
+
+            var referer = Request.Headers["Referer"].ToString();
+            if (!string.IsNullOrEmpty(referer))
+                return Redirect(referer);
+                
+            return RedirectToAction(nameof(Index));
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        [Authorize]
+        public async Task<IActionResult> PayDeposit(int id)
+        {
+            var result = await _appointmentService.PayDepositAsync(id);
+            if (result.Success)
+            {
+                TempData["Success"] = "Deposit payment of $50.00 received! Request is now pending doctor approval.";
             }
             else
             {
