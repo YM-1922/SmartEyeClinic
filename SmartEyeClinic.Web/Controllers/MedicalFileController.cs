@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Claims;
@@ -17,6 +18,19 @@ namespace SmartEyeClinic.Web.Controllers
     {
         private readonly AppDbContext _context;
         private readonly Microsoft.AspNetCore.Hosting.IWebHostEnvironment _env;
+
+        // Allowed file extensions and their MIME types
+        private static readonly Dictionary<string, string[]> AllowedTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { ".pdf",  new[] { "application/pdf" } },
+            { ".jpg",  new[] { "image/jpeg" } },
+            { ".jpeg", new[] { "image/jpeg" } },
+            { ".png",  new[] { "image/png" } },
+            { ".doc",  new[] { "application/msword" } },
+            { ".docx", new[] { "application/vnd.openxmlformats-officedocument.wordprocessingml.document" } },
+        };
+
+        private const long MaxFileSizeBytes = 5 * 1024 * 1024; // 5 MB
 
         public MedicalFileController(AppDbContext context, Microsoft.AspNetCore.Hosting.IWebHostEnvironment env)
         {
@@ -53,28 +67,32 @@ namespace SmartEyeClinic.Web.Controllers
                 ViewBag.IsPatient = false;
             }
 
-            var files = await query.OrderByDescending(f => f.UploadedAt).ToListAsync();
+            var files = await query.AsNoTracking().OrderByDescending(f => f.UploadedAt).ToListAsync();
             return View(files);
         }
 
-        // GET: Upload File
+        // GET: Upload File — restricted to Admin, Doctor, Receptionist
+        [Authorize(Roles = "Admin,Doctor,Receptionist")]
         [HttpGet]
-        public IActionResult Upload(int? patientId = null, int? appointmentId = null)
+        public async Task<IActionResult> Upload(int? patientId = null, int? appointmentId = null)
         {
             ViewBag.PatientId = patientId;
             ViewBag.AppointmentId = appointmentId;
             
-            ViewBag.Patients = _context.Patients.Include(p => p.User).OrderBy(p => p.User.FullName).ToList();
-            ViewBag.Appointments = _context.Appointments
+            ViewBag.Patients = await _context.Patients.Include(p => p.User)
+                .AsNoTracking().OrderBy(p => p.User.FullName).ToListAsync();
+            ViewBag.Appointments = await _context.Appointments
                 .Include(a => a.Patient).ThenInclude(p => p.User)
                 .Where(a => a.Status != "Cancelled")
+                .AsNoTracking()
                 .OrderByDescending(a => a.AppointmentDateTime)
-                .ToList();
+                .ToListAsync();
 
             return View();
         }
 
-        // POST: Upload File
+        // POST: Upload File — restricted to Admin, Doctor, Receptionist
+        [Authorize(Roles = "Admin,Doctor,Receptionist")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(int patientId, int? appointmentId, IFormFile file)
@@ -85,19 +103,39 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Upload), new { patientId, appointmentId });
             }
 
+            // --- Security: Size check ---
+            if (file.Length > MaxFileSizeBytes)
+            {
+                TempData["Error"] = "File size exceeds the maximum allowed limit of 5 MB.";
+                return RedirectToAction(nameof(Upload), new { patientId, appointmentId });
+            }
+
+            // --- Security: Extension whitelist ---
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!AllowedTypes.ContainsKey(ext))
+            {
+                TempData["Error"] = "Invalid file type. Allowed: PDF, JPG, JPEG, PNG, DOC, DOCX.";
+                return RedirectToAction(nameof(Upload), new { patientId, appointmentId });
+            }
+
+            // --- Security: MIME type validation ---
+            var allowedMimes = AllowedTypes[ext];
+            if (!allowedMimes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
+            {
+                TempData["Error"] = "File content type does not match the file extension. Upload rejected.";
+                return RedirectToAction(nameof(Upload), new { patientId, appointmentId });
+            }
+
             try
             {
                 // Ensure upload folder exists
                 var uploadDir = Path.Combine(_env.WebRootPath, "uploads");
                 if (!Directory.Exists(uploadDir))
-                {
                     Directory.CreateDirectory(uploadDir);
-                }
 
-                // Generate unique filename to avoid duplicates
-                var ext = Path.GetExtension(file.FileName);
-                var filename = $"{Guid.NewGuid()}{ext}";
-                var filePath = Path.Combine(uploadDir, filename);
+                // Generate unique filename to avoid duplicates / path traversal
+                var safeFilename = $"{Guid.NewGuid()}{ext}";
+                var filePath = Path.Combine(uploadDir, safeFilename);
 
                 // Save file to disk
                 using (var stream = new FileStream(filePath, FileMode.Create))
@@ -105,20 +143,20 @@ namespace SmartEyeClinic.Web.Controllers
                     await file.CopyToAsync(stream);
                 }
 
-                // Get current logged in user ID
+                // Get current logged-in user ID
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 int? uploaderId = userIdClaim != null ? int.Parse(userIdClaim.Value) : null;
 
                 // Save file info in Database
                 var medicalFile = new MedicalFile
                 {
-                    PatientId = patientId,
+                    PatientId     = patientId,
                     AppointmentId = appointmentId,
-                    UploadedBy = uploaderId,
-                    FileType = ext.TrimStart('.').ToUpper(),
-                    FilePath = $"/uploads/{filename}",
-                    FileSize = file.Length,
-                    UploadedAt = DateTime.Now
+                    UploadedBy    = uploaderId,
+                    FileType      = ext.TrimStart('.').ToUpper(),
+                    FilePath      = $"/uploads/{safeFilename}",
+                    FileSize      = file.Length,
+                    UploadedAt    = DateTime.Now
                 };
 
                 _context.MedicalFiles.Add(medicalFile);
@@ -134,25 +172,28 @@ namespace SmartEyeClinic.Web.Controllers
             }
         }
 
-        // Delete File
+        // Delete File — GET (Admin or uploader)
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
             var file = await _context.MedicalFiles
                 .Include(f => f.Patient).ThenInclude(p => p.User)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(f => f.Id == id);
 
             if (file == null)
                 return NotFound();
 
-            // Constraint check: Patients cannot delete files unless they uploaded them, or Admin only
+            // Patients cannot delete; Admin and original uploader (Doctor/Receptionist) can
             if (User.IsInRole("Patient"))
+                return RedirectToAction("AccessDenied", "Account");
+
+            // Non-admin users can only delete files they uploaded
+            if (!User.IsInRole("Admin"))
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 if (userIdClaim == null || file.UploadedBy != int.Parse(userIdClaim.Value))
-                {
                     return RedirectToAction("AccessDenied", "Account");
-                }
             }
 
             return View(file);
@@ -166,12 +207,21 @@ namespace SmartEyeClinic.Web.Controllers
             if (file == null)
                 return NotFound();
 
+            // Re-check authorization on POST as well (defense in depth)
+            if (User.IsInRole("Patient"))
+                return RedirectToAction("AccessDenied", "Account");
+
+            if (!User.IsInRole("Admin"))
+            {
+                var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+                if (userIdClaim == null || file.UploadedBy != int.Parse(userIdClaim.Value))
+                    return RedirectToAction("AccessDenied", "Account");
+            }
+
             // Remove file from disk
             var diskPath = Path.Combine(_env.WebRootPath, file.FilePath.TrimStart('/'));
             if (System.IO.File.Exists(diskPath))
-            {
                 System.IO.File.Delete(diskPath);
-            }
 
             int pid = file.PatientId;
             _context.MedicalFiles.Remove(file);

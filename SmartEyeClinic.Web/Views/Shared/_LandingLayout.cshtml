@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Smart Eye Clinic</title>
+    <!-- Bootstrap 5 -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- Custom site CSS -->
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="landing-body">
+    <!-- Landing Navbar -->
+    <nav class="navbar navbar-expand-lg landing-nav" id="landingNavbar">
+        <div class="container">
+            <a class="navbar-brand d-flex align-items-center gap-2 text-white" href="#hero">
+                <div class="sidebar-brand-icon" style="width: 32px; height: 32px; font-size: 0.95rem;">
+                    <i class="fa-solid fa-eye"></i>
+                </div>
+                <span class="fw-bold fs-5">SmartEye</span>
+            </a>
+            <button class="navbar-toggler border-0 text-white" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarText">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0 nav-links">
+                    <li class="nav-item"><a class="nav-link" href="#hero">Home</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#overview">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#departments">Departments</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#services">Services</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#doctors">Specialists</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#faq">FAQ</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#contact">Contact</a></li>
+                </ul>
+                <div class="d-flex align-items-center gap-2">
+                    <a asp-controller="Account" asp-action="Login" class="btn btn-hero-primary py-2 px-4 fs-6">
+                        <i class="fa-solid fa-right-to-bracket"></i> Patient Portal
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    @RenderBody()
+
+    <!-- Landing Footer -->
+    <footer class="landing-footer">
+        <div class="container">
+            <div class="row g-4">
+                <div class="col-lg-4 col-md-6">
+                    <div class="footer-brand">SmartEye Clinic</div>
+                    <p class="text-white-50 small mb-4" style="max-width: 300px;">Providing premium eye care solutions using state-of-the-art diagnostic technology and clinical expertise.</p>
+                    <div class="d-flex gap-2">
+                        <a href="#" class="btn btn-sm btn-icon btn-light" style="width: 32px; height: 32px;"><i class="fa-brands fa-facebook-f"></i></a>
+                        <a href="#" class="btn btn-sm btn-icon btn-light" style="width: 32px; height: 32px;"><i class="fa-brands fa-twitter"></i></a>
+                        <a href="#" class="btn btn-sm btn-icon btn-light" style="width: 32px; height: 32px;"><i class="fa-brands fa-linkedin-in"></i></a>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-6">
+                    <div class="footer-heading">Clinic</div>
+                    <a href="#overview" class="footer-link">About Us</a>
+                    <a href="#services" class="footer-link">Eye Services</a>
+                    <a href="#doctors" class="footer-link">Our Specialists</a>
+                    <a href="#departments" class="footer-link">Departments</a>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-heading">Support</div>
+                    <a href="#faq" class="footer-link">Frequently Asked Questions</a>
+                    <a href="#contact" class="footer-link">Online Inquiry</a>
+                    <a href="/Account/Login" class="footer-link">Patient Portal</a>
+                    <a href="/Account/Register" class="footer-link">New Patient Signup</a>
+                </div>
+                <div class="col-lg-3 col-md-6">
+                    <div class="footer-heading">Contact Info</div>
+                    <p class="small text-white-50 mb-2"><i class="fa-solid fa-map-marker-alt me-2 text-info"></i> 101 Medical Center Way, Suite A</p>
+                    <p class="small text-white-50 mb-2"><i class="fa-solid fa-phone me-2 text-info"></i> +1 (555) 900-0000</p>
+                    <p class="small text-white-50 mb-0"><i class="fa-solid fa-envelope me-2 text-info"></i> info@smarteyeclinic.com</p>
+                </div>
+            </div>
+            <div class="footer-bottom text-center text-white-50">
+                &copy; @DateTime.Now.Year Smart Eye Clinic. All Rights Reserved. Hospital ERP Management.
+            </div>
+        </div>
+    </footer>
+
+    <!-- Bootstrap & jQuery -->
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(window).scroll(function() {
+            if ($(this).scrollTop() > 50) {
+                $('#landingNavbar').addClass('scrolled');
+            } else {
+                $('#landingNavbar').removeClass('scrolled');
+            }
+        });
+    </script>
+</body>
+</html>

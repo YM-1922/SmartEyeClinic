@@ -17,26 +17,28 @@ namespace SmartEyeClinic.Web.Services
         }
 
         // Get All Doctors
-        public List<Doctor> GetAllDoctors()
+        public async Task<List<Doctor>> GetAllDoctorsAsync()
         {
-            return _context.Doctors
+            return await _context.Doctors
                 .Include(d => d.User)
                 .Include(d => d.Specialization)
+                .AsNoTracking()
                 .OrderByDescending(d => d.Id)
-                .ToList();
+                .ToListAsync();
         }
 
         // Get Doctor by Id
-        public Doctor? GetDoctorById(int id)
+        public async Task<Doctor?> GetDoctorByIdAsync(int id)
         {
-            return _context.Doctors
+            return await _context.Doctors
                 .Include(d => d.User)
                 .Include(d => d.Specialization)
-                .FirstOrDefault(d => d.Id == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(d => d.Id == id);
         }
 
         // Add Doctor
-        public void AddDoctor(
+        public async Task AddDoctorAsync(
             string fullName,
             string email,
             string password,
@@ -58,20 +60,24 @@ namespace SmartEyeClinic.Web.Services
             if (string.IsNullOrWhiteSpace(licenseNumber))
                 throw new Exception("License Number is required.");
 
-            bool licenseExists = _context.Doctors.Any(d => d.LicenseNumber == licenseNumber);
+            bool licenseExists = await _context.Doctors.AnyAsync(d => d.LicenseNumber == licenseNumber);
             if (licenseExists)
                 throw new Exception("License Number already exists.");
 
-            bool emailExists = _context.Users.Any(u => u.Email == email);
+            bool emailExists = await _context.Users.AnyAsync(u => u.Email == email);
             if (emailExists)
                 throw new Exception("Email already exists.");
 
             if (!string.IsNullOrWhiteSpace(phoneNumber))
             {
-                bool phoneExists = _context.Users.Any(u => u.PhoneNumber == phoneNumber);
+                bool phoneExists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
                 if (phoneExists)
                     throw new Exception("Phone Number already exists.");
             }
+
+            var doctorRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Doctor");
+            if (doctorRole == null)
+                throw new Exception("Doctor role is not initialized in the database.");
 
             var doctorUser = new User
             {
@@ -79,13 +85,13 @@ namespace SmartEyeClinic.Web.Services
                 Email = email,
                 PasswordHash = password,
                 PhoneNumber = phoneNumber,
-                RoleId = 2, // Role 2 is Doctor
+                RoleId = doctorRole.Id,
                 IsActive = true,
                 CreatedAt = DateTime.Now
             };
 
             _context.Users.Add(doctorUser);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             var doctor = new Doctor
             {
@@ -97,11 +103,11 @@ namespace SmartEyeClinic.Web.Services
             };
 
             _context.Doctors.Add(doctor);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
         // Update Doctor
-        public void UpdateDoctor(
+        public async Task UpdateDoctorAsync(
             int id,
             string fullName,
             string email,
@@ -112,9 +118,9 @@ namespace SmartEyeClinic.Web.Services
             decimal consultationFee,
             string? bio)
         {
-            var doctor = _context.Doctors
+            var doctor = await _context.Doctors
                 .Include(d => d.User)
-                .FirstOrDefault(d => d.Id == id);
+                .FirstOrDefaultAsync(d => d.Id == id);
 
             if (doctor == null)
                 throw new Exception("Doctor profile not found.");
@@ -132,17 +138,17 @@ namespace SmartEyeClinic.Web.Services
                 throw new Exception("License Number is required.");
 
             // Unique Checks
-            bool licenseExists = _context.Doctors.Any(d => d.LicenseNumber == licenseNumber && d.Id != id);
+            bool licenseExists = await _context.Doctors.AnyAsync(d => d.LicenseNumber == licenseNumber && d.Id != id);
             if (licenseExists)
                 throw new Exception("License Number already exists.");
 
-            bool emailExists = _context.Users.Any(u => u.Email == email && u.Id != doctor.UserId);
+            bool emailExists = await _context.Users.AnyAsync(u => u.Email == email && u.Id != doctor.UserId);
             if (emailExists)
                 throw new Exception("Email already exists.");
 
             if (!string.IsNullOrWhiteSpace(phoneNumber))
             {
-                bool phoneExists = _context.Users.Any(u => u.PhoneNumber == phoneNumber && u.Id != doctor.UserId);
+                bool phoneExists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber && u.Id != doctor.UserId);
                 if (phoneExists)
                     throw new Exception("Phone Number already exists.");
             }
@@ -157,27 +163,27 @@ namespace SmartEyeClinic.Web.Services
             doctor.ConsultationFee = consultationFee;
             doctor.Bio = bio;
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
 
         // Delete Doctor
-        public void DeleteDoctor(int id)
+        public async Task DeleteDoctorAsync(int id)
         {
-            var doctor = _context.Doctors
+            var doctor = await _context.Doctors
                 .Include(d => d.User)
-                .FirstOrDefault(d => d.Id == id);
+                .FirstOrDefaultAsync(d => d.Id == id);
 
             if (doctor == null)
                 throw new Exception("Doctor not found.");
 
             // Dependency constraint checks before deleting
-            if (_context.Appointments.Any(a => a.DoctorId == id))
+            if (await _context.Appointments.AnyAsync(a => a.DoctorId == id))
                 throw new Exception("Cannot delete doctor because they have associated patient appointments.");
 
-            if (_context.Surgeries.Any(s => s.DoctorId == id))
+            if (await _context.Surgeries.AnyAsync(s => s.DoctorId == id))
                 throw new Exception("Cannot delete doctor because they have scheduled surgeries.");
 
-            if (_context.DoctorSchedules.Any(ds => ds.DoctorId == id))
+            if (await _context.DoctorSchedules.AnyAsync(ds => ds.DoctorId == id))
             {
                 var schedules = _context.DoctorSchedules.Where(ds => ds.DoctorId == id);
                 _context.DoctorSchedules.RemoveRange(schedules);
@@ -191,7 +197,7 @@ namespace SmartEyeClinic.Web.Services
                 _context.Users.Remove(user);
             }
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
         }
     }
 }

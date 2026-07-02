@@ -17,11 +17,11 @@ namespace SmartEyeClinic.Web.Services
         }
 
         // Create Prescription
-        public ServiceResult CreatePrescription(int examinationId, int medicineId,
+        public async Task<ServiceResult> CreatePrescriptionAsync(int examinationId, int medicineId,
             string? dosage, int durationDays, string? instructions)
         {
-            var examinationExists = _context.Examinations.Any(e => e.Id == examinationId);
-            var medicineExists    = _context.Medicines.Any(m => m.Id == medicineId);
+            var examinationExists = await _context.Examinations.AnyAsync(e => e.Id == examinationId);
+            var medicineExists    = await _context.Medicines.AnyAsync(m => m.Id == medicineId);
 
             if (!examinationExists)
                 return ServiceResult.Fail("Examination not found!");
@@ -36,7 +36,7 @@ namespace SmartEyeClinic.Web.Services
             };
 
             _context.PrescriptionHeaders.Add(prescriptionHeader);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             var prescriptionItem = new PrescriptionItem
             {
@@ -48,36 +48,38 @@ namespace SmartEyeClinic.Web.Services
             };
 
             _context.PrescriptionItems.Add(prescriptionItem);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return ServiceResult.Ok();
         }
 
         // Get All Prescription Items (used for listing)
-        public List<PrescriptionItem> GetAllPrescriptions()
+        public async Task<List<PrescriptionItem>> GetAllPrescriptionsAsync()
         {
-            return _context.PrescriptionItems
+            return await _context.PrescriptionItems
                 .Include(p => p.PrescriptionHeader).ThenInclude(h => h.Examination).ThenInclude(e => e.Appointment).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
                 .Include(p => p.PrescriptionHeader).ThenInclude(h => h.Examination).ThenInclude(e => e.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
                 .Include(p => p.Medicine)
+                .AsNoTracking()
                 .OrderByDescending(p => p.PrescriptionHeader.CreatedAt)
-                .ToList();
+                .ToListAsync();
         }
 
         // Get Prescription Header By ID (used for details sheet)
-        public PrescriptionHeader? GetPrescriptionHeaderById(int id)
+        public async Task<PrescriptionHeader?> GetPrescriptionHeaderByIdAsync(int id)
         {
-            return _context.PrescriptionHeaders
+            return await _context.PrescriptionHeaders
                 .Include(h => h.Examination).ThenInclude(e => e.Appointment).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
                 .Include(h => h.Examination).ThenInclude(e => e.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
                 .Include(h => h.PrescriptionItems).ThenInclude(i => i.Medicine)
-                .FirstOrDefault(h => h.Id == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(h => h.Id == id);
         }
 
         // Delete Prescription
-        public ServiceResult DeletePrescription(int id)
+        public async Task<ServiceResult> DeletePrescriptionAsync(int id)
         {
-            var header = _context.PrescriptionHeaders.Find(id);
+            var header = await _context.PrescriptionHeaders.FindAsync(id);
             if (header == null)
                 return ServiceResult.Fail("Prescription not found.");
 
@@ -86,7 +88,7 @@ namespace SmartEyeClinic.Web.Services
             _context.PrescriptionItems.RemoveRange(items);
 
             _context.PrescriptionHeaders.Remove(header);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return ServiceResult.Ok();
         }

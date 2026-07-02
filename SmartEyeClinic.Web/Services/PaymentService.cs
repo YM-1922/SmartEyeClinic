@@ -17,12 +17,12 @@ namespace SmartEyeClinic.Web.Services
         }
 
         // Add Payment Method
-        public ServiceResult AddPaymentMethod(string? name)
+        public async Task<ServiceResult> AddPaymentMethodAsync(string? name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 return ServiceResult.Fail("Payment Method name cannot be empty!");
 
-            bool exists = _context.PaymentMethods.Any(m => m.Name.ToLower() == name.Trim().ToLower());
+            bool exists = await _context.PaymentMethods.AnyAsync(m => m.Name.ToLower() == name.Trim().ToLower());
             if (exists)
                 return ServiceResult.Fail("This payment method already exists.");
 
@@ -32,23 +32,23 @@ namespace SmartEyeClinic.Web.Services
             };
 
             _context.PaymentMethods.Add(paymentMethod);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return ServiceResult.Ok();
         }
 
         // Get All Payment Methods
-        public List<PaymentMethod> GetAllPaymentMethods()
+        public async Task<List<PaymentMethod>> GetAllPaymentMethodsAsync()
         {
-            return _context.PaymentMethods.ToList();
+            return await _context.PaymentMethods.AsNoTracking().ToListAsync();
         }
 
         // Add Payment
-        public ServiceResult AddPayment(int invoiceId, int paymentMethodId,
+        public async Task<ServiceResult> AddPaymentAsync(int invoiceId, int paymentMethodId,
             decimal amount, string? transactionRef)
         {
-            var invoice      = _context.Invoices.FirstOrDefault(i => i.Id == invoiceId);
-            var methodExists = _context.PaymentMethods.Any(m => m.Id == paymentMethodId);
+            var invoice      = await _context.Invoices.FirstOrDefaultAsync(i => i.Id == invoiceId);
+            var methodExists = await _context.PaymentMethods.AnyAsync(m => m.Id == paymentMethodId);
 
             if (invoice == null)
                 return ServiceResult.Fail("Invoice not found!");
@@ -77,36 +77,38 @@ namespace SmartEyeClinic.Web.Services
             else
                 invoice.Status = "Partial";
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return ServiceResult.Ok();
         }
 
         // Get All Payments
-        public List<Payment> GetAllPayments()
+        public async Task<List<Payment>> GetAllPaymentsAsync()
         {
-            return _context.Payments
+            return await _context.Payments
                 .Include(p => p.Invoice).ThenInclude(i => i.Patient).ThenInclude(pa => pa.User)
                 .Include(p => p.PaymentMethod)
+                .AsNoTracking()
                 .OrderByDescending(p => p.PaidAt)
-                .ToList();
+                .ToListAsync();
         }
 
         // Get Payment By Id
-        public Payment? GetPaymentById(int id)
+        public async Task<Payment?> GetPaymentByIdAsync(int id)
         {
-            return _context.Payments
+            return await _context.Payments
                 .Include(p => p.Invoice).ThenInclude(i => i.Patient).ThenInclude(pa => pa.User)
                 .Include(p => p.PaymentMethod)
-                .FirstOrDefault(p => p.Id == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(p => p.Id == id);
         }
 
         // Delete Payment (with Invoice refund/reversal logic)
-        public ServiceResult DeletePayment(int id)
+        public async Task<ServiceResult> DeletePaymentAsync(int id)
         {
-            var payment = _context.Payments
+            var payment = await _context.Payments
                 .Include(p => p.Invoice)
-                .FirstOrDefault(p => p.Id == id);
+                .FirstOrDefaultAsync(p => p.Id == id);
 
             if (payment == null)
                 return ServiceResult.Fail("Payment record not found.");
@@ -125,7 +127,7 @@ namespace SmartEyeClinic.Web.Services
             }
 
             _context.Payments.Remove(payment);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return ServiceResult.Ok();
         }

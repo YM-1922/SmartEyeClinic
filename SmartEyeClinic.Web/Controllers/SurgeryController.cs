@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -18,30 +20,62 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Surgeries
-        public IActionResult Index()
+        // List Surgeries — patients see only their own, doctors see only their own
+        public async Task<IActionResult> Index()
         {
-            var surgeries = _context.Surgeries
+            var query = _context.Surgeries
                 .Include(s => s.Patient).ThenInclude(p => p.User)
                 .Include(s => s.Doctor).ThenInclude(d => d.User)
                 .Include(s => s.SurgeryType)
-                .OrderByDescending(s => s.SurgeryDate)
-                .ToList();
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null) return RedirectToAction("AccessDenied", "Account");
+                int patId = int.Parse(patIdClaim);
+                query = query.Where(s => s.PatientId == patId);
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null) return RedirectToAction("AccessDenied", "Account");
+                int docId = int.Parse(docIdClaim);
+                query = query.Where(s => s.DoctorId == docId);
+            }
+
+            var surgeries = await query.OrderByDescending(s => s.SurgeryDate).ToListAsync();
             return View(surgeries);
         }
 
-        // Details
-        public IActionResult Details(int id)
+        // Details — IDOR protected
+        public async Task<IActionResult> Details(int id)
         {
-            var surgery = _context.Surgeries
+            var surgery = await _context.Surgeries
                 .Include(s => s.Patient).ThenInclude(p => p.User)
                 .Include(s => s.Doctor).ThenInclude(d => d.User)
                 .Include(s => s.SurgeryType)
                 .Include(s => s.Appointment)
-                .FirstOrDefault(s => s.Id == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == id);
 
             if (surgery == null)
                 return NotFound();
+
+            // IDOR Protection
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != surgery.PatientId)
+                    return RedirectToAction("AccessDenied", "Account");
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != surgery.DoctorId)
+                    return RedirectToAction("AccessDenied", "Account");
+            }
 
             return View(surgery);
         }
@@ -49,67 +83,84 @@ namespace SmartEyeClinic.Web.Controllers
         // Create (Doctors & Admin only)
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
-        public IActionResult Create(int? appointmentId = null)
+        public async Task<IActionResult> Create(int? appointmentId = null)
         {
-            PopulateDropdowns(appointmentId);
+            await PopulateDropdownsAsync(appointmentId);
             return View();
         }
 
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Surgery surgery)
+        public async Task<IActionResult> Create(Surgery surgery)
         {
             if (ModelState.IsValid)
             {
                 _context.Surgeries.Add(surgery);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 TempData["Success"] = "Surgery scheduled successfully!";
                 return RedirectToAction(nameof(Index));
             }
-            PopulateDropdowns(surgery.AppointmentId);
+            await PopulateDropdownsAsync(surgery.AppointmentId);
             return View(surgery);
         }
 
-        // Edit (Doctors & Admin only)
+        // Edit (Doctors & Admin only) — doctor can only edit their own
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var surgery = _context.Surgeries.Find(id);
+            var surgery = await _context.Surgeries.FindAsync(id);
             if (surgery == null)
                 return NotFound();
 
-            PopulateDropdowns(surgery.AppointmentId);
+            // IDOR: Doctor can only edit their own surgeries
+            if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != surgery.DoctorId)
+                    return RedirectToAction("AccessDenied", "Account");
+            }
+
+            await PopulateDropdownsAsync(surgery.AppointmentId);
             return View(surgery);
         }
 
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Surgery surgery)
+        public async Task<IActionResult> Edit(Surgery surgery)
         {
+            // IDOR: Doctor can only edit their own surgeries
+            if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != surgery.DoctorId)
+                    return RedirectToAction("AccessDenied", "Account");
+            }
+
             if (ModelState.IsValid)
             {
                 _context.Update(surgery);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 TempData["Success"] = "Surgery record updated successfully!";
                 return RedirectToAction(nameof(Details), new { id = surgery.Id });
             }
-            PopulateDropdowns(surgery.AppointmentId);
+            await PopulateDropdownsAsync(surgery.AppointmentId);
             return View(surgery);
         }
 
         // Delete (Admin only)
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var surgery = _context.Surgeries
+            var surgery = await _context.Surgeries
                 .Include(s => s.Patient).ThenInclude(p => p.User)
                 .Include(s => s.Doctor).ThenInclude(d => d.User)
                 .Include(s => s.SurgeryType)
-                .FirstOrDefault(s => s.Id == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Id == id);
 
             if (surgery == null)
                 return NotFound();
@@ -120,40 +171,44 @@ namespace SmartEyeClinic.Web.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var surgery = _context.Surgeries.Find(id);
+            var surgery = await _context.Surgeries.FindAsync(id);
             if (surgery == null)
                 return NotFound();
 
             _context.Surgeries.Remove(surgery);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             TempData["Success"] = "Surgery schedule deleted successfully!";
             return RedirectToAction(nameof(Index));
         }
 
-        private void PopulateDropdowns(int? selectedAppId = null)
+        private async Task PopulateDropdownsAsync(int? selectedAppId = null)
         {
-            ViewBag.Appointments = _context.Appointments
+            ViewBag.Appointments = await _context.Appointments
                 .Include(a => a.Patient).ThenInclude(p => p.User)
                 .Include(a => a.Doctor).ThenInclude(d => d.User)
                 .Where(a => a.Status != "Cancelled" || a.Id == selectedAppId)
+                .AsNoTracking()
                 .OrderByDescending(a => a.AppointmentDateTime)
-                .ToList();
+                .ToListAsync();
 
-            ViewBag.Patients = _context.Patients
+            ViewBag.Patients = await _context.Patients
                 .Include(p => p.User)
+                .AsNoTracking()
                 .OrderBy(p => p.User.FullName)
-                .ToList();
+                .ToListAsync();
 
-            ViewBag.Doctors = _context.Doctors
+            ViewBag.Doctors = await _context.Doctors
                 .Include(d => d.User)
+                .AsNoTracking()
                 .OrderBy(d => d.User.FullName)
-                .ToList();
+                .ToListAsync();
 
-            ViewBag.SurgeryTypes = _context.SurgeryTypes
+            ViewBag.SurgeryTypes = await _context.SurgeryTypes
+                .AsNoTracking()
                 .OrderBy(t => t.Name)
-                .ToList();
+                .ToListAsync();
 
             ViewBag.SelectedAppointmentId = selectedAppId;
         }

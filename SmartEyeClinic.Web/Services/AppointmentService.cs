@@ -17,28 +17,30 @@ namespace SmartEyeClinic.Web.Services
         }
 
         // Get All Appointments
-        public List<Appointment> GetAllAppointments()
+        public async Task<List<Appointment>> GetAllAppointmentsAsync()
         {
-            return _context.Appointments
+            return await _context.Appointments
                 .Include(a => a.Patient).ThenInclude(p => p.User)
                 .Include(a => a.Doctor).ThenInclude(d => d.User)
                 .Include(a => a.Branch)
+                .AsNoTracking()
                 .OrderByDescending(a => a.AppointmentDateTime)
-                .ToList();
+                .ToListAsync();
         }
 
         // Get Appointment By Id
-        public Appointment? GetAppointmentById(int id)
+        public async Task<Appointment?> GetAppointmentByIdAsync(int id)
         {
-            return _context.Appointments
+            return await _context.Appointments
                 .Include(a => a.Patient).ThenInclude(p => p.User)
                 .Include(a => a.Doctor).ThenInclude(d => d.User)
                 .Include(a => a.Branch)
-                .FirstOrDefault(a => a.Id == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(a => a.Id == id);
         }
 
         // Add Appointment with Full Details
-        public ServiceResult AddAppointment(
+        public async Task<ServiceResult> AddAppointmentAsync(
             int patientId, 
             int doctorId, 
             int branchId, 
@@ -48,18 +50,18 @@ namespace SmartEyeClinic.Web.Services
             string status, 
             string? notes)
         {
-            if (!_context.Patients.Any(p => p.Id == patientId))
+            if (!await _context.Patients.AnyAsync(p => p.Id == patientId))
                 return ServiceResult.Fail("Patient not found!");
 
-            if (!_context.Doctors.Any(d => d.Id == doctorId))
+            if (!await _context.Doctors.AnyAsync(d => d.Id == doctorId))
                 return ServiceResult.Fail("Doctor not found!");
 
-            if (!_context.Branches.Any(b => b.Id == branchId))
+            if (!await _context.Branches.AnyAsync(b => b.Id == branchId))
                 return ServiceResult.Fail("Branch not found!");
 
             // Double booking validation (Doctor)
             var endTime = appointmentDateTime.AddMinutes(durationMinutes);
-            bool docBusy = _context.Appointments.Any(a => 
+            bool docBusy = await _context.Appointments.AnyAsync(a => 
                 a.DoctorId == doctorId && 
                 a.Status != "Cancelled" &&
                 ((a.AppointmentDateTime <= appointmentDateTime && appointmentDateTime < a.AppointmentDateTime.AddMinutes(a.DurationMinutes)) ||
@@ -82,13 +84,13 @@ namespace SmartEyeClinic.Web.Services
             };
 
             _context.Appointments.Add(appointment);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return ServiceResult.Ok();
         }
 
         // Update Appointment
-        public ServiceResult UpdateAppointment(
+        public async Task<ServiceResult> UpdateAppointmentAsync(
             int id,
             int patientId,
             int doctorId,
@@ -99,22 +101,22 @@ namespace SmartEyeClinic.Web.Services
             string status,
             string? notes)
         {
-            var appointment = _context.Appointments.Find(id);
+            var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null)
                 return ServiceResult.Fail("Appointment not found!");
 
-            if (!_context.Patients.Any(p => p.Id == patientId))
+            if (!await _context.Patients.AnyAsync(p => p.Id == patientId))
                 return ServiceResult.Fail("Patient not found!");
 
-            if (!_context.Doctors.Any(d => d.Id == doctorId))
+            if (!await _context.Doctors.AnyAsync(d => d.Id == doctorId))
                 return ServiceResult.Fail("Doctor not found!");
 
-            if (!_context.Branches.Any(b => b.Id == branchId))
+            if (!await _context.Branches.AnyAsync(b => b.Id == branchId))
                 return ServiceResult.Fail("Branch not found!");
 
             // Check doctor conflict for other appointments
             var endTime = appointmentDateTime.AddMinutes(durationMinutes);
-            bool docBusy = _context.Appointments.Any(a => 
+            bool docBusy = await _context.Appointments.AnyAsync(a => 
                 a.Id != id &&
                 a.DoctorId == doctorId && 
                 a.Status != "Cancelled" &&
@@ -133,32 +135,32 @@ namespace SmartEyeClinic.Web.Services
             appointment.Status = status;
             appointment.Notes = notes;
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return ServiceResult.Ok();
         }
 
         // Delete Appointment
-        public ServiceResult DeleteAppointment(int id)
+        public async Task<ServiceResult> DeleteAppointmentAsync(int id)
         {
-            var appointment = _context.Appointments.Find(id);
+            var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null)
                 return ServiceResult.Fail("Appointment not found!");
 
             // Check constraints
-            if (_context.Examinations.Any(e => e.AppointmentId == id))
+            if (await _context.Examinations.AnyAsync(e => e.AppointmentId == id))
                 return ServiceResult.Fail("Cannot delete appointment because it has clinical examination records associated.");
 
-            if (_context.Invoices.Any(i => i.AppointmentId == id))
+            if (await _context.Invoices.AnyAsync(i => i.AppointmentId == id))
                 return ServiceResult.Fail("Cannot delete appointment because it has associated billing invoices.");
 
-            if (_context.Queues.Any(q => q.AppointmentId == id))
+            if (await _context.Queues.AnyAsync(q => q.AppointmentId == id))
             {
                 var qRecords = _context.Queues.Where(q => q.AppointmentId == id);
                 _context.Queues.RemoveRange(qRecords);
             }
 
             _context.Appointments.Remove(appointment);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return ServiceResult.Ok();
         }
     }

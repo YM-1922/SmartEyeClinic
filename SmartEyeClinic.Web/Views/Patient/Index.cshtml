@@ -3,65 +3,43 @@
     ViewData["Title"] = "Patients Directory - Smart Eye Clinic";
 }
 
-<!-- Page Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <ul class="breadcrumb-custom mb-1">
-            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-            <li>Patients Directory</li>
-        </ul>
-        <h3 class="fw-bold text-dark mb-0">Patients Directory</h3>
+<div class="page-header">
+    <div class="page-header-left">
+        <nav class="breadcrumb-nav">
+            <a asp-controller="Home" asp-action="Index">Home</a>
+            <span class="separator">/</span>
+            <span class="current">Patients Directory</span>
+        </nav>
+        <h3 class="page-title">Patients Directory</h3>
+        <p class="page-subtitle">Track, register, and review clinical patient profiles</p>
     </div>
-    <div>
-        <a asp-action="Create" class="btn btn-custom btn-custom-primary">
-            <i class="fa-solid fa-user-plus"></i> Add New Patient
-        </a>
-    </div>
+    <a asp-action="Create" class="btn btn-primary">
+        <i class="fa-solid fa-user-plus"></i> Register Patient
+    </a>
 </div>
 
-<!-- Alerts -->
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-custom d-flex align-items-center mb-4" role="alert">
-        <i class="fa-solid fa-circle-check fs-5 me-2"></i>
-        <div>@TempData["Success"]</div>
+<div class="table-card">
+    <div class="table-card-header">
+        <h5 class="table-title">
+            <i class="fa-solid fa-hospital-user text-primary"></i> Patient Register
+        </h5>
     </div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4" role="alert">
-        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i>
-        <div>@TempData["Error"]</div>
-    </div>
-}
-
-<!-- Directory Card -->
-<div class="card custom-card">
-    <div class="card-header-clean">
-        <div class="d-flex align-items-center">
-            <i class="fa-solid fa-hospital-user text-primary me-2 fs-5"></i>
-            <h5 class="mb-0">Patient Register List</h5>
-        </div>
-        <div class="text-muted small">Total: @Model.Count registered</div>
-    </div>
-    <div class="card-body-clean">
+    <div class="card-body-clean p-4">
         @if (Model == null || !Model.Any())
         {
-            <div class="text-center py-5">
-                <div class="p-3 bg-light-primary text-primary rounded-circle d-inline-flex mb-3" style="width: 70px; height: 70px; align-items: center; justify-content: center;">
-                    <i class="fa-solid fa-users-slash fs-1"></i>
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fa-solid fa-users-slash"></i>
                 </div>
-                <h5 class="fw-bold text-dark mb-2">No Patients Found</h5>
-                <p class="text-muted small mb-4">The patient register is currently empty.</p>
-                <a asp-action="Create" class="btn btn-custom btn-custom-primary">
-                    <i class="fa-solid fa-user-plus"></i> Register First Patient
-                </a>
+                <h5>No Patients Found</h5>
+                <p>The patient register is currently empty.</p>
+                <a asp-action="Create" class="btn btn-primary"><i class="fa-solid fa-user-plus"></i> Register Patient</a>
             </div>
         }
         else
         {
             <div class="table-responsive-custom">
-                <table class="table custom-table">
+                <table class="table datatable custom-table">
                     <thead>
                         <tr>
                             <th>Patient Details</th>
@@ -77,45 +55,45 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-circle me-3 bg-light-primary text-primary fw-bold text-center" style="width: 40px; height: 40px; border-radius: 50%; line-height: 40px; font-size: 0.95rem; background-color: #E0F2FE;">
+                                        <div class="avatar-initials avatar-md me-3 bg-light-primary text-primary-custom">
                                             @(p.User?.FullName?.Length > 0 ? p.User.FullName[0].ToString().ToUpper() : "P")
                                         </div>
-                                        <div>
-                                            <a asp-action="Details" asp-route-id="@p.Id" class="fw-bold text-dark d-block text-decoration-none" style="transition:color 0.2s;" onmouseover="this.style.color='#0F4C81'" onmouseout="this.style.color=''">@p.User?.FullName</a>
-                                            <span class="text-muted small">@p.User?.Email</span>
+                                        <div class="d-flex flex-column">
+                                            <a asp-action="Details" asp-route-id="@p.Id" class="fw-bold text-dark text-decoration-none hover-underline">@p.User?.FullName</a>
+                                            <span class="text-xs text-muted">@p.User?.Email</span>
                                         </div>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="font-monospace text-secondary">@p.NationalId</span>
+                                    <span class="font-monospace text-secondary-custom fw-600">@p.NationalId</span>
                                 </td>
                                 <td>
                                     @if (p.Gender == "Male")
                                     {
-                                        <span class="badge-custom badge-custom-success"><i class="fa-solid fa-mars me-1"></i> Male</span>
+                                        <span class="badge-status badge-success">Male</span>
                                     }
                                     else if (p.Gender == "Female")
                                     {
-                                        <span class="badge-custom" style="background: rgba(236, 72, 153, 0.1); color: #EC4899;"><i class="fa-solid fa-venus me-1"></i> Female</span>
+                                        <span class="badge-status badge-secondary">Female</span>
                                     }
                                     else
                                     {
-                                        <span class="badge-custom badge-custom-warning">@p.Gender</span>
+                                        <span class="badge-status badge-neutral">@p.Gender</span>
                                     }
                                 </td>
                                 <td>
-                                    <span class="text-muted">@(string.IsNullOrEmpty(p.Address) ? "No Address Recorded" : p.Address)</span>
+                                    <span class="text-muted text-xs">@(string.IsNullOrEmpty(p.Address) ? "No Address Recorded" : p.Address)</span>
                                 </td>
                                 <td class="text-end">
-                                    <div class="d-inline-flex gap-2">
-                                        <a asp-action="Details" asp-route-id="@p.Id" class="btn btn-custom btn-custom-primary btn-sm" title="View Patient 360" style="padding: 6px 12px;">
-                                            <i class="fa-solid fa-eye me-0"></i> <span class="d-none d-md-inline ms-1">View</span>
+                                    <div class="action-btns justify-content-end">
+                                        <a asp-action="Details" asp-route-id="@p.Id" class="btn btn-sm btn-light" title="View Patient Details">
+                                            <i class="fa-solid fa-eye text-muted"></i> Details
                                         </a>
-                                        <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-custom btn-custom-secondary btn-sm" title="Edit Profile" style="padding: 6px 12px;">
-                                            <i class="fa-solid fa-user-pen me-0"></i> <span class="d-none d-md-inline ms-1">Edit</span>
+                                        <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-light text-primary" title="Edit Patient">
+                                            <i class="fa-solid fa-user-pen"></i> Edit
                                         </a>
-                                        <a asp-action="Delete" asp-route-id="@p.Id" class="btn btn-custom btn-custom-danger btn-sm" title="Delete Patient" style="padding: 6px 12px;">
-                                            <i class="fa-solid fa-trash-can me-0"></i> <span class="d-none d-md-inline ms-1">Delete</span>
+                                        <a asp-action="Delete" asp-route-id="@p.Id" class="btn btn-sm btn-custom-danger" title="Delete Patient">
+                                            <i class="fa-solid fa-trash-can"></i>
                                         </a>
                                     </div>
                                 </td>

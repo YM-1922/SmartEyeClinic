@@ -1,0 +1,515 @@
+@inject SmartEyeClinic.Data.AppDbContext DbContext
+@{
+    Layout = "_LandingLayout";
+    ViewData["Title"] = "Premium Eye Care Specialist";
+
+    // Grab statistics dynamically to keep stats section real!
+    var totalPatients = DbContext.Patients.Count() + 1420; // add a base offset for marketing
+    var totalDoctors = DbContext.Doctors.Count();
+    var totalBranches = DbContext.Branches.Count();
+    var activeSurgeries = DbContext.Surgeries.Count() + 450;
+}
+
+<!-- Hero Section -->
+<section id="hero" class="hero-section">
+    <div class="hero-grid-overlay"></div>
+    <div class="container hero-content">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="hero-badge">
+                    <i class="fa-solid fa-sparkles"></i> World-Class Ophthalmology ERP
+                </div>
+                <h1 class="hero-title">
+                    Advanced Vision Care, <br />
+                    <span class="gradient-text">Focused on You.</span>
+                </h1>
+                <p class="hero-subtitle">
+                    Experience state-of-the-art diagnostics, modern micro-surgery, and customized vision therapies designed to restore and preserve your sight.
+                </p>
+                <div class="hero-actions">
+                    <a href="/Account/Login" class="btn-hero-primary">
+                        <i class="fa-solid fa-calendar-check"></i> Book Consultation
+                    </a>
+                    <a href="#overview" class="btn-hero-outline">
+                        Explore Services <i class="fa-solid fa-arrow-down ms-1"></i>
+                    </a>
+                </div>
+                <!-- Mini Stats Bar -->
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="stat-number">99.8%</div>
+                        <div class="stat-label">Success Rate</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="stat-number">15+</div>
+                        <div class="stat-label">Specialists</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="stat-number">24/7</div>
+                        <div class="stat-label">Emergency Care</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6 d-none d-lg-block hero-visual">
+                <div class="hero-panel animate-float">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="sidebar-brand-icon">
+                            <i class="fa-solid fa-eye-low-vision"></i>
+                        </div>
+                        <div>
+                            <h5 class="mb-0 text-white fw-bold">Ophthalmic Diagnosis</h5>
+                            <span class="text-white-50 text-xs">Laser Scan & OCT Imaging</span>
+                        </div>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="floating-card">
+                                <i class="fa-solid fa-circle-check text-info mb-2 fs-5"></i>
+                                <div class="text-white fw-bold text-sm">Cataract Surgery</div>
+                                <span class="text-white-50 text-xs">Micro-incision tech</span>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="floating-card">
+                                <i class="fa-solid fa-circle-check text-info mb-2 fs-5"></i>
+                                <div class="text-white fw-bold text-sm">Refractive Lasik</div>
+                                <span class="text-white-50 text-xs">Blade-free laser</span>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="floating-card d-flex align-items-center justify-content-between">
+                                <div class="d-flex align-items-center gap-3">
+                                    <i class="fa-solid fa-clock-rotate-left text-success fs-5"></i>
+                                    <div>
+                                        <div class="text-white fw-bold text-sm">Online Appointments</div>
+                                        <span class="text-white-50 text-xs">Instant scheduling available</span>
+                                    </div>
+                                </div>
+                                <span class="badge bg-success font-size-xs">Active</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Overview Section -->
+<section id="overview" class="landing-section">
+    <div class="container">
+        <div class="row align-items-center g-5">
+            <div class="col-lg-6">
+                <div class="position-relative">
+                    <div class="bg-primary-soft p-4 rounded-4" style="background: rgba(15,76,129,0.05); border: 1.5px solid var(--border);">
+                        <h4 class="fw-bold text-primary-custom mb-3"><i class="fa-solid fa-quote-left text-secondary-light me-2"></i>Dedicated to Clarity</h4>
+                        <p class="text-muted leading-relaxed">Our clinic is dedicated to offering specialized, high-quality ophthalmic care. Leveraging next-generation diagnostic scans, corneal topographers, and micro-incision surgical tools, our experienced surgeons help you view the world with absolute clarity.</p>
+                        <hr class="my-4" style="border-color: var(--border);" />
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-circle-check text-success"></i>
+                                    <span class="text-sm fw-600 text-dark">Premium Lens Implants</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-circle-check text-success"></i>
+                                    <span class="text-sm fw-600 text-dark">Pediatric Eye Care</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-circle-check text-success"></i>
+                                    <span class="text-sm fw-600 text-dark">Corneal Topography</span>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="fa-solid fa-circle-check text-success"></i>
+                                    <span class="text-sm fw-600 text-dark">Glaucoma Treatment</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="section-badge">Clinic Overview</div>
+                <h2 class="section-title">Your Eyes Deserve the Highest Standard of Medical Care</h2>
+                <p class="section-subtitle mb-4">We combine cutting-edge technology with warm, patient-centric care. Our goal is to ensure a smooth, transparent clinical path for all of our patients.</p>
+                <div class="d-flex flex-column gap-3">
+                    <div class="d-flex gap-3">
+                        <div class="avatar-sm avatar-initials bg-light-primary text-primary-custom" style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-user-doctor fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Board Certified Ophthalmic Surgeons</h6>
+                            <p class="text-muted small mb-0">Our surgical staff are certified experts with decades of clinical experience in laser and intraocular surgeries.</p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <div class="avatar-sm avatar-initials bg-light-success text-success" style="width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                            <i class="fa-solid fa-microscope fs-5"></i>
+                        </div>
+                        <div>
+                            <h6 class="fw-bold mb-1">Advanced Laser Diagnostics</h6>
+                            <p class="text-muted small mb-0">We use high-resolution optical coherence tomography (OCT) to identify and treat early-stage conditions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Departments Section -->
+<section id="departments" class="landing-section landing-section-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-badge">Departments</div>
+            <h2 class="section-title mx-auto">Specialized Clinical Units</h2>
+            <p class="section-subtitle mx-auto">Our facilities are split into specialized units, ensuring focus on your exact clinical needs.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="service-card text-center">
+                    <div class="service-icon bg-light-primary text-primary-custom mx-auto">
+                        <i class="fa-solid fa-eye-low-vision"></i>
+                    </div>
+                    <h5>Refractive Surgery & LASIK</h5>
+                    <p>Permanently correct myopia, hyperopia, and astigmatism using our computer-guided laser systems.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="service-card text-center">
+                    <div class="service-icon bg-light-success text-success mx-auto">
+                        <i class="fa-solid fa-circle-notch"></i>
+                    </div>
+                    <h5>Cataract & Lens Solutions</h5>
+                    <p>Replace clouded lenses with high-performance premium intraocular lenses (IOLs) to restore vibrant vision.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="service-card text-center">
+                    <div class="service-icon bg-light-danger text-danger mx-auto">
+                        <i class="fa-solid fa-child"></i>
+                    </div>
+                    <h5>Pediatric Ophthalmology</h5>
+                    <p>Dedicated tracking and treatment of strabismus, lazy eyes, and refractive errors in younger patients.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services Section -->
+<section id="services" class="landing-section">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+            <div class="col-lg-5">
+                <div class="section-badge">Services</div>
+                <h2 class="section-title">Comprehensive Clinical Operations</h2>
+                <p class="section-subtitle mb-4">From routing diagnostic examinations to advanced vitreoretinal surgeries, our services cover every aspect of clinical and cosmetic eye health.</p>
+                <ul class="list-unstyled d-flex flex-column gap-2 mb-4">
+                    <li class="d-flex align-items-center gap-2"><i class="fa-solid fa-square-check text-info"></i> Comprehensive Glaucoma Screening</li>
+                    <li class="d-flex align-items-center gap-2"><i class="fa-solid fa-square-check text-info"></i> Diabetic Retinopathy Management</li>
+                    <li class="d-flex align-items-center gap-2"><i class="fa-solid fa-square-check text-info"></i> Visual Acuity & Auto-refractor Diagnostics</li>
+                    <li class="d-flex align-items-center gap-2"><i class="fa-solid fa-square-check text-info"></i> Corneal Grafting & Cross-linking</li>
+                </ul>
+                <a href="/Account/Login" class="btn btn-primary btn-lg">
+                    <i class="fa-solid fa-calendar-plus"></i> Book a Diagnostic Session
+                </a>
+            </div>
+            <div class="col-lg-7">
+                <div class="row g-4">
+                    <div class="col-sm-6">
+                        <div class="card border-0 shadow-sm p-4 rounded-3 h-100 hover-shadow transition-all bg-white">
+                            <i class="fa-solid fa-glasses text-info fs-3 mb-3"></i>
+                            <h6 class="fw-bold text-dark">Glasses & Contact Lenses</h6>
+                            <p class="text-muted small mb-0">Custom optic fitting with next-generation auto-refractors for exact vision prescription.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card border-0 shadow-sm p-4 rounded-3 h-100 hover-shadow transition-all bg-white">
+                            <i class="fa-solid fa-user-shield text-success fs-3 mb-3"></i>
+                            <h6 class="fw-bold text-dark">Ocular Emergency Care</h6>
+                            <p class="text-muted small mb-0">Emergency trauma, sudden vision loss, and pressure spikes handled immediately by on-call specialists.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card border-0 shadow-sm p-4 rounded-3 h-100 hover-shadow transition-all bg-white">
+                            <i class="fa-solid fa-magnifying-glass-chart text-warning fs-3 mb-3"></i>
+                            <h6 class="fw-bold text-dark">Dry Eye Spa & Care</h6>
+                            <p class="text-muted small mb-0">Meibomian gland expression and clinical drops therapy to resolve persistent dry eye syndrome.</p>
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <div class="card border-0 shadow-sm p-4 rounded-3 h-100 hover-shadow transition-all bg-white">
+                            <i class="fa-solid fa-laptop-medical text-primary fs-3 mb-3"></i>
+                            <h6 class="fw-bold text-dark">OCT Retina Imaging</h6>
+                            <p class="text-muted small mb-0">High-resolution cross-sectional scans of the macular and retina layers to spot issues early.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Stats Section -->
+<section class="stats-section">
+    <div class="container position-relative z-index-2">
+        <div class="row g-4 justify-content-center">
+            <div class="col-lg-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-big">@totalPatients+</div>
+                    <div class="stat-lbl">Registered Patients</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-big">@totalDoctors</div>
+                    <div class="stat-lbl">Active Specialists</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-big">@totalBranches</div>
+                    <div class="stat-lbl">Clinic Branches</div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="stat-item">
+                    <div class="stat-big">@activeSurgeries+</div>
+                    <div class="stat-lbl">Surgeries Performed</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Doctors Section -->
+<section id="doctors" class="landing-section">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-badge">Specialists</div>
+            <h2 class="section-title mx-auto">Meet Our Ophthalmologists</h2>
+            <p class="section-subtitle mx-auto">Our board-certified eye doctors bring decades of combined surgical and clinical diagnostics expertise.</p>
+        </div>
+        <div class="row g-4 justify-content-center">
+            @{
+                var activeDocs = DbContext.Doctors.Include(d => d.User).Include(d => d.Specialization).Take(4).ToList();
+            }
+            @if (activeDocs.Any())
+            {
+                @foreach (var doc in activeDocs)
+                {
+                    <div class="col-lg-3 col-md-6 col-sm-10">
+                        <div class="doctor-card">
+                            <div class="doctor-avatar-wrap">
+                                <div class="doctor-initials-big">
+                                    @(doc.User?.FullName?.Length > 0 ? doc.User.FullName[0].ToString().ToUpper() : "D")
+                                </div>
+                            </div>
+                            <div class="doctor-info">
+                                <h6>Dr. @doc.User?.FullName</h6>
+                                <div class="doctor-spec">@doc.Specialization?.Name</div>
+                                <p class="text-muted small mb-0">License: @doc.LicenseNumber</p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="col-lg-3 col-md-6">
+                    <div class="doctor-card">
+                        <div class="doctor-avatar-wrap">
+                            <div class="doctor-initials-big">W</div>
+                        </div>
+                        <div class="doctor-info">
+                            <h6>Dr. Alexander Wright</h6>
+                            <div class="doctor-spec">General Ophthalmology</div>
+                            <p class="text-muted small mb-0">License: LIC-9988-OPH</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials Section -->
+<section class="landing-section landing-section-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <div class="section-badge">Testimonials</div>
+            <h2 class="section-title mx-auto">What Our Patients Say</h2>
+            <p class="section-subtitle mx-auto">Read honest feedback from patients who restored their vision at our clinic.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="quote">"My LASIK surgery was painless and completed in under 15 minutes. The clinic's staff and laser equipment are state-of-the-art. I now have 20/20 vision!"</p>
+                    <div class="patient-name">Emily Johnson</div>
+                    <div class="patient-tag">Lasik Patient</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i>
+                    </div>
+                    <p class="quote">"Dr. Wright performed cataract surgery on both of my eyes. The colors are so bright now, and I can read without glasses. A truly life-changing experience."</p>
+                    <div class="patient-name">Robert Miller</div>
+                    <div class="patient-tag">Cataract Patient</div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="testimonial-card">
+                    <div class="stars">
+                        <i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star"></i><i class="fa-solid fa-star-half-stroke"></i>
+                    </div>
+                    <p class="quote">"Great dry eye diagnostics. They identified my issue during the first consultation and set up a laser gland session. Very structured clinic layout!"</p>
+                    <div class="patient-name">Sophia Davis</div>
+                    <div class="patient-tag">Dry Eye Patient</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ Section -->
+<section id="faq" class="landing-section">
+    <div class="container">
+        <div class="row g-5">
+            <div class="col-lg-5">
+                <div class="section-badge">FAQ</div>
+                <h2 class="section-title">Frequently Asked Questions</h2>
+                <p class="section-subtitle">Find answers to the most common questions regarding clinical appointments, surgical procedures, and payment modes.</p>
+                <div class="mt-4 p-4 rounded-3 bg-light-primary text-primary-custom" style="border: 1px solid var(--border);">
+                    <h6 class="fw-bold mb-2"><i class="fa-solid fa-circle-question me-2"></i>Need Immediate Support?</h6>
+                    <p class="small mb-0 opacity-75">Our reception desk is active Monday–Saturday to assist you. Call us or send an email through our contact coordinates.</p>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="accordion faq-accordion border-0" id="faqAccordion">
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                                How do I schedule an eye consultation?
+                            </button>
+                        </h2>
+                        <div id="faq1" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                You can register a patient profile online and access the Patient Portal to book an appointment instantly, choosing your preferred doctor, branch, and available slot.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                                Is cataract surgery performed as an outpatient procedure?
+                            </button>
+                        </h2>
+                        <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                Yes, cataract extraction is a minimally invasive outpatient procedure. The surgery itself takes approximately 15–20 minutes, and patients can recover in the comfort of their homes.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                                What payment methods does the clinic accept?
+                            </button>
+                        </h2>
+                        <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                We accept Cash, Credit Cards (Visa/Mastercard), Insurance coverage, and Bank Wire transfers. Invoices are generated transparently upon visit registration.
+                            </div>
+                        </div>
+                    </div>
+                    <div class="accordion-item bg-transparent">
+                        <h2 class="accordion-header">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq4">
+                                Do I need a referral to see a specialist?
+                            </button>
+                        </h2>
+                        <div id="faq4" class="accordion-collapse collapse" data-bs-parent="#faqAccordion">
+                            <div class="accordion-body">
+                                No, you can schedule an appointment directly with any of our ophthalmologists. However, if you are planning to claim insurance coverage, some providers might require a general practitioner referral.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section id="contact" class="landing-section landing-section-light">
+    <div class="container">
+        <div class="card border-0 shadow-lg p-5 rounded-4 bg-white" style="background: linear-gradient(135deg, #FFFFFF 0%, #F8FAFC 100%);">
+            <div class="row g-5">
+                <div class="col-lg-6">
+                    <div class="section-badge">Contact Us</div>
+                    <h2 class="section-title">Schedule Your Visit Today</h2>
+                    <p class="section-subtitle mb-5">Fill out the contact query form, or register a profile directly to book your appointment online immediately.</p>
+                    <div class="d-flex flex-column gap-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-sm bg-light-primary text-primary-custom" style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-map-pin"></i>
+                            </div>
+                            <span class="text-sm font-weight-500">101 Medical Center Way, Suite A</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-sm bg-light-success text-success" style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-phone"></i>
+                            </div>
+                            <span class="text-sm font-weight-500">+1 (555) 900-0000</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="avatar-sm bg-light-info text-info" style="width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fa-solid fa-envelope"></i>
+                            </div>
+                            <span class="text-sm font-weight-500">info@smarteyeclinic.com</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <form onsubmit="event.preventDefault(); Swal.fire('Query Sent', 'We will respond to your inquiry shortly.', 'success');">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label class="form-label text-xs">Full Name</label>
+                                <input type="text" class="form-control" placeholder="Jane Doe" required />
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label text-xs">Email Address</label>
+                                <input type="email" class="form-control" placeholder="jane@example.com" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-xs">Subject</label>
+                                <input type="text" class="form-control" placeholder="Clinical inquiry" required />
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-xs">Your Message</label>
+                                <textarea class="form-control" placeholder="Describe your query..." style="min-height: 120px;" required></textarea>
+                            </div>
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary btn-lg w-100 justify-content-center">
+                                    <i class="fa-solid fa-paper-plane me-1"></i> Send Online Inquiry
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

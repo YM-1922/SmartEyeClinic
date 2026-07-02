@@ -17,32 +17,34 @@ namespace SmartEyeClinic.Web.Services
         }
 
         // Get All Invoices
-        public List<Invoice> GetAllInvoices()
+        public async Task<List<Invoice>> GetAllInvoicesAsync()
         {
-            return _context.Invoices
+            return await _context.Invoices
                 .Include(i => i.Patient).ThenInclude(p => p.User)
                 .Include(i => i.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
+                .AsNoTracking()
                 .OrderByDescending(i => i.IssuedAt)
-                .ToList();
+                .ToListAsync();
         }
 
         // Get Invoice By Id
-        public Invoice? GetInvoiceById(int id)
+        public async Task<Invoice?> GetInvoiceByIdAsync(int id)
         {
-            return _context.Invoices
+            return await _context.Invoices
                 .Include(i => i.Patient).ThenInclude(p => p.User)
                 .Include(i => i.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
                 .Include(i => i.Appointment).ThenInclude(a => a.Branch)
                 .Include(i => i.Payments).ThenInclude(p => p.PaymentMethod)
-                .FirstOrDefault(i => i.Id == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(i => i.Id == id);
         }
 
         // Add Invoice
-        public ServiceResult AddInvoice(int appointmentId, int patientId,
+        public async Task<ServiceResult> AddInvoiceAsync(int appointmentId, int patientId,
             decimal totalAmount, decimal? tax, decimal? discount)
         {
-            var appointmentExists = _context.Appointments.Any(a => a.Id == appointmentId);
-            var patientExists     = _context.Patients.Any(p => p.Id == patientId);
+            var appointmentExists = await _context.Appointments.AnyAsync(a => a.Id == appointmentId);
+            var patientExists     = await _context.Patients.AnyAsync(p => p.Id == patientId);
 
             if (!appointmentExists)
                 return ServiceResult.Fail("Appointment not found!");
@@ -64,13 +66,13 @@ namespace SmartEyeClinic.Web.Services
             };
 
             _context.Invoices.Add(invoice);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
 
             return ServiceResult.Ok();
         }
 
         // Update Invoice
-        public ServiceResult UpdateInvoice(
+        public async Task<ServiceResult> UpdateInvoiceAsync(
             int id,
             int appointmentId,
             int patientId,
@@ -81,14 +83,14 @@ namespace SmartEyeClinic.Web.Services
             decimal? discount,
             string status)
         {
-            var invoice = _context.Invoices.Find(id);
+            var invoice = await _context.Invoices.FindAsync(id);
             if (invoice == null)
                 return ServiceResult.Fail("Invoice not found.");
 
-            if (!_context.Appointments.Any(a => a.Id == appointmentId))
+            if (!await _context.Appointments.AnyAsync(a => a.Id == appointmentId))
                 return ServiceResult.Fail("Appointment not found!");
 
-            if (!_context.Patients.Any(p => p.Id == patientId))
+            if (!await _context.Patients.AnyAsync(p => p.Id == patientId))
                 return ServiceResult.Fail("Patient not found!");
 
             invoice.AppointmentId = appointmentId;
@@ -100,23 +102,23 @@ namespace SmartEyeClinic.Web.Services
             invoice.Discount = discount;
             invoice.Status = status;
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return ServiceResult.Ok();
         }
 
         // Delete Invoice
-        public ServiceResult DeleteInvoice(int id)
+        public async Task<ServiceResult> DeleteInvoiceAsync(int id)
         {
-            var invoice = _context.Invoices.Find(id);
+            var invoice = await _context.Invoices.FindAsync(id);
             if (invoice == null)
                 return ServiceResult.Fail("Invoice not found.");
 
             // Check if invoice has associated payment records
-            if (_context.Payments.Any(p => p.InvoiceId == id))
+            if (await _context.Payments.AnyAsync(p => p.InvoiceId == id))
                 return ServiceResult.Fail("Cannot delete invoice because payments have already been settled against it.");
 
             _context.Invoices.Remove(invoice);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return ServiceResult.Ok();
         }
     }

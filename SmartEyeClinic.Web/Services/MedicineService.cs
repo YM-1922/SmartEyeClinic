@@ -1,5 +1,8 @@
+using Microsoft.EntityFrameworkCore;
 using SmartEyeClinic.Data;
 using SmartEyeClinic.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace SmartEyeClinic.Web.Services;
 
@@ -12,8 +15,7 @@ public class MedicineService
         _context = context;
     }
 
-    // Renamed: parameters replace Console.ReadLine() — DB logic unchanged
-    public void AddMedicine(string name, string? description, string? manufacturer)
+    public async Task AddMedicineAsync(string name, string? description, string? manufacturer)
     {
         var medicine = new Medicine();
 
@@ -22,12 +24,11 @@ public class MedicineService
         medicine.Manufacturer= manufacturer;
 
         _context.Medicines.Add(medicine);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
-    // Renamed: returns list instead of Console.WriteLine() — DB logic unchanged
-    public List<Medicine> GetAllMedicines()
+    public async Task<List<Medicine>> GetAllMedicinesAsync()
     {
-        return _context.Medicines.ToList();
+        return await _context.Medicines.AsNoTracking().ToListAsync();
     }
 }

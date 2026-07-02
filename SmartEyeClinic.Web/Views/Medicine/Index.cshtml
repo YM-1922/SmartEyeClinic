@@ -3,48 +3,49 @@
     ViewData["Title"] = "Medicines - Smart Eye Clinic";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <ul class="breadcrumb-custom mb-1">
-            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-            <li>Pharmacy Catalog</li>
-        </ul>
-        <h3 class="fw-bold text-dark mb-0">Pharmacy & Medicines Catalog</h3>
+<div class="page-header">
+    <div class="page-header-left">
+        <nav class="breadcrumb-nav">
+            <a asp-controller="Home" asp-action="Index">Home</a>
+            <span class="separator">/</span>
+            <span class="current">Pharmacy Catalog</span>
+        </nav>
+        <h3 class="page-title">Pharmacy & Medicines</h3>
+        <p class="page-subtitle">Track prescription drug inventory, manufacturers, and usage directions</p>
     </div>
-    <a asp-action="Create" class="btn btn-custom btn-custom-primary">
-        <i class="fa-solid fa-pills"></i> Add Medicine
-    </a>
+    @if (User.IsInRole("Admin") || User.IsInRole("Doctor"))
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fa-solid fa-pills"></i> Add Medicine
+        </a>
+    }
 </div>
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-custom d-flex align-items-center mb-4">
-        <i class="fa-solid fa-circle-check fs-5 me-2"></i> <div>@TempData["Success"]</div>
+<div class="table-card">
+    <div class="table-card-header">
+        <h5 class="table-title">
+            <i class="fa-solid fa-pills text-primary"></i> Medicine Database
+        </h5>
     </div>
-}
-
-<div class="card custom-card">
-    <div class="card-header-clean">
-        <div class="d-flex align-items-center">
-            <i class="fa-solid fa-pills text-primary me-2 fs-5"></i>
-            <h5 class="mb-0">Medicine Database</h5>
-        </div>
-        <div class="text-muted small">Total: @Model.Count items</div>
-    </div>
-    <div class="card-body-clean">
+    <div class="card-body-clean p-4">
         @if (!Model.Any())
         {
-            <div class="text-center py-5">
-                <i class="fa-solid fa-pills text-muted fs-1 mb-3 d-block"></i>
-                <h5 class="fw-bold text-dark mb-2">No Medicines in Catalog</h5>
-                <p class="text-muted small mb-4">Add medicines to the pharmacy database.</p>
-                <a asp-action="Create" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-pills"></i> Add First Medicine</a>
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fa-solid fa-capsules"></i>
+                </div>
+                <h5>No Medicines Cataloged</h5>
+                <p>The pharmacy medicine database is currently empty.</p>
+                @if (User.IsInRole("Admin") || User.IsInRole("Doctor"))
+                {
+                    <a asp-action="Create" class="btn btn-primary"><i class="fa-solid fa-pills"></i> Add Medicine</a>
+                }
             </div>
         }
         else
         {
             <div class="table-responsive-custom">
-                <table class="table custom-table">
+                <table class="table datatable custom-table">
                     <thead>
                         <tr>
                             <th>Medicine</th>
@@ -58,16 +59,18 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="p-2 rounded me-3 text-warning" style="background:rgba(245,158,11,0.1);width:36px;height:36px;display:flex;align-items:center;justify-content:center;">
+                                        <div class="avatar-initials avatar-sm me-3 bg-light-warning text-warning" style="border-radius: var(--radius-sm)">
                                             <i class="fa-solid fa-capsules"></i>
                                         </div>
                                         <span class="fw-bold text-dark">@m.Name</span>
                                     </div>
                                 </td>
-                                <td><span class="text-muted">@(m.Manufacturer ?? "—")</span></td>
                                 <td>
-                                    <span class="text-muted small" title="@m.Description">
-                                        @(m.Description?.Length > 60 ? m.Description.Substring(0, 60) + "..." : (m.Description ?? "—"))
+                                    <span class="fw-500 text-dark">@(m.Manufacturer ?? "—")</span>
+                                </td>
+                                <td>
+                                    <span class="text-muted text-xs" title="@m.Description">
+                                        @(m.Description?.Length > 100 ? m.Description.Substring(0, 100) + "..." : (m.Description ?? "—"))
                                     </span>
                                 </td>
                             </tr>

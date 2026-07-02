@@ -1,110 +1,118 @@
 @model IEnumerable<SmartEyeClinic.Models.MedicalFile>
 @{
     ViewData["Title"] = "Medical Files - Smart Eye Clinic";
+    var userIdString = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+    int currentUserId = string.IsNullOrEmpty(userIdString) ? 0 : int.Parse(userIdString);
 }
 
-<div class="container-fluid py-4">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Medical Files</li>
-        </ol>
-    </nav>
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="fw-bold text-dark mb-1">Patient Medical Files</h3>
-            <p class="text-muted small mb-0">Browse, upload, and download patient clinical records, scan files, and OCT charts.</p>
-        </div>
-        @if (!ViewBag.IsPatient)
-        {
-            <a asp-action="Upload" asp-route-patientId="@ViewBag.PatientId" class="btn btn-primary px-3 py-2 border-0" style="background: var(--primary-color); border-radius: 8px;">
-                <i class="fa-solid fa-cloud-arrow-up me-1"></i> Upload File
-            </a>
-        }
+<div class="page-header">
+    <div class="page-header-left">
+        <nav class="breadcrumb-nav">
+            <a asp-controller="Home" asp-action="Index">Dashboard</a>
+            <span class="separator">/</span>
+            <span class="current">Medical Files</span>
+        </nav>
+        <h3 class="page-title">Patient Medical Files</h3>
+        <p class="page-subtitle">Browse, upload, and download patient clinical records, scan files, and OCT charts</p>
     </div>
-
-    @if (TempData["Success"] != null)
+    @if (!ViewBag.IsPatient)
     {
-        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
-            <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <a asp-action="Upload" asp-route-patientId="@ViewBag.PatientId" class="btn btn-primary">
+            <i class="fa-solid fa-cloud-arrow-up"></i> Upload File
+        </a>
     }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
-            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+</div>
 
-    <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg);">
-        <div class="card-body p-4">
-            @if (Model == null || !Model.Any())
-            {
-                <div class="text-center py-5">
-                    <i class="fa-solid fa-folder-open fs-1 text-muted mb-3 d-block"></i>
-                    <h5 class="text-muted fw-normal">No medical files have been uploaded yet.</h5>
+<div class="table-card">
+    <div class="table-card-header">
+        <h5 class="table-title">
+            <i class="fa-solid fa-folder-open text-primary"></i> Patient Medical Records
+        </h5>
+    </div>
+    <div class="card-body-clean p-4">
+        @if (Model == null || !Model.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fa-solid fa-folder-open"></i>
                 </div>
-            }
-            else
-            {
-                <div class="table-responsive">
-                    <table class="table custom-table small">
-                        <thead>
+                <h5>No Medical Files Found</h5>
+                <p>No scans, clinical notes, or visual acuity charts have been uploaded yet.</p>
+                @if (!ViewBag.IsPatient)
+                {
+                    <a asp-action="Upload" asp-route-patientId="@ViewBag.PatientId" class="btn btn-primary"><i class="fa-solid fa-cloud-arrow-up"></i> Upload File</a>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive-custom">
+                <table class="table datatable custom-table">
+                    <thead>
+                        <tr>
+                            <th>File ID</th>
+                            <th>Patient Name</th>
+                            <th>File Type</th>
+                            <th>File Size</th>
+                            <th>Uploaded At</th>
+                            <th>Uploader</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
                             <tr>
-                                <th>File ID</th>
-                                <th>Patient Name</th>
-                                <th>File Type</th>
-                                <th>File Size</th>
-                                <th>Uploaded At</th>
-                                <th>Uploader</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var item in Model)
-                            {
-                                <tr>
-                                    <td>#@item.Id</td>
-                                    <td><strong>@item.Patient.User.FullName</strong></td>
-                                    <td>
-                                        <span class="badge bg-light text-primary border px-2.5 py-1.5 fw-bold font-monospace">@item.FileType</span>
-                                    </td>
-                                    <td>
-                                        @if (item.FileSize.HasValue)
-                                        {
-                                            <span>@((item.FileSize.Value / 1024.0).ToString("F1")) KB</span>
-                                        }
-                                        else
-                                        {
-                                            <span>-</span>
-                                        }
-                                    </td>
-                                    <td>@(item.UploadedAt.HasValue ? item.UploadedAt.Value.ToString("dd MMM yyyy, hh:mm tt") : "-")</td>
-                                    <td>@(item.Uploader != null ? item.Uploader.FullName : "-")</td>
-                                    <td>
-                                        <div class="d-flex gap-2">
-                                            <a href="@item.FilePath" target="_blank" class="btn btn-sm btn-outline-primary" style="border-radius: 6px;">
-                                                <i class="fa-solid fa-eye me-1"></i> View / Download
-                                            </a>
-                                            @if (User.IsInRole("Admin") || (User.IsInRole("Patient") && item.UploadedBy.ToString() == User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value))
-                                            {
-                                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" style="border-radius: 6px;">
-                                                    <i class="fa-solid fa-trash"></i>
-                                                </a>
-                                            }
+                                <td><span class="text-muted font-monospace small">#@item.Id</span></td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-initials avatar-sm me-2 bg-light-primary text-primary-custom">
+                                            @(item.Patient?.User?.FullName?.Length > 0 ? item.Patient.User.FullName[0].ToString().ToUpper() : "P")
                                         </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
-                </div>
-            }
-        </div>
+                                        <span class="fw-600 text-dark">@item.Patient?.User?.FullName</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="pill pill-info font-monospace fw-bold">@item.FileType</span>
+                                </td>
+                                <td>
+                                    @if (item.FileSize.HasValue)
+                                    {
+                                        <span class="fw-500">@((item.FileSize.Value / 1024.0).ToString("F1")) KB</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">-</span>
+                                    }
+                                </td>
+                                <td>
+                                    <span class="fw-500 d-block">@(item.UploadedAt.HasValue ? item.UploadedAt.Value.ToString("dd MMM yyyy") : "-")</span>
+                                    <span class="text-xs text-muted">@(item.UploadedAt.HasValue ? item.UploadedAt.Value.ToString("hh:mm tt") : "-")</span>
+                                </td>
+                                <td>
+                                    <span class="text-dark">@(item.Uploader != null ? item.Uploader.FullName : "-")</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="action-btns justify-content-end">
+                                        <a href="@item.FilePath" target="_blank" class="btn btn-sm btn-light" title="View or Download File">
+                                            <i class="fa-solid fa-cloud-arrow-down text-muted"></i> Download
+                                        </a>
+                                        @if (User.IsInRole("Admin") || (!User.IsInRole("Patient") && item.UploadedBy == currentUserId))
+                                        {
+                                            <form asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" data-confirm="Are you sure you want to delete this medical file?" data-item="Medical File #@item.Id">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-custom-danger" title="Delete File">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
     </div>
 </div>

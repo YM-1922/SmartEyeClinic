@@ -22,44 +22,91 @@ namespace SmartEyeClinic.Web.Controllers
         }
 
         // List prescriptions (returns list of PrescriptionItem to match existing view contract)
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var prescriptions = _prescriptionService.GetAllPrescriptions();
+            var prescriptions = await _prescriptionService.GetAllPrescriptionsAsync();
+
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim != null)
+                {
+                    int patId = int.Parse(patIdClaim);
+                    prescriptions = prescriptions.Where(p => p.PrescriptionHeader.Examination.Appointment.PatientId == patId).ToList();
+                }
+                else
+                {
+                    prescriptions = new List<PrescriptionItem>();
+                }
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim != null)
+                {
+                    int docId = int.Parse(docIdClaim);
+                    prescriptions = prescriptions.Where(p => p.PrescriptionHeader.Examination.Appointment.DoctorId == docId).ToList();
+                }
+                else
+                {
+                    prescriptions = new List<PrescriptionItem>();
+                }
+            }
+
             return View(prescriptions);
         }
 
         // Prescription details (Printable Rx sheet)
         [HttpGet]
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var rxHeader = _prescriptionService.GetPrescriptionHeaderById(id);
+            var rxHeader = await _prescriptionService.GetPrescriptionHeaderByIdAsync(id);
             if (rxHeader == null)
             {
                 TempData["Error"] = "Prescription not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            // IDOR Protection
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != rxHeader.Examination.Appointment.PatientId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != rxHeader.Examination.Appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
             return View(rxHeader);
         }
 
         // Create Prescription (Doctors only)
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
-        public IActionResult Create(int? examinationId = null)
+        public async Task<IActionResult> Create(int? examinationId = null)
         {
-            PopulateDropdowns(examinationId);
+            await PopulateDropdownsAsync(examinationId);
             return View();
         }
 
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(int examinationId, int medicineId, string? dosage, int durationDays, string? instructions)
+        public async Task<IActionResult> Create(int examinationId, int medicineId, string? dosage, int durationDays, string? instructions)
         {
-            var result = _prescriptionService.CreatePrescription(examinationId, medicineId, dosage, durationDays, instructions);
+            var result = await _prescriptionService.CreatePrescriptionAsync(examinationId, medicineId, dosage, durationDays, instructions);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                PopulateDropdowns(examinationId);
+                await PopulateDropdownsAsync(examinationId);
                 return View();
             }
             TempData["Success"] = "Prescription created successfully!";
@@ -68,23 +115,51 @@ namespace SmartEyeClinic.Web.Controllers
 
         // Delete Prescription - GET (Admin or prescribing Doctor)
         [HttpGet]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var rx = _prescriptionService.GetPrescriptionHeaderById(id);
+            var rx = await _prescriptionService.GetPrescriptionHeaderByIdAsync(id);
             if (rx == null)
             {
                 TempData["Error"] = "Prescription not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            // Security check: Only Admin or the prescribing doctor can delete
+            if (!User.IsInRole("Admin"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != rx.Examination.Appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
             return View(rx);
         }
 
         // Delete Prescription - POST
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var result = _prescriptionService.DeletePrescription(id);
+            var rx = await _prescriptionService.GetPrescriptionHeaderByIdAsync(id);
+            if (rx == null)
+            {
+                TempData["Error"] = "Prescription not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // Security check: Only Admin or the prescribing doctor can delete
+            if (!User.IsInRole("Admin"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != rx.Examination.Appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
+            var result = await _prescriptionService.DeletePrescriptionAsync(id);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
@@ -94,18 +169,28 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private void PopulateDropdowns(int? selectedExamId = null)
+        private async Task PopulateDropdownsAsync(int? selectedExamId = null)
         {
-            ViewBag.Examinations = _context.Examinations
-                .Include(e => e.Appointment).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
-                .Include(e => e.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
-                .OrderByDescending(e => e.ExaminedAt)
-                .ToList();
+            IQueryable<Examination> query = _context.Examinations
+                .Include(e => e.Appointment)
+                    .ThenInclude(a => a.Patient)
+                        .ThenInclude(p => p.User)
+                .Include(e => e.Appointment)
+                    .ThenInclude(a => a.Doctor)
+                        .ThenInclude(d => d.User);
 
-            ViewBag.Medicines = _context.Medicines
-                .OrderBy(m => m.Name)
-                .ToList();
+            if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim != null)
+                {
+                    int docId = int.Parse(docIdClaim);
+                    query = query.Where(e => e.Appointment.DoctorId == docId);
+                }
+            }
 
+            ViewBag.Examinations = await query.OrderByDescending(e => e.ExaminedAt).ToListAsync();
+            ViewBag.Medicines = await _context.Medicines.AsNoTracking().OrderBy(m => m.Name).ToListAsync();
             ViewBag.SelectedExaminationId = selectedExamId;
         }
     }

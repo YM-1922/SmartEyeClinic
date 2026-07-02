@@ -22,38 +22,85 @@ namespace SmartEyeClinic.Web.Controllers
         }
 
         // List Examinations
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var examinations = _examinationService.GetAllExaminations();
+            var examinations = await _examinationService.GetAllExaminationsAsync();
+
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim != null)
+                {
+                    int patId = int.Parse(patIdClaim);
+                    examinations = examinations.Where(e => e.Appointment.PatientId == patId).ToList();
+                }
+                else
+                {
+                    examinations = new List<Examination>();
+                }
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim != null)
+                {
+                    int docId = int.Parse(docIdClaim);
+                    examinations = examinations.Where(e => e.Appointment.DoctorId == docId).ToList();
+                }
+                else
+                {
+                    examinations = new List<Examination>();
+                }
+            }
+
             return View(examinations);
         }
 
         // Examination Details (Visual Acuity sheet)
         [HttpGet]
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var exam = _examinationService.GetExaminationById(id);
+            var exam = await _examinationService.GetExaminationByIdAsync(id);
             if (exam == null)
             {
                 TempData["Error"] = "Examination record not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            // IDOR Protection
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != exam.Appointment.PatientId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != exam.Appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
             return View(exam);
         }
 
         // Create Examination (Doctors only)
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
-        public IActionResult Create(int? appointmentId = null)
+        public async Task<IActionResult> Create(int? appointmentId = null)
         {
-            PopulateAppointmentsDropdown(appointmentId);
+            await PopulateAppointmentsDropdownAsync(appointmentId);
             return View();
         }
 
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(
+        public async Task<IActionResult> Create(
             int appointmentId, 
             string diagnosis, 
             string? symptoms,
@@ -62,13 +109,13 @@ namespace SmartEyeClinic.Web.Controllers
             string? intraocularPressure, 
             string? treatmentPlan)
         {
-            var result = _examinationService.AddExamination(appointmentId, diagnosis, symptoms,
+            var result = await _examinationService.AddExaminationAsync(appointmentId, diagnosis, symptoms,
                 visualAcuityLeft, visualAcuityRight, intraocularPressure, treatmentPlan);
 
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                PopulateAppointmentsDropdown(appointmentId);
+                await PopulateAppointmentsDropdownAsync(appointmentId);
                 return View();
             }
             TempData["Success"] = "Examination record logged successfully!";
@@ -78,20 +125,30 @@ namespace SmartEyeClinic.Web.Controllers
         // Edit Examination
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var exam = _examinationService.GetExaminationById(id);
+            var exam = await _examinationService.GetExaminationByIdAsync(id);
             if (exam == null)
                 return NotFound();
 
-            PopulateAppointmentsDropdown(exam.AppointmentId);
+            // IDOR Protection: Doctor can only edit their own exams
+            if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != exam.Appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
+            await PopulateAppointmentsDropdownAsync(exam.AppointmentId);
             return View(exam);
         }
 
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(
+        public async Task<IActionResult> Edit(
             int id,
             int appointmentId,
             string diagnosis,
@@ -101,14 +158,27 @@ namespace SmartEyeClinic.Web.Controllers
             string? intraocularPressure,
             string? treatmentPlan)
         {
-            var result = _examinationService.UpdateExamination(id, appointmentId, diagnosis, symptoms,
+            var exam = await _examinationService.GetExaminationByIdAsync(id);
+            if (exam == null)
+                return NotFound();
+
+            // IDOR Protection
+            if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != exam.Appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
+            var result = await _examinationService.UpdateExaminationAsync(id, appointmentId, diagnosis, symptoms,
                 visualAcuityLeft, visualAcuityRight, intraocularPressure, treatmentPlan);
 
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                PopulateAppointmentsDropdown(appointmentId);
-                var exam = _examinationService.GetExaminationById(id);
+                await PopulateAppointmentsDropdownAsync(appointmentId);
                 return View(exam);
             }
             TempData["Success"] = "Examination record updated successfully!";
@@ -118,9 +188,9 @@ namespace SmartEyeClinic.Web.Controllers
         // Delete Examination - GET
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var exam = _examinationService.GetExaminationById(id);
+            var exam = await _examinationService.GetExaminationByIdAsync(id);
             if (exam == null)
             {
                 TempData["Error"] = "Examination record not found.";
@@ -133,9 +203,9 @@ namespace SmartEyeClinic.Web.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var result = _examinationService.DeleteExamination(id);
+            var result = await _examinationService.DeleteExaminationAsync(id);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
@@ -145,15 +215,24 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private void PopulateAppointmentsDropdown(int? selectedId = null)
+        private async Task PopulateAppointmentsDropdownAsync(int? selectedId = null)
         {
-            // Populate appointments that are pending or matching selectedId
-            ViewBag.Appointments = _context.Appointments
+            var query = _context.Appointments
                 .Include(a => a.Patient).ThenInclude(p => p.User)
                 .Include(a => a.Doctor).ThenInclude(d => d.User)
-                .Where(a => a.Status != "Cancelled" || a.Id == selectedId)
-                .OrderByDescending(a => a.AppointmentDateTime)
-                .ToList();
+                .Where(a => a.Status != "Cancelled" || a.Id == selectedId);
+
+            if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim != null)
+                {
+                    int docId = int.Parse(docIdClaim);
+                    query = query.Where(a => a.DoctorId == docId);
+                }
+            }
+
+            ViewBag.Appointments = await query.OrderByDescending(a => a.AppointmentDateTime).ToListAsync();
             ViewBag.SelectedAppointmentId = selectedId;
         }
     }

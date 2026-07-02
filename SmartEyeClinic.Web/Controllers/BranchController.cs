@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -19,26 +20,43 @@ namespace SmartEyeClinic.Web.Controllers
         }
 
         // List Branches
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var branches = _context.Branches
+            var branches = await _context.Branches
                 .Include(b => b.Appointments)
                 .Include(b => b.Receptionists)
-                .ToList();
+                .AsNoTracking()
+                .ToListAsync();
             return View(branches);
         }
 
-        // Details of a Branch
-        public IActionResult Details(int id)
+        // Details of a Branch — patients only see their own appointments
+        public async Task<IActionResult> Details(int id)
         {
-            var branch = _context.Branches
+            var branch = await _context.Branches
                 .Include(b => b.Appointments).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
                 .Include(b => b.Appointments).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
                 .Include(b => b.Receptionists).ThenInclude(r => r.User)
-                .FirstOrDefault(b => b.Id == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(b => b.Id == id);
 
             if (branch == null)
                 return NotFound();
+
+            // IDOR: filter appointment list for patients — they should not see other patients' visits
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim != null)
+                {
+                    int patId = int.Parse(patIdClaim);
+                    branch.Appointments = branch.Appointments.Where(a => a.PatientId == patId).ToList();
+                }
+                else
+                {
+                    branch.Appointments = new List<Appointment>();
+                }
+            }
 
             return View(branch);
         }
@@ -54,12 +72,12 @@ namespace SmartEyeClinic.Web.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Branch branch)
+        public async Task<IActionResult> Create(Branch branch)
         {
             if (ModelState.IsValid)
             {
                 _context.Branches.Add(branch);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 TempData["Success"] = "Branch created successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -69,9 +87,9 @@ namespace SmartEyeClinic.Web.Controllers
         // Edit Branch (Admin only)
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var branch = _context.Branches.Find(id);
+            var branch = await _context.Branches.FindAsync(id);
             if (branch == null)
                 return NotFound();
 
@@ -81,12 +99,12 @@ namespace SmartEyeClinic.Web.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(Branch branch)
+        public async Task<IActionResult> Edit(Branch branch)
         {
             if (ModelState.IsValid)
             {
                 _context.Update(branch);
-                _context.SaveChanges();
+                await _context.SaveChangesAsync();
                 TempData["Success"] = "Branch updated successfully!";
                 return RedirectToAction(nameof(Index));
             }
@@ -96,9 +114,9 @@ namespace SmartEyeClinic.Web.Controllers
         // Delete Branch (Admin only)
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var branch = _context.Branches.Find(id);
+            var branch = await _context.Branches.FindAsync(id);
             if (branch == null)
                 return NotFound();
 
@@ -108,27 +126,27 @@ namespace SmartEyeClinic.Web.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var branch = _context.Branches.Find(id);
+            var branch = await _context.Branches.FindAsync(id);
             if (branch == null)
                 return NotFound();
 
             // Constraint checks
-            if (_context.Appointments.Any(a => a.BranchId == id))
+            if (await _context.Appointments.AnyAsync(a => a.BranchId == id))
             {
                 TempData["Error"] = "Cannot delete branch because it has associated patient appointments scheduled.";
                 return RedirectToAction(nameof(Index));
             }
 
-            if (_context.Receptionists.Any(r => r.BranchId == id))
+            if (await _context.Receptionists.AnyAsync(r => r.BranchId == id))
             {
                 TempData["Error"] = "Cannot delete branch because receptionists are currently assigned to this location.";
                 return RedirectToAction(nameof(Index));
             }
 
             _context.Branches.Remove(branch);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             TempData["Success"] = "Branch deleted successfully!";
             return RedirectToAction(nameof(Index));
         }

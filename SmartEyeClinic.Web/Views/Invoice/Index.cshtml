@@ -3,54 +3,49 @@
     ViewData["Title"] = "Invoices - Smart Eye Clinic";
 }
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <ul class="breadcrumb-custom mb-1">
-            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-            <li>Invoices</li>
-        </ul>
-        <h3 class="fw-bold text-dark mb-0">Billing & Invoices</h3>
+<div class="page-header">
+    <div class="page-header-left">
+        <nav class="breadcrumb-nav">
+            <a asp-controller="Home" asp-action="Index">Home</a>
+            <span class="separator">/</span>
+            <span class="current">Invoices</span>
+        </nav>
+        <h3 class="page-title">Billing & Invoices</h3>
+        <p class="page-subtitle">Manage patient consultations invoices and accounts settlements</p>
     </div>
-    <a asp-action="Create" class="btn btn-custom btn-custom-primary">
-        <i class="fa-solid fa-file-invoice-dollar"></i> Create Invoice
-    </a>
+    @if (User.IsInRole("Admin") || User.IsInRole("Receptionist"))
+    {
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fa-solid fa-file-invoice-dollar"></i> Create Invoice
+        </a>
+    }
 </div>
 
-@if (TempData["Success"] != null)
-{
-    <div class="alert alert-success alert-custom d-flex align-items-center mb-4">
-        <i class="fa-solid fa-circle-check fs-5 me-2"></i> <div>@TempData["Success"]</div>
+<div class="table-card">
+    <div class="table-card-header">
+        <h5 class="table-title">
+            <i class="fa-solid fa-file-invoice-dollar text-primary"></i> Invoice Register
+        </h5>
     </div>
-}
-@if (TempData["Error"] != null)
-{
-    <div class="alert alert-danger alert-custom d-flex align-items-center mb-4">
-        <i class="fa-solid fa-circle-exclamation fs-5 me-2"></i> <div>@TempData["Error"]</div>
-    </div>
-}
-
-<div class="card custom-card">
-    <div class="card-header-clean">
-        <div class="d-flex align-items-center">
-            <i class="fa-solid fa-file-invoice-dollar text-primary me-2 fs-5"></i>
-            <h5 class="mb-0">Invoice Register</h5>
-        </div>
-        <div class="text-muted small">Total: @Model.Count invoices</div>
-    </div>
-    <div class="card-body-clean">
+    <div class="card-body-clean p-4">
         @if (!Model.Any())
         {
-            <div class="text-center py-5">
-                <i class="fa-solid fa-file-invoice text-muted fs-1 mb-3 d-block"></i>
-                <h5 class="fw-bold text-dark mb-2">No Invoices Found</h5>
-                <p class="text-muted small mb-4">Create the first invoice for a patient appointment.</p>
-                <a asp-action="Create" class="btn btn-custom btn-custom-primary"><i class="fa-solid fa-file-invoice-dollar"></i> Create Invoice</a>
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fa-solid fa-file-invoice"></i>
+                </div>
+                <h5>No Invoices Found</h5>
+                <p>Create the first invoice for a patient appointment.</p>
+                @if (User.IsInRole("Admin") || User.IsInRole("Receptionist"))
+                {
+                    <a asp-action="Create" class="btn btn-primary"><i class="fa-solid fa-file-invoice-dollar"></i> Create Invoice</a>
+                }
             </div>
         }
         else
         {
             <div class="table-responsive-custom">
-                <table class="table custom-table">
+                <table class="table datatable custom-table">
                     <thead>
                         <tr>
                             <th>Invoice #</th>
@@ -59,37 +54,71 @@
                             <th>Paid Amount</th>
                             <th>Status</th>
                             <th>Issued Date</th>
-                            <th>Actions</th>
+                            <th class="text-end">Actions</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var i in Model)
                         {
                             <tr>
-                                <td><span class="font-monospace fw-bold text-primary">@i.InvoiceNumber</span></td>
+                                <td>
+                                    <span class="font-monospace fw-bold text-primary-custom">@i.InvoiceNumber</span>
+                                </td>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="me-2 text-white fw-bold text-center rounded-circle" style="width:32px;height:32px;line-height:32px;font-size:0.8rem;background:#00B4D8;">
+                                        <div class="avatar-initials avatar-sm me-2 bg-light-success text-success">
                                             @(i.Patient?.User?.FullName?.Length > 0 ? i.Patient.User.FullName[0].ToString().ToUpper() : "P")
                                         </div>
-                                        <span>@i.Patient?.User?.FullName</span>
+                                        <div class="d-flex flex-column">
+                                            <span class="fw-600 text-dark">@i.Patient?.User?.FullName</span>
+                                            <span class="text-xs text-muted">ID: #@i.PatientId</span>
+                                        </div>
                                     </div>
                                 </td>
-                                <td><span class="fw-bold text-dark">@i.TotalAmount.ToString("C")</span></td>
-                                <td><span class="text-success">@(i.PaidAmount?.ToString("C") ?? "—")</span></td>
+                                <td>
+                                    <span class="fw-bold text-dark">@i.TotalAmount.ToString("C")</span>
+                                </td>
+                                <td>
+                                    <span class="fw-bold text-success">@(i.PaidAmount?.ToString("C") ?? "$0.00")</span>
+                                </td>
                                 <td>
                                     @if (i.Status == "Paid")
-                                    { <span class="badge-custom badge-custom-success">Paid</span> }
+                                    { <span class="badge-status badge-success">Paid</span> }
                                     else if (i.Status == "Partial")
-                                    { <span class="badge-custom badge-custom-warning">Partial</span> }
+                                    { <span class="badge-status badge-warning">Partial</span> }
                                     else
-                                    { <span class="badge-custom badge-custom-danger">@i.Status</span> }
+                                    { <span class="badge-status badge-danger">@i.Status</span> }
                                 </td>
-                                <td><span class="text-muted">@i.IssuedAt?.ToString("dd MMM yyyy")</span></td>
                                 <td>
-                                    <a asp-controller="Payment" asp-action="Create" asp-route-invoiceId="@i.Id" class="btn btn-sm btn-custom btn-custom-primary" style="padding:5px 12px;">
-                                        <i class="fa-solid fa-credit-card"></i> Pay
-                                    </a>
+                                    <span class="text-muted text-xs">@i.IssuedAt?.ToString("dd MMM yyyy")</span>
+                                </td>
+                                <td class="text-end">
+                                    <div class="action-btns justify-content-end">
+                                        @if (i.Status != "Paid" && (User.IsInRole("Admin") || User.IsInRole("Receptionist")))
+                                        {
+                                            <a asp-controller="Payment" asp-action="Create" asp-route-invoiceId="@i.Id" class="btn btn-sm btn-success" title="Record Payment">
+                                                <i class="fa-solid fa-credit-card"></i> Pay
+                                            </a>
+                                        }
+                                        <a asp-action="Details" asp-route-id="@i.Id" class="btn btn-sm btn-light" title="View details">
+                                            <i class="fa-solid fa-eye text-muted"></i> Details
+                                        </a>
+                                        @if (User.IsInRole("Admin") || User.IsInRole("Receptionist"))
+                                        {
+                                            <a asp-action="Edit" asp-route-id="@i.Id" class="btn btn-sm btn-light text-primary" title="Edit Invoice">
+                                                <i class="fa-solid fa-pen-to-square"></i> Edit
+                                            </a>
+                                        }
+                                        @if (User.IsInRole("Admin"))
+                                        {
+                                            <form asp-action="Delete" asp-route-id="@i.Id" method="post" class="d-inline" data-confirm="Are you sure you want to delete this invoice record?" data-item="Invoice #@i.InvoiceNumber">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-custom-danger" title="Delete">
+                                                    <i class="fa-solid fa-trash-can"></i>
+                                                </button>
+                                            </form>
+                                        }
+                                    </div>
                                 </td>
                             </tr>
                         }

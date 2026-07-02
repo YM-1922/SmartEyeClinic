@@ -1,206 +1,216 @@
 @{
-    ViewData["Title"] = "Doctor Dashboard - Smart Eye Clinic";
+    ViewData["Title"] = "Doctor Dashboard";
     var appointments = ViewBag.TodayAppointments as List<SmartEyeClinic.Models.Appointment>;
-    var surgeries = ViewBag.UpcomingSurgeries as List<SmartEyeClinic.Models.Surgery>;
+    var surgeries    = ViewBag.UpcomingSurgeries  as List<SmartEyeClinic.Models.Surgery>;
 }
 
-<div class="container-fluid py-4">
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="fw-bold text-dark mb-1">Clinical Control Center</h3>
-            <p class="text-muted small mb-0">Welcome back, @User.Identity?.Name. Access patient records and schedule visits.</p>
+<!-- Page Header -->
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb-nav">
+            <a href="/"><i class="bi bi-house-door"></i> Home</a>
+            <span class="separator">/</span>
+            <span class="current">Doctor Dashboard</span>
         </div>
-        <div class="d-flex gap-2">
-            <a asp-controller="Examination" asp-action="Create" class="btn btn-primary btn-sm px-3 py-2 border-0" style="background: var(--primary-color); border-radius: 8px;">
-                <i class="fa-solid fa-notes-medical me-1"></i> Log Examination
-            </a>
-            <a asp-controller="Prescription" asp-action="Create" class="btn btn-success btn-sm px-3 py-2 border-0" style="background: var(--success-color); border-radius: 8px;">
-                <i class="fa-solid fa-file-prescription me-1"></i> New Prescription
-            </a>
+        <h1 class="page-title"><i class="bi bi-heart-pulse text-secondary-custom me-2"></i>Clinical Control Center</h1>
+        <p class="page-subtitle">
+            Welcome back, <strong>@User.Identity?.Name</strong>. Today is @DateTime.Today.ToString("dddd, dd MMMM yyyy").
+        </p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-controller="Examination"  asp-action="Create" class="btn btn-outline-primary btn-sm">
+            <i class="bi bi-file-medical"></i> Log Examination
+        </a>
+        <a asp-controller="Prescription" asp-action="Create" class="btn btn-primary btn-sm">
+            <i class="bi bi-prescription2"></i> New Prescription
+        </a>
+    </div>
+</div>
+
+<!-- KPI Row -->
+<div class="row g-4 mb-4">
+    <div class="col-md-4">
+        <div class="metric-card metric-gradient-primary">
+            <div class="metric-label">My Patients</div>
+            <div class="metric-value">@ViewBag.TotalMyPatients</div>
+            <div class="metric-sub"><i class="bi bi-person-check"></i> Distinct consultations</div>
+            <div class="metric-icon"><i class="bi bi-hospital"></i></div>
         </div>
     </div>
-
-    <!-- Stats row -->
-    <div class="row g-4 mb-4">
-        <div class="col-md-4">
-            <div class="card metric-card metric-gradient-primary h-100 shadow-sm">
-                <div class="card-body">
-                    <div class="text-uppercase text-white-50 small fw-bold mb-1">My Patients</div>
-                    <div class="fs-2 fw-bold text-white mb-2">@ViewBag.TotalMyPatients</div>
-                    <div class="small text-white-50"><i class="fa-solid fa-user-injured"></i> Distinct consult patients</div>
-                </div>
-                <div class="icon-wrapper">
-                    <i class="fa-solid fa-hospital-user"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card metric-card metric-gradient-secondary h-100 shadow-sm">
-                <div class="card-body">
-                    <div class="text-uppercase text-white-50 small fw-bold mb-1">Pending Consuls</div>
-                    <div class="fs-2 fw-bold text-white mb-2">@ViewBag.MyPendingAppointments</div>
-                    <div class="small text-white-50"><i class="fa-solid fa-hourglass-half"></i> Upcoming booked visits</div>
-                </div>
-                <div class="icon-wrapper">
-                    <i class="fa-solid fa-calendar-check"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md-4">
-            <div class="card metric-card metric-gradient-danger h-100 shadow-sm">
-                <div class="card-body">
-                    <div class="text-uppercase text-white-50 small fw-bold mb-1">Ocular Surgeries</div>
-                    <div class="fs-2 fw-bold text-white mb-2">@ViewBag.MySurgeries</div>
-                    <div class="small text-white-50"><i class="fa-solid fa-scissors"></i> Operating theater files</div>
-                </div>
-                <div class="icon-wrapper">
-                    <i class="fa-solid fa-syringe"></i>
-                </div>
-            </div>
+    <div class="col-md-4">
+        <div class="metric-card metric-gradient-secondary">
+            <div class="metric-label">Pending Consults</div>
+            <div class="metric-value">@ViewBag.MyPendingAppointments</div>
+            <div class="metric-sub"><i class="bi bi-hourglass-split"></i> Upcoming visits</div>
+            <div class="metric-icon"><i class="bi bi-calendar-check"></i></div>
         </div>
     </div>
-
-    <div class="row g-4">
-        <!-- Today's consultations -->
-        <div class="col-lg-8">
-            <div class="card border-0 shadow-sm rounded-4 h-100" style="background: var(--card-bg);">
-                <div class="card-header-clean">
-                    <h5 class="mb-0"><i class="fa-solid fa-calendar-day text-primary me-2"></i>Today's Consultations</h5>
-                    <span class="badge bg-light-primary text-primary px-2.5 py-1.5 rounded-pill small fw-600">@DateTime.Today.ToString("dd MMMM yyyy")</span>
-                </div>
-                <div class="card-body p-4">
-                    @if (appointments == null || !appointments.Any())
-                    {
-                        <div class="text-center py-5">
-                            <i class="fa-regular fa-calendar-check fs-1 text-muted mb-3 d-block"></i>
-                            <h6 class="text-muted fw-normal">You have no appointments scheduled for today.</h6>
-                            <p class="text-muted small">Use the search to inspect patient records manually.</p>
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="table-responsive-custom">
-                            <table class="table custom-table">
-                                <thead>
-                                    <tr>
-                                        <th>Patient</th>
-                                        <th>Time</th>
-                                        <th>Branch</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var app in appointments)
-                                    {
-                                        <tr>
-                                            <td>
-                                                <div class="d-flex align-items-center">
-                                                    <div class="avatar-circle me-2 bg-light-primary text-primary fw-bold text-center" style="width: 32px; height: 32px; border-radius: 50%; line-height: 32px; font-size: 0.85rem;">
-                                                        @(app.Patient.User.FullName.Length > 0 ? app.Patient.User.FullName[0].ToString().ToUpper() : "P")
-                                                    </div>
-                                                    <div>
-                                                        <a asp-controller="Patient" asp-action="Details" asp-route-id="@app.PatientId" class="fw-bold d-block text-dark text-decoration-none">@app.Patient.User.FullName</a>
-                                                        <span class="text-muted small">ID: #@app.PatientId</span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <span class="text-dark fw-500">@app.AppointmentDateTime.ToString("hh:mm tt")</span>
-                                            </td>
-                                            <td>
-                                                <span class="text-muted">@app.Branch.Name</span>
-                                            </td>
-                                            <td>
-                                                @if (app.Status == "Completed")
-                                                {
-                                                    <span class="badge-custom badge-custom-success">Completed</span>
-                                                }
-                                                else if (app.Status == "Pending")
-                                                {
-                                                    <span class="badge-custom badge-custom-warning">Pending</span>
-                                                }
-                                                else
-                                                {
-                                                    <span class="badge-custom badge-custom-danger">@app.Status</span>
-                                                }
-                                            </td>
-                                            <td>
-                                                <div class="dropdown">
-                                                    <button class="btn btn-light btn-sm border-0 dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                                        <i class="fa-solid fa-ellipsis-vertical"></i>
-                                                    </button>
-                                                    <ul class="dropdown-menu dropdown-menu-end shadow border-0">
-                                                        <li><a class="dropdown-item py-2" asp-controller="Examination" asp-action="Create" asp-route-appointmentId="@app.Id"><i class="fa-solid fa-file-medical me-2 text-muted"></i>Add Exam</a></li>
-                                                        <li><a class="dropdown-item py-2" asp-controller="Patient" asp-action="Details" asp-route-id="@app.PatientId"><i class="fa-solid fa-id-card me-2 text-muted"></i>Patient File</a></li>
-                                                        <li><hr class="dropdown-divider"></li>
-                                                        <li><a class="dropdown-item py-2" asp-controller="Appointment" asp-action="Edit" asp-route-id="@app.Id"><i class="fa-solid fa-clock me-2 text-muted"></i>Reschedule</a></li>
-                                                    </ul>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
-                    }
-                </div>
-            </div>
+    <div class="col-md-4">
+        <div class="metric-card metric-gradient-danger">
+            <div class="metric-label">Ocular Surgeries</div>
+            <div class="metric-value">@ViewBag.MySurgeries</div>
+            <div class="metric-sub"><i class="bi bi-scissors"></i> Operating theater</div>
+            <div class="metric-icon"><i class="bi bi-activity"></i></div>
         </div>
+    </div>
+</div>
 
-        <!-- Operating theater queue & availability -->
-        <div class="col-lg-4">
-            <!-- Surgery schedule -->
-            <div class="card border-0 shadow-sm rounded-4 mb-4" style="background: var(--card-bg);">
-                <div class="card-header-clean">
-                    <h5 class="mb-0"><i class="fa-solid fa-bed-pulse text-danger me-2"></i>Operating Room Queue</h5>
-                </div>
-                <div class="card-body p-4">
-                    @if (surgeries == null || !surgeries.Any())
-                    {
-                        <div class="text-center py-5 text-muted">
-                            <i class="fa-solid fa-circle-check fs-1 text-success mb-3 d-block"></i>
-                            No surgeries scheduled for today.
-                        </div>
-                    }
-                    else
-                    {
-                        <div class="list-group list-group-flush">
-                            @foreach (var s in surgeries)
-                            {
-                                <div class="list-group-item px-0 border-0 mb-3 bg-light p-3 rounded-3 hover-shadow transition-all">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <span class="badge bg-danger px-2.5 py-1 rounded-pill small">@s.SurgeryType.Name</span>
-                                        <span class="text-muted small">@s.SurgeryDate.ToString("dd MMM hh:mm tt")</span>
-                                    </div>
-                                    <div class="small mb-1">
-                                        <strong class="text-dark">Patient:</strong> @s.Patient.User.FullName
-                                    </div>
-                                    <div class="small text-muted mb-0">
-                                        <i class="fa-solid fa-hospital-user me-1"></i> ID: #@s.PatientId | Theater: OT-@s.Id
-                                    </div>
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
+<!-- Main Content -->
+<div class="row g-4">
+    <!-- Today's Consultations -->
+    <div class="col-lg-8">
+        <div class="table-card h-100">
+            <div class="table-card-header">
+                <h5 class="table-title"><i class="bi bi-calendar-day"></i> Today's Consultations</h5>
+                <span class="badge-status badge-primary">@DateTime.Today.ToString("dd MMMM yyyy")</span>
             </div>
-
-            <!-- Clinic Calendar shortcut card -->
-            <div class="card border-0 shadow-sm rounded-4" style="background: var(--card-bg); overflow: hidden;">
-                <div class="p-4 text-white" style="background: linear-gradient(135deg, #0F4C81 0%, #1D70B8 100%);">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <h6 class="fw-bold mb-0">My Clinical Calendar</h6>
-                        <i class="fa-regular fa-calendar-days fs-4"></i>
-                    </div>
-                    <p class="small text-white-50 mb-3">Check doctor schedules, working days, shifts, and leaves at once.</p>
-                    <a asp-controller="Home" asp-action="Calendar" class="btn btn-light btn-sm w-100 fw-bold border-0" style="color: #0F4C81; border-radius: 8px;">
-                        Open Planner
+            @if (appointments == null || !appointments.Any())
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
+                    <h5>No Appointments Today</h5>
+                    <p>You have no consultations scheduled for today. All your upcoming appointments will appear here.</p>
+                    <a asp-controller="Appointment" asp-action="Index" class="btn btn-primary btn-sm">
+                        <i class="bi bi-calendar2-week"></i> View All Appointments
                     </a>
                 </div>
+            }
+            else
+            {
+                <div class="table-responsive-custom">
+                    <table class="custom-table">
+                        <thead>
+                            <tr>
+                                <th>Patient</th>
+                                <th>Time</th>
+                                <th>Branch</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var app in appointments)
+                            {
+                                var aBadge = "";
+                                switch (app.Status)
+                                {
+                                    case "Completed": aBadge = "badge-success"; break;
+                                    case "Pending": aBadge = "badge-warning"; break;
+                                    case "Confirmed": aBadge = "badge-info"; break;
+                                    case "Cancelled": aBadge = "badge-danger"; break;
+                                    default: aBadge = "badge-neutral"; break;
+                                }
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <div class="avatar-initials avatar-sm">
+                                                @(app.Patient?.User?.FullName?.Length > 0 ? app.Patient.User.FullName[0].ToString().ToUpper() : "P")
+                                            </div>
+                                            <div>
+                                                <a asp-controller="Patient" asp-action="Details" asp-route-id="@app.PatientId"
+                                                   class="fw-600 text-sm d-block" style="color:var(--text);">
+                                                    @app.Patient?.User?.FullName
+                                                </a>
+                                                <span class="text-xs text-muted">ID: #@app.PatientId</span>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td><span class="fw-600 text-sm">@app.AppointmentDateTime.ToString("hh:mm tt")</span></td>
+                                    <td><span class="text-muted text-sm">@app.Branch?.Name</span></td>
+                                    <td><span class="badge-status @aBadge">@app.Status</span></td>
+                                    <td>
+                                        <div class="dropdown">
+                                            <button class="btn btn-light btn-icon btn-sm border" type="button"
+                                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="bi bi-three-dots-vertical"></i>
+                                            </button>
+                                            <ul class="dropdown-menu dropdown-menu-end premium-dropdown shadow">
+                                                <li>
+                                                    <a class="dropdown-item" asp-controller="Examination" asp-action="Create"
+                                                       asp-route-appointmentId="@app.Id">
+                                                        <i class="bi bi-file-medical"></i> Add Exam
+                                                    </a>
+                                                </li>
+                                                <li>
+                                                    <a class="dropdown-item" asp-controller="Patient" asp-action="Details"
+                                                       asp-route-id="@app.PatientId">
+                                                        <i class="bi bi-person-vcard"></i> Patient File
+                                                    </a>
+                                                </li>
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <a class="dropdown-item" asp-controller="Appointment" asp-action="Edit"
+                                                       asp-route-id="@app.Id">
+                                                        <i class="bi bi-clock"></i> Reschedule
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Surgery Queue -->
+        <div class="table-card mb-4">
+            <div class="table-card-header">
+                <h5 class="table-title"><i class="bi bi-activity"></i> Upcoming Surgeries</h5>
+                <span class="badge-status badge-danger">Scheduled</span>
+            </div>
+            <div class="card-body-clean" style="max-height:260px; overflow-y:auto;">
+                @if (surgeries == null || !surgeries.Any())
+                {
+                    <div class="empty-state" style="padding:30px 20px;">
+                        <div class="empty-state-icon"><i class="bi bi-check-circle"></i></div>
+                        <h5>No Surgeries Scheduled</h5>
+                        <p>Your upcoming operating theater cases will appear here.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="d-flex flex-column gap-2">
+                        @foreach (var s in surgeries)
+                        {
+                            <div class="p-3 rounded-3 border hover-shadow transition-all" style="background:var(--bg);">
+                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                    <span class="badge-status badge-danger">@s.SurgeryType?.Name</span>
+                                    <span class="text-xs text-muted">@s.SurgeryDate.ToString("dd MMM")</span>
+                                </div>
+                                <div class="fw-600 text-sm mb-1">@s.Patient?.User?.FullName</div>
+                                <div class="text-xs text-muted">
+                                    <i class="bi bi-clock"></i> @s.SurgeryDate.ToString("hh:mm tt") &nbsp;·&nbsp;
+                                    OT-@s.Id
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Calendar shortcut -->
+        <div class="custom-card overflow-hidden">
+            <div class="p-4 text-white"
+                 style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h6 class="fw-700 mb-0">My Clinical Calendar</h6>
+                    <i class="bi bi-calendar-week fs-4"></i>
+                </div>
+                <p class="text-sm mb-3" style="color:rgba(255,255,255,0.7);">
+                    View your full appointment schedule, working hours, and surgical blocks.
+                </p>
+                <a asp-controller="Home" asp-action="Calendar"
+                   class="btn btn-sm w-100 fw-700"
+                   style="background:#fff; color:var(--primary); border-radius:8px;">
+                    <i class="bi bi-calendar-range"></i> Open Planner
+                </a>
             </div>
         </div>
     </div>

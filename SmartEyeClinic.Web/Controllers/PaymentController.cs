@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,43 +23,69 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Payments
-        public IActionResult Index()
+        // List Payments — patients see only their own
+        public async Task<IActionResult> Index()
         {
-            var payments = _paymentService.GetAllPayments();
+            var payments = await _paymentService.GetAllPaymentsAsync();
+
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim != null)
+                {
+                    int patId = int.Parse(patIdClaim);
+                    payments = payments.Where(p => p.Invoice.PatientId == patId).ToList();
+                }
+                else
+                {
+                    payments = new List<Payment>();
+                }
+            }
+
             return View(payments);
         }
 
-        // Payment Details
+        // Payment Details — IDOR protected
         [HttpGet]
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var payment = _paymentService.GetPaymentById(id);
+            var payment = await _paymentService.GetPaymentByIdAsync(id);
             if (payment == null)
             {
                 TempData["Error"] = "Payment record not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            // IDOR: patients may only view their own payment
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != payment.Invoice.PatientId)
+                    return RedirectToAction("AccessDenied", "Account");
+            }
+
             return View(payment);
         }
 
-        // Create Payment
+        // Create Payment (Admin or Receptionist only)
+        [Authorize(Roles = "Admin,Receptionist")]
         [HttpGet]
-        public IActionResult Create(int? invoiceId = null)
+        public async Task<IActionResult> Create(int? invoiceId = null)
         {
-            PopulateDropdowns(invoiceId);
+            await PopulateDropdownsAsync(invoiceId);
             return View();
         }
 
+        [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(int invoiceId, int paymentMethodId, decimal amount, string? transactionRef)
+        public async Task<IActionResult> Create(int invoiceId, int paymentMethodId, decimal amount, string? transactionRef)
         {
-            var result = _paymentService.AddPayment(invoiceId, paymentMethodId, amount, transactionRef);
+            var result = await _paymentService.AddPaymentAsync(invoiceId, paymentMethodId, amount, transactionRef);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                PopulateDropdowns(invoiceId);
+                await PopulateDropdownsAsync(invoiceId);
                 return View();
             }
             TempData["Success"] = "Payment registered successfully!";
@@ -67,9 +95,9 @@ namespace SmartEyeClinic.Web.Controllers
         // Delete Payment (Admin only)
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var payment = _paymentService.GetPaymentById(id);
+            var payment = await _paymentService.GetPaymentByIdAsync(id);
             if (payment == null)
             {
                 TempData["Error"] = "Payment record not found.";
@@ -81,9 +109,9 @@ namespace SmartEyeClinic.Web.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var result = _paymentService.DeletePayment(id);
+            var result = await _paymentService.DeletePaymentAsync(id);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
@@ -94,9 +122,9 @@ namespace SmartEyeClinic.Web.Controllers
         }
 
         // Payment Methods listing
-        public IActionResult Methods()
+        public async Task<IActionResult> Methods()
         {
-            var methods = _paymentService.GetAllPaymentMethods();
+            var methods = await _paymentService.GetAllPaymentMethodsAsync();
             return View(methods);
         }
 
@@ -110,9 +138,9 @@ namespace SmartEyeClinic.Web.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult AddMethod(string name)
+        public async Task<IActionResult> AddMethod(string name)
         {
-            var result = _paymentService.AddPaymentMethod(name);
+            var result = await _paymentService.AddPaymentMethodAsync(name);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
@@ -122,17 +150,19 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Methods));
         }
 
-        private void PopulateDropdowns(int? selectedInvoiceId = null)
+        private async Task PopulateDropdownsAsync(int? selectedInvoiceId = null)
         {
-            ViewBag.Invoices = _context.Invoices
+            ViewBag.Invoices = await _context.Invoices
                 .Include(i => i.Patient).ThenInclude(p => p.User)
                 .Where(i => i.Status != "Paid" || i.Id == selectedInvoiceId)
+                .AsNoTracking()
                 .OrderByDescending(i => i.IssuedAt)
-                .ToList();
+                .ToListAsync();
 
-            ViewBag.PaymentMethods = _context.PaymentMethods
+            ViewBag.PaymentMethods = await _context.PaymentMethods
+                .AsNoTracking()
                 .OrderBy(m => m.Name)
-                .ToList();
+                .ToListAsync();
 
             ViewBag.SelectedInvoiceId = selectedInvoiceId;
         }

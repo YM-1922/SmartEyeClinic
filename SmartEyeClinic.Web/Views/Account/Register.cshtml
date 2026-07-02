@@ -8,212 +8,285 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Patient Registration - Smart Eye Clinic</title>
+    <!-- Bootstrap 5 -->
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+    <!-- Custom site CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <style>
-        body.login-body {
-            background: linear-gradient(135deg, #0F4C81 0%, #0077B6 50%, #00B4D8 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 30px 20px;
-            font-family: 'Poppins', 'Inter', sans-serif;
-        }
-
-        .login-card {
-            background: rgba(255, 255, 255, 0.92);
-            backdrop-filter: blur(10px);
-            border-radius: 16px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            overflow: hidden;
-            width: 100%;
-            max-width: 600px;
-            animation: fadeInUp 0.6s ease;
-        }
-
-        .login-header {
-            background: rgba(15, 76, 129, 0.05);
-            padding: 25px 40px 15px 40px;
-            text-align: center;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-        }
-
-        .login-header i {
-            color: #0F4C81;
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-        }
-
-        .login-header h3 {
-            font-weight: 700;
-            color: #0F4C81;
-            margin-bottom: 3px;
-        }
-
-        .login-body-content {
-            padding: 35px 40px;
-        }
-
-        .form-control-custom {
-            border: 1.5px solid #CBD5E1;
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 0.92rem;
-            transition: all 0.3s;
-            background-color: #F8FAFC;
-        }
-
-        .form-control-custom:focus {
-            border-color: #0F4C81;
-            background-color: #FFF;
-            box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.15);
-        }
-
-        .form-select-custom {
-            border: 1.5px solid #CBD5E1;
-            border-radius: 10px;
-            padding: 10px 14px;
-            font-size: 0.92rem;
-            transition: all 0.3s;
-            background-color: #F8FAFC;
-        }
-
-        .form-select-custom:focus {
-            border-color: #0F4C81;
-            background-color: #FFF;
-            box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.15);
-        }
-
-        .btn-register {
-            background: linear-gradient(135deg, #22C55E 0%, #15803D 100%);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: 600;
-            transition: all 0.3s;
-            box-shadow: 0 4px 10px rgba(34, 197, 94, 0.2);
-        }
-
-        .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 15px rgba(34, 197, 94, 0.3);
-            color: #fff;
-            opacity: 0.95;
-        }
-
-        @@keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-    </style>
 </head>
-<body class="login-body">
+<body>
+    <div class="auth-page">
+        <!-- Left Panel: Branding & Features -->
+        <div class="auth-panel-left d-none d-lg-flex">
+            <div class="hero-grid-overlay"></div>
+            <div style="max-width: 440px; position: relative; z-index: 5;">
+                <div class="auth-logo">
+                    <div class="auth-logo-icon">
+                        <i class="fa-solid fa-eye"></i>
+                    </div>
+                    <div class="auth-logo-text">
+                        <div class="clinic-name">SmartEye Clinic</div>
+                        <div class="clinic-type">Clinical ERP Platform</div>
+                    </div>
+                </div>
 
-    <div class="login-card">
-        <div class="login-header">
-            <i class="fa-solid fa-hospital-user"></i>
-            <h3>Register Patient Account</h3>
-            <p class="text-muted small mb-0">Join Smart Eye Clinic Patient Portal</p>
+                <h2 class="text-white fw-bold mb-4" style="line-height:1.25">Join the Future of <br/>Eye Care Service.</h2>
+                <p class="text-white-50 small mb-5">Create a patient account to instantly book visual acuity checks, manage medical records, retrieve laser imaging files, and track prescriptions.</p>
+
+                <!-- Features list -->
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fa-solid fa-clock-rotate-left"></i></div>
+                    <div class="auth-feature-text">
+                        <h6>Medical History Track</h6>
+                        <p>Keep a lifetime record of diagnoses, surgeries, and prescriptions.</p>
+                    </div>
+                </div>
+
+                <div class="auth-feature">
+                    <div class="auth-feature-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <div class="auth-feature-text">
+                        <h6>Zero Paper Billing</h6>
+                        <p>Access insurance details, bills, payments, and invoices digitally.</p>
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="login-body-content">
-            <form asp-controller="Account" asp-action="Register" method="post" class="needs-validation" novalidate>
-                @Html.AntiForgeryToken()
 
-                @if (!ViewData.ModelState.IsValid)
-                {
-                    <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3">
-                        <div asp-validation-summary="All" class="text-danger"></div>
+        <!-- Right Panel: Step-by-Step Register Form -->
+        <div class="auth-panel-right">
+            <div class="auth-form-container" style="max-width: 420px;">
+                <!-- Mobile Logo -->
+                <div class="auth-logo d-flex d-lg-none justify-content-center mb-4">
+                    <div class="auth-logo-icon" style="width: 40px; height: 40px; font-size:1.15rem;">
+                        <i class="fa-solid fa-eye"></i>
                     </div>
-                }
-
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-600">Full Name *</label>
-                        <input type="text" name="fullName" class="form-control form-control-custom" placeholder="John Doe" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-600">Email Address *</label>
-                        <input type="email" name="email" class="form-control form-control-custom" placeholder="john@example.com" required />
+                    <div class="auth-logo-text text-start">
+                        <div class="clinic-name text-dark">SmartEye</div>
+                        <div class="clinic-type" style="color:var(--text-muted)">Clinic ERP</div>
                     </div>
                 </div>
 
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-600">Password *</label>
-                        <input type="password" name="password" class="form-control form-control-custom" placeholder="••••••••" required minlength="6" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-600">Phone Number</label>
-                        <input type="tel" name="phoneNumber" class="form-control form-control-custom" placeholder="555-0199" />
-                    </div>
+                <div class="text-center text-lg-start">
+                    <h3 class="auth-title">Create Account</h3>
+                    <p class="auth-subtitle">Register a new patient profile</p>
                 </div>
 
-                <div class="row g-3 mb-3">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-600">National ID / Passport *</label>
-                        <input type="text" name="nationalId" class="form-control form-control-custom" placeholder="NID-8877" required />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-600">Gender *</label>
-                        <select name="gender" class="form-select form-select-custom" required>
-                            <option value="">Choose...</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
+                <!-- Step Progress Indicators -->
+                <div class="step-indicator">
+                    <div class="step-dot active" id="dot1">1</div>
+                    <div class="step-line" id="line1"></div>
+                    <div class="step-dot" id="dot2">2</div>
+                    <div class="step-line" id="line2"></div>
+                    <div class="step-dot" id="dot3">3</div>
                 </div>
 
-                <div class="row g-3 mb-4">
-                    <div class="col-md-6">
-                        <label class="form-label small fw-600">Date of Birth *</label>
-                        <input type="date" name="dob" class="form-control form-control-custom" required value="2000-01-01" />
-                    </div>
-                    <div class="col-md-6">
-                        <label class="form-label small fw-600">Home Address</label>
-                        <input type="text" name="address" class="form-control form-control-custom" placeholder="123 Maple St" />
-                    </div>
-                </div>
+                <form asp-controller="Account" asp-action="Register" method="post" class="needs-validation" novalidate id="registerForm">
+                    @Html.AntiForgeryToken()
 
-                <button type="submit" class="btn btn-register w-100 mb-3">
-                    <i class="fa-solid fa-user-plus me-2"></i> Register Account
-                </button>
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger py-2 px-3 mb-4 animate-fade-in-up">
+                            <i class="fa-solid fa-circle-exclamation fs-6"></i>
+                            <div asp-validation-summary="All" class="small"></div>
+                        </div>
+                    }
 
-                <div class="text-center small text-muted">
-                    Already have an account? <a asp-action="Login" class="fw-bold text-decoration-none" style="color: #0F4C81;">Sign In here</a>
-                </div>
-            </form>
+                    <!-- STEP 1: Account Information -->
+                    <div class="register-step active" id="step1">
+                        <h6 class="fw-bold mb-3 text-primary-custom text-xs uppercase tracking-wide">Step 1: Account Details</h6>
+                        
+                        <div class="mb-3">
+                            <label class="form-label text-xs">Full Name *</label>
+                            <div class="input-icon-wrap">
+                                <i class="fa-regular fa-user"></i>
+                                <input type="text" name="fullName" id="fullNameInput" class="form-control-auth" placeholder="John Doe" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-xs">Email Address *</label>
+                            <div class="input-icon-wrap">
+                                <i class="fa-regular fa-envelope"></i>
+                                <input type="email" name="email" id="emailInput" class="form-control-auth" placeholder="john@example.com" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-xs">Password *</label>
+                            <div class="input-icon-wrap">
+                                <i class="fa-solid fa-lock"></i>
+                                <input type="password" name="password" id="passwordInput" class="form-control-auth" placeholder="••••••••" required minlength="6" />
+                                <button type="button" class="password-toggle" id="togglePasswordBtn">
+                                    <i class="fa-regular fa-eye-slash" id="togglePasswordIcon"></i>
+                                </button>
+                            </div>
+                            <span class="text-muted text-xs d-block mt-1">Minimum 6 characters</span>
+                        </div>
+
+                        <div class="d-flex justify-content-end">
+                            <button type="button" class="btn btn-primary" onclick="goToStep(2)">
+                                Next Step <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 2: Identification & Demographics -->
+                    <div class="register-step" id="step2">
+                        <h6 class="fw-bold mb-3 text-primary-custom text-xs uppercase tracking-wide">Step 2: Profile Identification</h6>
+
+                        <div class="mb-3">
+                            <label class="form-label text-xs">National ID / Passport *</label>
+                            <div class="input-icon-wrap">
+                                <i class="fa-regular fa-id-card"></i>
+                                <input type="text" name="nationalId" id="nidInput" class="form-control-auth" placeholder="NID-8877" required />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label text-xs">Gender *</label>
+                            <select name="gender" id="genderInput" class="form-control-auth form-select" required>
+                                <option value="">Choose Gender...</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-xs">Date of Birth *</label>
+                            <input type="date" name="dob" id="dobInput" class="form-control-auth" required value="2000-01-01" />
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-light" onclick="goToStep(1)">
+                                <i class="fa-solid fa-arrow-left"></i> Previous
+                            </button>
+                            <button type="button" class="btn btn-primary" onclick="goToStep(3)">
+                                Next Step <i class="fa-solid fa-arrow-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- STEP 3: Contact Details & Confirmation -->
+                    <div class="register-step" id="step3">
+                        <h6 class="fw-bold mb-3 text-primary-custom text-xs uppercase tracking-wide">Step 3: Contact details</h6>
+
+                        <div class="mb-3">
+                            <label class="form-label text-xs">Phone Number</label>
+                            <div class="input-icon-wrap">
+                                <i class="fa-solid fa-phone"></i>
+                                <input type="tel" name="phoneNumber" class="form-control-auth" placeholder="555-0199" />
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label text-xs">Home Address</label>
+                            <div class="input-icon-wrap">
+                                <i class="fa-solid fa-house"></i>
+                                <input type="text" name="address" class="form-control-auth" placeholder="123 Maple St" />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between gap-2">
+                            <button type="button" class="btn btn-light" onclick="goToStep(2)">
+                                <i class="fa-solid fa-arrow-left"></i> Previous
+                            </button>
+                            <button type="submit" class="btn-auth btn-auth-primary w-auto flex-fill" id="registerBtn">
+                                <span class="btn-text"><i class="fa-solid fa-user-plus"></i> Register Profile</span>
+                                <span class="spinner"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="text-center small text-muted mt-4">
+                        Already have an account? <a asp-action="Login" class="fw-bold text-primary-custom">Sign In here</a>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
+    <!-- Scripts -->
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Bootstrap form validation
+        // Toggle Password visibility
+        const toggleBtn = document.getElementById('togglePasswordBtn');
+        const passInput = document.getElementById('passwordInput');
+        const toggleIcon = document.getElementById('togglePasswordIcon');
+        if (toggleBtn && passInput) {
+            toggleBtn.addEventListener('click', function () {
+                const type = passInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passInput.setAttribute('type', type);
+                toggleIcon.className = type === 'text' ? 'fa-regular fa-eye' : 'fa-regular fa-eye-slash';
+            });
+        }
+
+        // Wizard steps navigation
+        let currentStep = 1;
+        function goToStep(step) {
+            if (step > currentStep) {
+                // Validate fields in current step before moving forward
+                let isValid = true;
+                const container = document.getElementById(`step${currentStep}`);
+                const inputs = container.querySelectorAll('input[required], select[required]');
+                
+                inputs.forEach(input => {
+                    if (!input.checkValidity()) {
+                        isValid = false;
+                        input.classList.add('is-invalid');
+                    } else {
+                        input.classList.remove('is-invalid');
+                        input.classList.add('is-valid');
+                    }
+                });
+
+                if (!isValid) {
+                    return; // block navigation
+                }
+            }
+
+            // Move steps
+            document.querySelectorAll('.register-step').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+
+            // Update indicators
+            document.querySelectorAll('.step-dot').forEach(el => el.classList.remove('active', 'done'));
+            document.querySelectorAll('.step-line').forEach(el => el.classList.remove('done'));
+
+            for (let i = 1; i <= step; i++) {
+                const dot = document.getElementById(`dot${i}`);
+                if (i < step) {
+                    dot.classList.add('done');
+                    const line = document.getElementById(`line${i}`);
+                    if (line) line.classList.add('done');
+                } else if (i === step) {
+                    dot.classList.add('active');
+                }
+            }
+
+            currentStep = step;
+        }
+
+        // Form submit spinner
         (function () {
             'use strict'
-            var forms = document.querySelectorAll('.needs-validation')
-            Array.prototype.slice.call(forms)
-                .forEach(function (form) {
-                    form.addEventListener('submit', function (event) {
-                        if (!form.checkValidity()) {
-                            event.preventDefault()
-                            event.stopPropagation()
-                        }
-                        form.classList.add('was-validated')
-                    }, false)
-                })
-        })()
+            const form = document.getElementById('registerForm');
+            const btn = document.getElementById('registerBtn');
+            if (form && btn) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        form.classList.add('was-validated');
+                    } else {
+                        btn.classList.add('loading');
+                        btn.disabled = true;
+                    }
+                }, false);
+            }
+        })();
     </script>
 </body>
 </html>

@@ -17,26 +17,28 @@ namespace SmartEyeClinic.Web.Services
         }
 
         // Get All Examinations
-        public List<Examination> GetAllExaminations()
+        public async Task<List<Examination>> GetAllExaminationsAsync()
         {
-            return _context.Examinations
+            return await _context.Examinations
                 .Include(e => e.Appointment).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
                 .Include(e => e.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
+                .AsNoTracking()
                 .OrderByDescending(e => e.ExaminedAt)
-                .ToList();
+                .ToListAsync();
         }
 
         // Get Examination By Id
-        public Examination? GetExaminationById(int id)
+        public async Task<Examination?> GetExaminationByIdAsync(int id)
         {
-            return _context.Examinations
+            return await _context.Examinations
                 .Include(e => e.Appointment).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
                 .Include(e => e.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
-                .FirstOrDefault(e => e.Id == id);
+                .AsNoTracking()
+                .FirstOrDefaultAsync(e => e.Id == id);
         }
 
         // Add Examination
-        public ServiceResult AddExamination(
+        public async Task<ServiceResult> AddExaminationAsync(
             int appointmentId, 
             string diagnosis, 
             string? symptoms,
@@ -48,7 +50,7 @@ namespace SmartEyeClinic.Web.Services
             if (string.IsNullOrWhiteSpace(diagnosis))
                 return ServiceResult.Fail("Diagnosis description is required.");
 
-            if (!_context.Appointments.Any(a => a.Id == appointmentId))
+            if (!await _context.Appointments.AnyAsync(a => a.Id == appointmentId))
                 return ServiceResult.Fail("Appointment not found!");
 
             var examination = new Examination
@@ -66,18 +68,18 @@ namespace SmartEyeClinic.Web.Services
             _context.Examinations.Add(examination);
 
             // Automatically set the corresponding Appointment status to 'Completed' upon examination
-            var appointment = _context.Appointments.Find(appointmentId);
+            var appointment = await _context.Appointments.FindAsync(appointmentId);
             if (appointment != null)
             {
                 appointment.Status = "Completed";
             }
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return ServiceResult.Ok();
         }
 
         // Update Examination
-        public ServiceResult UpdateExamination(
+        public async Task<ServiceResult> UpdateExaminationAsync(
             int id,
             int appointmentId,
             string diagnosis,
@@ -87,14 +89,14 @@ namespace SmartEyeClinic.Web.Services
             string? intraocularPressure,
             string? treatmentPlan)
         {
-            var exam = _context.Examinations.Find(id);
+            var exam = await _context.Examinations.FindAsync(id);
             if (exam == null)
                 return ServiceResult.Fail("Examination record not found.");
 
             if (string.IsNullOrWhiteSpace(diagnosis))
                 return ServiceResult.Fail("Diagnosis description is required.");
 
-            if (!_context.Appointments.Any(a => a.Id == appointmentId))
+            if (!await _context.Appointments.AnyAsync(a => a.Id == appointmentId))
                 return ServiceResult.Fail("Appointment not found!");
 
             exam.AppointmentId = appointmentId;
@@ -105,23 +107,23 @@ namespace SmartEyeClinic.Web.Services
             exam.IntraocularPressure = intraocularPressure;
             exam.TreatmentPlan = treatmentPlan;
 
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return ServiceResult.Ok();
         }
 
         // Delete Examination
-        public ServiceResult DeleteExamination(int id)
+        public async Task<ServiceResult> DeleteExaminationAsync(int id)
         {
-            var exam = _context.Examinations.Find(id);
+            var exam = await _context.Examinations.FindAsync(id);
             if (exam == null)
                 return ServiceResult.Fail("Examination record not found.");
 
             // Check if patient has dependent prescriptions generated from this examination
-            if (_context.PrescriptionHeaders.Any(ph => ph.ExaminationId == id))
+            if (await _context.PrescriptionHeaders.AnyAsync(ph => ph.ExaminationId == id))
                 return ServiceResult.Fail("Cannot delete this examination because prescriptions have been issued based on it.");
 
             _context.Examinations.Remove(exam);
-            _context.SaveChanges();
+            await _context.SaveChangesAsync();
             return ServiceResult.Ok();
         }
     }

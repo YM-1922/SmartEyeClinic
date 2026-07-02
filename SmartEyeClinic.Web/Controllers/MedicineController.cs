@@ -1,8 +1,11 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartEyeClinic.Web.Services;
+using System.Threading.Tasks;
 
 namespace SmartEyeClinic.Web.Controllers;
 
+[Authorize]
 public class MedicineController : Controller
 {
     private readonly MedicineService _medicineService;
@@ -12,23 +15,31 @@ public class MedicineController : Controller
         _medicineService = medicineService;
     }
 
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        var medicines = _medicineService.GetAllMedicines();
+        var medicines = await _medicineService.GetAllMedicinesAsync();
         return View(medicines);
     }
 
+    [Authorize(Roles = "Admin,Doctor")]
     [HttpGet]
     public IActionResult Create()
     {
         return View();
     }
 
+    [Authorize(Roles = "Admin,Doctor")]
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Create(string name, string? description, string? manufacturer)
+    public async Task<IActionResult> Create(string name, string? description, string? manufacturer)
     {
-        _medicineService.AddMedicine(name, description, manufacturer);
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            TempData["Error"] = "Medicine name is required.";
+            return View();
+        }
+
+        await _medicineService.AddMedicineAsync(name, description, manufacturer);
         TempData["Success"] = "Medicine added successfully!";
         return RedirectToAction(nameof(Index));
     }

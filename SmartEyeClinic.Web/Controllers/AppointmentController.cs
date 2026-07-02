@@ -22,36 +22,83 @@ namespace SmartEyeClinic.Web.Controllers
         }
 
         // List Appointments
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
-            var appointments = _appointmentService.GetAllAppointments();
+            var appointments = await _appointmentService.GetAllAppointmentsAsync();
+
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim != null)
+                {
+                    int patId = int.Parse(patIdClaim);
+                    appointments = appointments.Where(a => a.PatientId == patId).ToList();
+                }
+                else
+                {
+                    appointments = new List<Appointment>();
+                }
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim != null)
+                {
+                    int docId = int.Parse(docIdClaim);
+                    appointments = appointments.Where(a => a.DoctorId == docId).ToList();
+                }
+                else
+                {
+                    appointments = new List<Appointment>();
+                }
+            }
+
             return View(appointments);
         }
 
         // Appointment Details
         [HttpGet]
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var appointment = _appointmentService.GetAppointmentById(id);
+            var appointment = await _appointmentService.GetAppointmentByIdAsync(id);
             if (appointment == null)
             {
                 TempData["Error"] = "Appointment not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            // IDOR Protection
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != appointment.PatientId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
             return View(appointment);
         }
 
         // Create Appointment
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            PopulateDropdowns();
+            await PopulateDropdownsAsync();
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(
+        public async Task<IActionResult> Create(
             int patientId, 
             int doctorId, 
             int branchId, 
@@ -61,11 +108,22 @@ namespace SmartEyeClinic.Web.Controllers
             string status, 
             string? notes)
         {
-            var result = _appointmentService.AddAppointment(patientId, doctorId, branchId, appointmentDateTime, durationMinutes, type, status, notes);
+            // Enforcement: Patient can only create appointments for themselves
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+                patientId = int.Parse(patIdClaim);
+            }
+
+            var result = await _appointmentService.AddAppointmentAsync(patientId, doctorId, branchId, appointmentDateTime, durationMinutes, type, status, notes);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                PopulateDropdowns();
+                await PopulateDropdownsAsync();
                 return View();
             }
             TempData["Success"] = "Appointment booked successfully!";
@@ -74,19 +132,37 @@ namespace SmartEyeClinic.Web.Controllers
 
         // Edit Appointment
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var appointment = _appointmentService.GetAppointmentById(id);
+            var appointment = await _appointmentService.GetAppointmentByIdAsync(id);
             if (appointment == null)
                 return NotFound();
 
-            PopulateDropdowns();
+            // IDOR Check
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != appointment.PatientId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
+            await PopulateDropdownsAsync(appointment.AppointmentDateTime, appointment.Id);
             return View(appointment);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(
+        public async Task<IActionResult> Edit(
             int id,
             int patientId,
             int doctorId,
@@ -97,12 +173,34 @@ namespace SmartEyeClinic.Web.Controllers
             string status,
             string? notes)
         {
-            var result = _appointmentService.UpdateAppointment(id, patientId, doctorId, branchId, appointmentDateTime, durationMinutes, type, status, notes);
+            var appointment = await _appointmentService.GetAppointmentByIdAsync(id);
+            if (appointment == null)
+                return NotFound();
+
+            // IDOR Check
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != appointment.PatientId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+                patientId = appointment.PatientId; // Patients can't shift patient ID
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
+            var result = await _appointmentService.UpdateAppointmentAsync(id, patientId, doctorId, branchId, appointmentDateTime, durationMinutes, type, status, notes);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                PopulateDropdowns();
-                var appointment = _appointmentService.GetAppointmentById(id);
+                await PopulateDropdownsAsync(appointmentDateTime, id);
                 return View(appointment);
             }
             TempData["Success"] = "Appointment updated successfully!";
@@ -111,23 +209,67 @@ namespace SmartEyeClinic.Web.Controllers
 
         // Delete Appointment - GET
         [HttpGet]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var appointment = _appointmentService.GetAppointmentById(id);
+            var appointment = await _appointmentService.GetAppointmentByIdAsync(id);
             if (appointment == null)
             {
                 TempData["Error"] = "Appointment not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            // IDOR Check
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != appointment.PatientId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
             return View(appointment);
         }
 
         // Delete Appointment - POST
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var result = _appointmentService.DeleteAppointment(id);
+            var appointment = await _appointmentService.GetAppointmentByIdAsync(id);
+            if (appointment == null)
+            {
+                TempData["Error"] = "Appointment not found.";
+                return RedirectToAction(nameof(Index));
+            }
+
+            // IDOR Check
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != appointment.PatientId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+            else if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim == null || int.Parse(docIdClaim) != appointment.DoctorId)
+                {
+                    return RedirectToAction("AccessDenied", "Account");
+                }
+            }
+
+            var result = await _appointmentService.DeleteAppointmentAsync(id);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
@@ -137,11 +279,11 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private void PopulateDropdowns()
+        private async Task PopulateDropdownsAsync(DateTime? selectedDate = null, int? appointmentId = null)
         {
-            ViewBag.Patients = _context.Patients.Include(p => p.User).OrderBy(p => p.User.FullName).ToList();
-            ViewBag.Doctors = _context.Doctors.Include(d => d.User).OrderBy(d => d.User.FullName).ToList();
-            ViewBag.Branches = _context.Branches.OrderBy(b => b.Name).ToList();
+            ViewBag.Patients = await _context.Patients.Include(p => p.User).AsNoTracking().OrderBy(p => p.User.FullName).ToListAsync();
+            ViewBag.Doctors = await _context.Doctors.Include(d => d.User).AsNoTracking().OrderBy(d => d.User.FullName).ToListAsync();
+            ViewBag.Branches = await _context.Branches.AsNoTracking().OrderBy(b => b.Name).ToListAsync();
         }
     }
 }

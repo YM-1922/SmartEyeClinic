@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,45 +23,69 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Invoices
-        public IActionResult Index()
+        // List Invoices (patients see only their own)
+        public async Task<IActionResult> Index()
         {
-            var invoices = _invoiceService.GetAllInvoices();
+            var invoices = await _invoiceService.GetAllInvoicesAsync();
+
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim != null)
+                {
+                    int patId = int.Parse(patIdClaim);
+                    invoices = invoices.Where(i => i.PatientId == patId).ToList();
+                }
+                else
+                {
+                    invoices = new List<Invoice>();
+                }
+            }
+
             return View(invoices);
         }
 
-        // Invoice details (Printable page)
+        // Invoice details — IDOR protected
         [HttpGet]
-        public IActionResult Details(int id)
+        public async Task<IActionResult> Details(int id)
         {
-            var invoice = _invoiceService.GetInvoiceById(id);
+            var invoice = await _invoiceService.GetInvoiceByIdAsync(id);
             if (invoice == null)
             {
                 TempData["Error"] = "Invoice not found.";
                 return RedirectToAction(nameof(Index));
             }
+
+            // IDOR: patients may only view their own invoice
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (patIdClaim == null || int.Parse(patIdClaim) != invoice.PatientId)
+                    return RedirectToAction("AccessDenied", "Account");
+            }
+
             return View(invoice);
         }
 
         // Create Invoice (Receptionist or Admin only)
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpGet]
-        public IActionResult Create(int? appointmentId = null)
+        public async Task<IActionResult> Create(int? appointmentId = null)
         {
-            PopulateDropdowns(appointmentId);
+            await PopulateDropdownsAsync(appointmentId);
             return View();
         }
 
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(int appointmentId, int patientId, decimal totalAmount, decimal? tax, decimal? discount)
+        public async Task<IActionResult> Create(int appointmentId, int patientId, decimal totalAmount, decimal? tax, decimal? discount)
         {
-            var result = _invoiceService.AddInvoice(appointmentId, patientId, totalAmount, tax, discount);
+            var result = await _invoiceService.AddInvoiceAsync(appointmentId, patientId, totalAmount, tax, discount);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                PopulateDropdowns(appointmentId);
+                await PopulateDropdownsAsync(appointmentId);
                 return View();
             }
             TempData["Success"] = "Invoice generated successfully!";
@@ -69,20 +95,20 @@ namespace SmartEyeClinic.Web.Controllers
         // Edit Invoice
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpGet]
-        public IActionResult Edit(int id)
+        public async Task<IActionResult> Edit(int id)
         {
-            var invoice = _invoiceService.GetInvoiceById(id);
+            var invoice = await _invoiceService.GetInvoiceByIdAsync(id);
             if (invoice == null)
                 return NotFound();
 
-            PopulateDropdowns(invoice.AppointmentId);
+            await PopulateDropdownsAsync(invoice.AppointmentId);
             return View(invoice);
         }
 
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Edit(
+        public async Task<IActionResult> Edit(
             int id,
             int appointmentId,
             int patientId,
@@ -93,12 +119,12 @@ namespace SmartEyeClinic.Web.Controllers
             decimal? discount,
             string status)
         {
-            var result = _invoiceService.UpdateInvoice(id, appointmentId, patientId, invoiceNumber, totalAmount, paidAmount, tax, discount, status);
+            var result = await _invoiceService.UpdateInvoiceAsync(id, appointmentId, patientId, invoiceNumber, totalAmount, paidAmount, tax, discount, status);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                PopulateDropdowns(appointmentId);
-                var invoice = _invoiceService.GetInvoiceById(id);
+                await PopulateDropdownsAsync(appointmentId);
+                var invoice = await _invoiceService.GetInvoiceByIdAsync(id);
                 return View(invoice);
             }
             TempData["Success"] = "Invoice updated successfully!";
@@ -108,9 +134,9 @@ namespace SmartEyeClinic.Web.Controllers
         // Delete Invoice - GET
         [Authorize(Roles = "Admin")]
         [HttpGet]
-        public IActionResult Delete(int id)
+        public async Task<IActionResult> Delete(int id)
         {
-            var invoice = _invoiceService.GetInvoiceById(id);
+            var invoice = await _invoiceService.GetInvoiceByIdAsync(id);
             if (invoice == null)
             {
                 TempData["Error"] = "Invoice not found.";
@@ -123,9 +149,9 @@ namespace SmartEyeClinic.Web.Controllers
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
-        public IActionResult DeleteConfirmed(int id)
+        public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var result = _invoiceService.DeleteInvoice(id);
+            var result = await _invoiceService.DeleteInvoiceAsync(id);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
@@ -135,19 +161,21 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        private void PopulateDropdowns(int? selectedAppointmentId = null)
+        private async Task PopulateDropdownsAsync(int? selectedAppointmentId = null)
         {
-            ViewBag.Appointments = _context.Appointments
+            ViewBag.Appointments = await _context.Appointments
                 .Include(a => a.Patient).ThenInclude(p => p.User)
                 .Include(a => a.Doctor).ThenInclude(d => d.User)
                 .Where(a => a.Status != "Cancelled" || a.Id == selectedAppointmentId)
+                .AsNoTracking()
                 .OrderByDescending(a => a.AppointmentDateTime)
-                .ToList();
+                .ToListAsync();
 
-            ViewBag.Patients = _context.Patients
+            ViewBag.Patients = await _context.Patients
                 .Include(p => p.User)
+                .AsNoTracking()
                 .OrderBy(p => p.User.FullName)
-                .ToList();
+                .ToListAsync();
 
             ViewBag.SelectedAppointmentId = selectedAppointmentId;
         }

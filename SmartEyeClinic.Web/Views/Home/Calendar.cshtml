@@ -1,7 +1,7 @@
 @inject SmartEyeClinic.Data.AppDbContext DbContext
 @using Microsoft.EntityFrameworkCore
 @{
-    ViewData["Title"] = "Clinical Calendar - Smart Eye Clinic";
+    ViewData["Title"] = "Clinical Planner";
 
     // Load appointments for calendar view
     var appointments = DbContext.Appointments
@@ -13,32 +13,38 @@
 }
 
 <!-- Page Header -->
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <ul class="breadcrumb-custom mb-1">
-            <li><a asp-controller="Home" asp-action="Index">Home</a></li>
-            <li>Schedule Calendar</li>
-        </ul>
-        <h3 class="fw-bold text-dark mb-0">Clinical Calendar Schedule</h3>
+<div class="page-header">
+    <div class="page-header-left">
+        <div class="breadcrumb-nav">
+            <a href="/"><i class="bi bi-house-door"></i> Home</a>
+            <span class="separator">/</span>
+            <span class="current">Clinical Calendar</span>
+        </div>
+        <h1 class="page-title"><i class="bi bi-calendar-range text-secondary-custom me-2"></i>Clinical Planner &amp; Schedule</h1>
+        <p class="page-subtitle">Interactive appointment planner, daily schedules, and check-in timelines.</p>
     </div>
-    <a asp-controller="Appointment" asp-action="Create" class="btn btn-custom btn-custom-primary">
-        <i class="fa-solid fa-calendar-plus"></i> Schedule Appointment
-    </a>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-controller="Appointment" asp-action="Create" class="btn btn-primary btn-sm">
+            <i class="bi bi-calendar-plus"></i> Schedule Appointment
+        </a>
+    </div>
 </div>
 
 <div class="row g-4">
-    <!-- Left Column: Appointment List Panel -->
+    <!-- Left Column: Appointment Quick List -->
     <div class="col-lg-4">
-        <div class="card custom-card">
-            <div class="card-header-clean">
-                <h6 class="mb-0 fw-bold"><i class="fa-solid fa-clipboard-list text-primary me-2"></i>Consultations Quick List</h6>
+        <div class="table-card h-100">
+            <div class="table-card-header">
+                <h5 class="table-title"><i class="bi bi-list-stars"></i> Consultations Quick List</h5>
+                <span class="badge-status badge-primary">Total: @appointments.Count</span>
             </div>
             <div class="card-body-clean" style="max-height: 600px; overflow-y: auto;">
                 @if (!appointments.Any())
                 {
-                    <div class="text-center py-5">
-                        <i class="fa-regular fa-calendar-times text-muted fs-2 mb-2 d-block"></i>
-                        <span class="text-muted small">No scheduled visits.</span>
+                    <div class="empty-state">
+                        <div class="empty-state-icon"><i class="bi bi-calendar-x"></i></div>
+                        <h5>No Scheduled Visits</h5>
+                        <p>There are no current consultations logged in the system planner.</p>
                     </div>
                 }
                 else
@@ -46,16 +52,28 @@
                     <div class="d-flex flex-column gap-3">
                         @foreach (var app in appointments)
                         {
-                            <div class="p-3 border rounded shadow-sm hover-shadow cursor-pointer bg-light-subtle" onclick="focusAppointment('@app.Id')">
+                            var aBadge = "";
+                            var appDateStr = app.AppointmentDateTime.ToString("dd MMM yyyy - hh:mm tt");
+                            switch (app.Status)
+                            {
+                                case "Confirmed": aBadge = "badge-success"; break;
+                                case "Pending": aBadge = "badge-warning"; break;
+                                case "Cancelled": aBadge = "badge-danger"; break;
+                                case "Completed": aBadge = "badge-secondary"; break;
+                                default: aBadge = "badge-neutral"; break;
+                            }
+                            <div class="p-3 border rounded-3 hover-shadow cursor-pointer transition-all" 
+                                 style="background: var(--bg);" 
+                                 onclick="focusAppointment('@app.Id', '@app.Patient?.User?.FullName', 'Dr. @app.Doctor?.User?.FullName', '@appDateStr', '@app.Branch?.Name', '@app.Status')">
                                 <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <span class="badge-custom badge-custom-success">@app.Status</span>
+                                    <span class="badge-status @aBadge">@app.Status</span>
                                     <span class="text-muted font-monospace small">#@app.Id</span>
                                 </div>
-                                <h6 class="fw-bold text-dark mb-1">@app.Patient?.User?.FullName</h6>
-                                <p class="text-muted small mb-2"><i class="fa-solid fa-user-md text-info me-1"></i>Dr. @app.Doctor?.User?.FullName</p>
-                                <div class="d-flex justify-content-between text-muted small border-top pt-2">
-                                    <span><i class="fa-regular fa-calendar me-1"></i>@app.AppointmentDateTime.ToString("dd MMM yyyy")</span>
-                                    <span><i class="fa-regular fa-clock me-1"></i>@app.AppointmentDateTime.ToString("hh:mm tt")</span>
+                                <h6 class="fw-700 text-dark mb-1 text-sm">@app.Patient?.User?.FullName</h6>
+                                <p class="text-muted small mb-2"><i class="bi bi-person-badge text-info me-1"></i>Dr. @app.Doctor?.User?.FullName</p>
+                                <div class="d-flex justify-content-between text-muted small border-top pt-2" style="font-size:0.75rem;">
+                                    <span><i class="bi bi-calendar3 me-1"></i>@app.AppointmentDateTime.ToString("dd MMM yyyy")</span>
+                                    <span><i class="bi bi-clock me-1"></i>@app.AppointmentDateTime.ToString("hh:mm tt")</span>
                                 </div>
                             </div>
                         }
@@ -65,20 +83,20 @@
         </div>
     </div>
 
-    <!-- Right Column: Interactive Monthly CSS Grid Calendar -->
+    <!-- Right Column: Interactive Planner Grid -->
     <div class="col-lg-8">
-        <div class="card custom-card">
-            <div class="card-header-clean d-flex justify-content-between align-items-center">
-                <h5 class="mb-0"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Clinical Planner</h5>
-                <div class="d-flex gap-2">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="alert('Previous month clicked!')"><i class="fa-solid fa-chevron-left"></i></button>
-                    <span class="fw-bold text-dark my-auto px-2">@DateTime.Today.ToString("MMMM yyyy")</span>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="alert('Next month clicked!')"><i class="fa-solid fa-chevron-right"></i></button>
+        <div class="table-card">
+            <div class="table-card-header d-flex justify-content-between align-items-center">
+                <h5 class="table-title"><i class="bi bi-grid-3x3-gap"></i> Clinical Planner</h5>
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn btn-sm btn-light border" onclick="Swal.fire('Info', 'Full dynamic month switching is available in the planning modules.', 'info')"><i class="bi bi-chevron-left"></i></button>
+                    <span class="fw-700 text-dark my-auto px-2">@DateTime.Today.ToString("MMMM yyyy")</span>
+                    <button class="btn btn-sm btn-light border" onclick="Swal.fire('Info', 'Full dynamic month switching is available in the planning modules.', 'info')"><i class="bi bi-chevron-right"></i></button>
                 </div>
             </div>
             <div class="card-body-clean">
                 <!-- Days Header -->
-                <div class="row text-center fw-bold text-muted mb-2 g-1" style="font-size: 0.85rem;">
+                <div class="row text-center fw-700 text-muted mb-2 g-1" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">
                     <div class="col">Sun</div>
                     <div class="col">Mon</div>
                     <div class="col">Tue</div>
@@ -89,9 +107,8 @@
                 </div>
 
                 <!-- Calendar Grid Logic -->
-                <div class="row g-1 text-center" style="min-height: 450px;">
+                <div class="row g-1 text-center" style="min-height: 480px;">
                     @{
-                        // Simple calendar generator matching heliotherapy days
                         var startOfMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
                         var startDay = (int)startOfMonth.DayOfWeek;
                         var totalDays = DateTime.DaysInMonth(DateTime.Today.Year, DateTime.Today.Month);
@@ -99,7 +116,7 @@
                         // Output empty spots for padding
                         for (int i = 0; i < startDay; i++)
                         {
-                            <div class="col border rounded p-2 bg-light opacity-50" style="min-height: 90px;"></div>
+                            <div class="col border rounded p-2 bg-light opacity-50" style="min-height: 96px; width: 14.28%; flex-grow: 0; flex-shrink: 0;"></div>
                         }
 
                         // Output actual days of the month
@@ -109,24 +126,29 @@
                             var dayApps = appointments.Where(a => a.AppointmentDateTime.Date == currentDay.Date).ToList();
                             var isToday = currentDay.Date == DateTime.Today.Date;
 
-                            <div class="col border rounded p-2 text-start position-relative d-flex flex-column justify-content-between @(isToday ? "border-primary bg-primary-subtle" : "bg-white")" style="min-height: 90px; width: 14%; flex-grow: 0; flex-shrink: 0;">
+                            <div class="col border rounded p-2 text-start position-relative d-flex flex-column justify-content-between @(isToday ? "border-primary bg-light-primary" : "bg-white")" 
+                                 style="min-height: 96px; width: 14.28%; flex-grow: 0; flex-shrink: 0; transition: border-color 0.2s;">
                                 <div class="d-flex justify-content-between align-items-center">
-                                    <span class="fw-bold @(isToday ? "text-primary fs-5" : "text-dark")">@day</span>
+                                    <span class="fw-700 @(isToday ? "text-primary-custom fs-5" : "text-dark")" style="font-size: 0.95rem;">@day</span>
                                     @if (dayApps.Any())
                                     {
-                                        <span class="badge bg-primary rounded-circle" style="font-size: 0.72rem; width: 18px; height: 18px; line-height: 18px; text-align: center; padding: 0;">@dayApps.Count</span>
+                                        <span class="badge bg-primary rounded-circle" style="font-size: 0.65rem; width: 18px; height: 18px; line-height: 18px; text-align: center; padding: 0; display: inline-flex; align-items: center; justify-content: center;">@dayApps.Count</span>
                                     }
                                 </div>
-                                <div class="mt-1" style="overflow: hidden; max-height: 50px;">
+                                <div class="mt-1" style="overflow: hidden; max-height: 55px;">
                                     @foreach (var app in dayApps.Take(2))
                                     {
-                                        <div class="badge bg-secondary-subtle text-primary border border-primary-subtle text-truncate w-100 p-1 mb-1 font-size-xs" style="font-size: 0.68rem; cursor: pointer;" title="Patient: @app.Patient?.User?.FullName" onclick="focusAppointment('@app.Id')">
+                                        var appDateStr = app.AppointmentDateTime.ToString("dd MMM yyyy - hh:mm tt");
+                                        <div class="badge text-primary border text-truncate w-100 p-1 mb-1 font-size-xs" 
+                                             style="font-size: 0.68rem; cursor: pointer; background: rgba(0,180,216,0.06); border-color: rgba(0,180,216,0.12);" 
+                                             title="Patient: @app.Patient?.User?.FullName" 
+                                             onclick="focusAppointment('@app.Id', '@app.Patient?.User?.FullName', 'Dr. @app.Doctor?.User?.FullName', '@appDateStr', '@app.Branch?.Name', '@app.Status')">
                                             @app.Patient?.User?.FullName
                                         </div>
                                     }
                                     @if (dayApps.Count > 2)
                                     {
-                                        <span class="text-muted small" style="font-size: 0.65rem;">+@(dayApps.Count - 2) more</span>
+                                        <div class="text-muted small ps-1" style="font-size: 0.65rem; font-weight: 500;">+@(dayApps.Count - 2) more</div>
                                     }
                                 </div>
                             </div>
@@ -138,8 +160,34 @@
     </div>
 </div>
 
-<script>
-    function focusAppointment(id) {
-        alert("Selected consultation schedule item ID #" + id);
-    }
-</script>
+@section Scripts {
+    <script>
+        function focusAppointment(id, patient, doctor, datetime, branch, status) {
+            Swal.fire({
+                title: '<strong>Consultation Info</strong>',
+                icon: 'info',
+                html:
+                    `<div class="text-start small p-2">` +
+                    `<p class="mb-1"><strong>ID:</strong> #${id}</p>` +
+                    `<p class="mb-1"><strong>Patient:</strong> ${patient}</p>` +
+                    `<p class="mb-1"><strong>Doctor:</strong> ${doctor}</p>` +
+                    `<p class="mb-1"><strong>Date & Time:</strong> ${datetime}</p>` +
+                    `<p class="mb-1"><strong>Branch:</strong> ${branch}</p>` +
+                    `<p class="mb-0"><strong>Status:</strong> <span class="badge bg-secondary-subtle text-dark border px-2 py-0.5">${status}</span></p>` +
+                    `</div>`,
+                showCloseButton: true,
+                showCancelButton: true,
+                focusConfirm: false,
+                confirmButtonText: '<i class="bi bi-pencil-square"></i> Edit Details',
+                cancelButtonText: '<i class="bi bi-x-circle"></i> Close',
+                customClass: {
+                    popup: 'rounded-3'
+                }
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    window.location.href = `/Appointment/Edit/${id}`;
+                }
+            });
+        }
+    </script>
+}

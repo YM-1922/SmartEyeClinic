@@ -1,8 +1,12 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SmartEyeClinic.Web.Services;
+using System;
+using System.Threading.Tasks;
 
 namespace SmartEyeClinic.Web.Controllers;
 
+[Authorize(Roles = "Admin,Doctor,Receptionist")]
 public class PatientController : Controller
 {
     private readonly PatientService _patientService;
@@ -13,9 +17,9 @@ public class PatientController : Controller
     }
 
     // List
-    public IActionResult Index()
+    public async Task<IActionResult> Index()
     {
-        var patients = _patientService.GetAllPatients();
+        var patients = await _patientService.GetAllPatientsAsync();
         return View(patients);
     }
 
@@ -28,7 +32,7 @@ public class PatientController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Create(
+    public async Task<IActionResult> Create(
         string fullName,
         string email,
         string password,
@@ -39,7 +43,7 @@ public class PatientController : Controller
     {
         try
         {
-            _patientService.AddPatient(
+            await _patientService.AddPatientAsync(
                 fullName,
                 email,
                 password,
@@ -60,9 +64,9 @@ public class PatientController : Controller
 
     // Edit Patient
     [HttpGet]
-    public IActionResult Edit(int id)
+    public async Task<IActionResult> Edit(int id)
     {
-        var patient = _patientService.GetPatientById(id);
+        var patient = await _patientService.GetPatientByIdAsync(id);
 
         if (patient == null)
             return NotFound();
@@ -72,7 +76,7 @@ public class PatientController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Edit(
+    public async Task<IActionResult> Edit(
         int id,
         string fullName,
         string email,
@@ -84,7 +88,7 @@ public class PatientController : Controller
     {
         try
         {
-            _patientService.UpdatePatient(
+            await _patientService.UpdatePatientAsync(
                 id,
                 fullName,
                 email,
@@ -106,9 +110,9 @@ public class PatientController : Controller
 
     // Delete Patient - GET (Confirmation Page)
     [HttpGet]
-    public IActionResult Delete(int id)
+    public async Task<IActionResult> Delete(int id)
     {
-        var patient = _patientService.GetPatientById(id);
+        var patient = await _patientService.GetPatientByIdAsync(id);
         if (patient == null)
         {
             TempData["Error"] = "Patient not found.";
@@ -120,11 +124,11 @@ public class PatientController : Controller
     // Delete Patient - POST
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
-    public IActionResult DeleteConfirmed(int id)
+    public async Task<IActionResult> DeleteConfirmed(int id)
     {
         try
         {
-            _patientService.DeletePatient(id);
+            await _patientService.DeletePatientAsync(id);
             TempData["Success"] = "Patient deleted successfully!";
         }
         catch (Exception ex)
@@ -135,10 +139,20 @@ public class PatientController : Controller
     }
 
     // Patient 360 Details
+    [Authorize]
     [HttpGet]
-    public IActionResult Details(int id)
+    public async Task<IActionResult> Details(int id)
     {
-        var patient = _patientService.GetPatientById(id);
+        if (User.IsInRole("Patient"))
+        {
+            var patIdClaim = User.FindFirst("PatientId")?.Value;
+            if (patIdClaim == null || int.Parse(patIdClaim) != id)
+            {
+                return RedirectToAction("AccessDenied", "Account");
+            }
+        }
+
+        var patient = await _patientService.GetPatientByIdAsync(id);
         if (patient == null)
         {
             TempData["Error"] = "Patient not found.";

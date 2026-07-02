@@ -3,79 +3,68 @@
     ViewData["Title"] = "Specializations - Smart Eye Clinic";
 }
 
-<div class="container-fluid py-4">
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb" class="mb-4">
-        <ol class="breadcrumb">
-            <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index">Dashboard</a></li>
-            <li class="breadcrumb-item active" aria-current="page">Specializations</li>
-        </ol>
-    </nav>
-
-    <!-- Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h3 class="fw-bold text-dark mb-1">Clinical Specializations</h3>
-            <p class="text-muted small mb-0">Manage clinical ophthalmology specialization departments and areas.</p>
-        </div>
-        @if (User.IsInRole("Admin"))
-        {
-            <a asp-action="Create" class="btn btn-primary px-3 py-2 border-0" style="background: var(--primary-color); border-radius: 8px;">
-                <i class="fa-solid fa-plus me-1"></i> Add Specialization
-            </a>
-        }
+<div class="page-header">
+    <div class="page-header-left">
+        <nav class="breadcrumb-nav">
+            <a asp-controller="Home" asp-action="Index">Dashboard</a>
+            <span class="separator">/</span>
+            <span class="current">Specializations</span>
+        </nav>
+        <h3 class="page-title">Clinical Specializations</h3>
+        <p class="page-subtitle">Configure medical departments, specialization tags, and active physicians lists</p>
     </div>
-
-    @if (TempData["Success"] != null)
+    @if (User.IsInRole("Admin"))
     {
-        <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
-            <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
+        <a asp-action="Create" class="btn btn-primary">
+            <i class="fa-solid fa-plus"></i> Add Specialization
+        </a>
     }
-    @if (TempData["Error"] != null)
-    {
-        <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
-            <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-        </div>
-    }
+</div>
 
-    <div class="row g-4">
-        @foreach (var item in Model)
-        {
-            <div class="col-md-4">
-                <div class="card border-0 shadow-sm rounded-4 h-100" style="background: var(--card-bg);">
-                    <div class="card-body p-4 d-flex flex-column">
-                        <div class="d-flex align-items-center mb-3">
-                            <span class="bg-light text-primary rounded-circle px-3 py-2.5 me-3"><i class="fa-solid fa-tags fs-4"></i></span>
-                            <div>
-                                <h5 class="fw-bold text-dark mb-0">@item.Name</h5>
-                                <span class="text-muted small">Dept Code: #@item.Id</span>
-                            </div>
+<div class="row g-4 animate-fade-in-up">
+    @foreach (var item in Model)
+    {
+        <div class="col-xl-4 col-md-6">
+            <div class="card custom-card h-100">
+                <div class="card-body-clean p-4 d-flex flex-column h-100">
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="avatar-initials avatar-lg me-3 bg-light-primary text-primary-custom" style="border-radius: var(--radius)">
+                            <i class="fa-solid fa-tags fs-4"></i>
                         </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-0">@item.Name</h5>
+                            <span class="text-xs text-muted">Dept Code: #@item.Id</span>
+                        </div>
+                    </div>
 
-                        <p class="text-muted small mb-4 flex-grow-1">@(string.IsNullOrEmpty(item.Description) ? "No department description entered." : item.Description)</p>
+                    <p class="text-muted text-xs mb-4 flex-grow-1">
+                        @(string.IsNullOrEmpty(item.Description) ? "No department description entered." : item.Description)
+                    </p>
 
-                        <hr class="text-muted opacity-25" />
+                    <hr class="text-muted opacity-10 my-3" />
 
-                        <div class="d-flex justify-content-between align-items-center mt-2">
-                            <div class="small">
-                                <span class="text-muted d-block font-size-xs">Specialists</span>
-                                <strong class="text-dark">@item.Doctors.Count Doctors</strong>
-                            </div>
-                            <div class="d-flex gap-2">
-                                <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-primary" style="border-radius: 6px;">Details</a>
-                                @if (User.IsInRole("Admin"))
-                                {
-                                    <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" style="border-radius: 6px;"><i class="fa-regular fa-pen-to-square"></i></a>
-                                    <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" style="border-radius: 6px;"><i class="fa-solid fa-trash"></i></a>
-                                }
-                            </div>
+                    <div class="d-flex justify-content-between align-items-center mt-auto">
+                        <div>
+                            <span class="text-muted text-xs d-block">Active Specialists</span>
+                            <strong class="text-dark font-size-sm">@item.Doctors.Count Doctors</strong>
+                        </div>
+                        <div class="action-btns">
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light" title="View details">
+                                <i class="fa-solid fa-eye text-muted"></i> Details
+                            </a>
+                            @if (User.IsInRole("Admin"))
+                            {
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light text-primary" title="Edit department tags">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-custom-danger" title="Delete specialization">
+                                    <i class="fa-solid fa-trash-can"></i>
+                                </a>
+                            }
                         </div>
                     </div>
                 </div>
             </div>
-        }
-    </div>
+        </div>
+    }
 </div>

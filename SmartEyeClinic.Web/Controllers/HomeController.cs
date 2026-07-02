@@ -16,6 +16,16 @@ public class HomeController : Controller
         _context = context;
     }
 
+    [AllowAnonymous]
+    public IActionResult Landing()
+    {
+        if (User.Identity != null && User.Identity.IsAuthenticated)
+        {
+            return RedirectToAction(nameof(Index));
+        }
+        return View();
+    }
+
     [Authorize]
     public IActionResult Index()
     {

@@ -14,24 +14,26 @@ public class PatientService
     }
 
     // Get All Patients
-    public List<Patient> GetAllPatients()
+    public async Task<List<Patient>> GetAllPatientsAsync()
     {
-        return _context.Patients
+        return await _context.Patients
             .Include(p => p.User)
+            .AsNoTracking()
             .OrderByDescending(p => p.Id)
-            .ToList();
+            .ToListAsync();
     }
 
     // Get Patient By Id
-    public Patient? GetPatientById(int id)
+    public async Task<Patient?> GetPatientByIdAsync(int id)
     {
-        return _context.Patients
+        return await _context.Patients
             .Include(p => p.User)
-            .FirstOrDefault(p => p.Id == id);
+            .AsNoTracking()
+            .FirstOrDefaultAsync(p => p.Id == id);
     }
 
     // Add Patient
-    public void AddPatient(
+    public async Task AddPatientAsync(
         string? fullName,
         string? email,
         string? password,
@@ -55,15 +57,19 @@ public class PatientService
         if (string.IsNullOrWhiteSpace(nationalId))
             throw new Exception("National ID is required.");
 
-        bool exists = _context.Patients.Any(p => p.NationalId == nationalId);
+        bool exists = await _context.Patients.AnyAsync(p => p.NationalId == nationalId);
 
         if (exists)
             throw new Exception("This National ID already exists.");
 
-        bool phoneExists = _context.Users.Any(u => u.PhoneNumber == phoneNumber);
+        bool phoneExists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
 
         if (phoneExists)
             throw new Exception("Phone Number already exists.");
+
+        var patientRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Patient");
+        if (patientRole == null)
+            throw new Exception("Patient role is not initialized in the database.");
 
         var user = new User
         {
@@ -71,13 +77,13 @@ public class PatientService
             Email = email,
             PasswordHash = password,
             PhoneNumber = phoneNumber,
-            RoleId = 3,
+            RoleId = patientRole.Id,
             IsActive = true,
             CreatedAt = DateTime.Now
         };
 
         _context.Users.Add(user);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
 
         var patient = new Patient
         {
@@ -89,11 +95,11 @@ public class PatientService
         };
 
         _context.Patients.Add(patient);
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
     // Update Patient
-    public void UpdatePatient(
+    public async Task UpdatePatientAsync(
         int id,
         string fullName,
         string email,
@@ -103,9 +109,9 @@ public class PatientService
         string gender,
         string address)
     {
-        var patient = _context.Patients
+        var patient = await _context.Patients
             .Include(p => p.User)
-            .FirstOrDefault(p => p.Id == id);
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (patient == null)
             throw new Exception("Patient not found.");
@@ -126,17 +132,17 @@ public class PatientService
             throw new Exception("National ID is required.");
 
         // Check if national ID exists on another patient
-        bool exists = _context.Patients.Any(p => p.NationalId == nationalId && p.Id != id);
+        bool exists = await _context.Patients.AnyAsync(p => p.NationalId == nationalId && p.Id != id);
         if (exists)
             throw new Exception("This National ID already exists.");
 
         // Check if phone number exists on another user
-        bool phoneExists = _context.Users.Any(u => u.PhoneNumber == phoneNumber && u.Id != patient.UserId);
+        bool phoneExists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber && u.Id != patient.UserId);
         if (phoneExists)
             throw new Exception("Phone Number already exists.");
 
         // Check if email exists on another user
-        bool emailExists = _context.Users.Any(u => u.Email == email && u.Id != patient.UserId);
+        bool emailExists = await _context.Users.AnyAsync(u => u.Email == email && u.Id != patient.UserId);
         if (emailExists)
             throw new Exception("Email already exists.");
 
@@ -149,15 +155,15 @@ public class PatientService
         patient.Gender = gender;
         patient.Address = address;
 
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 
     // Delete Patient
-    public void DeletePatient(int id)
+    public async Task DeletePatientAsync(int id)
     {
-        var patient = _context.Patients
+        var patient = await _context.Patients
             .Include(p => p.User)
-            .FirstOrDefault(p => p.Id == id);
+            .FirstOrDefaultAsync(p => p.Id == id);
 
         if (patient == null)
             throw new Exception("Patient not found.");
@@ -165,24 +171,22 @@ public class PatientService
         var user = patient.User;
 
         // Check if patient has any dependent records that will break deletion
-        if (_context.Appointments.Any(a => a.PatientId == id))
+        if (await _context.Appointments.AnyAsync(a => a.PatientId == id))
             throw new Exception("Cannot delete patient because they have associated appointments.");
 
-        if (_context.Invoices.Any(i => i.PatientId == id))
+        if (await _context.Invoices.AnyAsync(i => i.PatientId == id))
             throw new Exception("Cannot delete patient because they have associated invoices.");
-if (false)
-    throw new Exception("Cannot delete patient because they have associated surgeries.");
 
-        if (_context.MedicalFiles.Any(m => m.PatientId == id))
+        if (await _context.MedicalFiles.AnyAsync(m => m.PatientId == id))
             throw new Exception("Cannot delete patient because they have associated medical files.");
 
-        if (_context.PatientHistories.Any(h => h.PatientId == id))
+        if (await _context.PatientHistories.AnyAsync(h => h.PatientId == id))
             throw new Exception("Cannot delete patient because they have associated patient history.");
 
-        if (_context.PatientInsurances.Any(pi => pi.PatientId == id))
+        if (await _context.PatientInsurances.AnyAsync(pi => pi.PatientId == id))
             throw new Exception("Cannot delete patient because they have associated insurance information.");
 
-        if (_context.DoctorReviews.Any(r => r.PatientId == id))
+        if (await _context.DoctorReviews.AnyAsync(r => r.PatientId == id))
             throw new Exception("Cannot delete patient because they have associated doctor reviews.");
 
         _context.Patients.Remove(patient);
@@ -191,6 +195,6 @@ if (false)
             _context.Users.Remove(user);
         }
 
-        _context.SaveChanges();
+        await _context.SaveChangesAsync();
     }
 }
