@@ -52,6 +52,19 @@ namespace SmartEyeClinic.Data.Configurations
                 .IsUnicode(false)
                 .IsRequired(false);
 
+            builder.Property(a => a.DepositAmount)
+                .HasColumnType("decimal(18, 2)")
+                .HasDefaultValue(0.00m)
+                .IsRequired();
+
+            builder.Property(a => a.DepositStatus)
+                .HasMaxLength(50)
+                .HasDefaultValue("Pending")
+                .IsRequired();
+
+            builder.Property(a => a.PaymentDate)
+                .IsRequired(false);
+
             builder.Property(a => a.CreatedAt)
                 .HasDefaultValueSql("GETDATE()")
                 .IsRequired(false);
