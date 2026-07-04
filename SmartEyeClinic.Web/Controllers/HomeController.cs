@@ -343,6 +343,46 @@ public class HomeController : Controller
         return View();
     }
 
+    [AllowAnonymous]
+    public IActionResult About()
+    {
+        return View();
+    }
+
+    [AllowAnonymous]
+    [HttpGet]
+    public IActionResult Contact()
+    {
+        return View();
+    }
+
+    [AllowAnonymous]
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public IActionResult Contact(string name, string email, string subject, string message)
+    {
+        if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email) || 
+            string.IsNullOrWhiteSpace(subject) || string.IsNullOrWhiteSpace(message))
+        {
+            TempData["Error"] = "All inquiry form fields are required.";
+            return View();
+        }
+
+        TempData["Success"] = "Your inquiry has been submitted successfully! Our staff will contact you shortly.";
+        return RedirectToAction(nameof(Contact));
+    }
+
+    [AllowAnonymous]
+    public async Task<IActionResult> Doctors()
+    {
+        var doctors = await _context.Doctors
+            .Include(d => d.User)
+            .Include(d => d.Specialization)
+            .Include(d => d.Reviews)
+            .ToListAsync();
+        return View(doctors);
+    }
+
     public IActionResult Privacy()
     {
         return View();

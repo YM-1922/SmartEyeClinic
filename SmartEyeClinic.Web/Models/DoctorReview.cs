@@ -16,5 +16,6 @@ namespace SmartEyeClinic.Models
         // Navigation properties
         public virtual Doctor Doctor { get; set; } = null!;
         public virtual Patient Patient { get; set; } = null!;
+        public virtual System.Collections.Generic.ICollection<ReviewReply> Replies { get; set; } = new System.Collections.Generic.HashSet<ReviewReply>();
     }
 }

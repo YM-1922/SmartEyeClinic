@@ -38,8 +38,53 @@
                 @Html.AntiForgeryToken()
 
                 <div class="row g-3 mb-4">
-                    <!-- Patient Input (Visible only to Admin/Reception/Doctor) -->
-                    @if (isPatient)
+                    <!-- Patient Input -->
+                    @{
+                        var isAuthenticated = User.Identity != null && User.Identity.IsAuthenticated;
+                    }
+                    @if (!isAuthenticated)
+                    {
+                        <div class="col-12 mt-2 mb-3">
+                            <div class="p-3.5 rounded-3 bg-light border border-light" style="border-radius: var(--radius);">
+                                <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-address-card text-primary me-2"></i> Patient Personal Details (New Account Details)</h6>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-600">Full Name *</label>
+                                        <input type="text" name="guestName" class="form-control input-custom" placeholder="John Doe" required />
+                                        <div class="invalid-feedback text-xs">Full Name is required.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-600">Email Address *</label>
+                                        <input type="email" name="guestEmail" class="form-control input-custom" placeholder="john.doe@example.com" required />
+                                        <div class="invalid-feedback text-xs">A valid email address is required.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-600">Phone Number *</label>
+                                        <input type="tel" name="guestPhone" class="form-control input-custom" placeholder="555-0199" required />
+                                        <div class="invalid-feedback text-xs">Phone number is required.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-600">National ID / Passport *</label>
+                                        <input type="text" name="guestNationalId" class="form-control input-custom" placeholder="NID-12345-OPH" required />
+                                        <div class="invalid-feedback text-xs">National ID is required.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-600">Date of Birth *</label>
+                                        <input type="date" name="guestDOB" class="form-control input-custom" required />
+                                        <div class="invalid-feedback text-xs">Date of Birth is required.</div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label small fw-600">Gender *</label>
+                                        <select name="guestGender" class="form-select select-custom" required>
+                                            <option value="Male" selected>Male</option>
+                                            <option value="Female">Female</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                    else if (isPatient)
                     {
                         <input type="hidden" name="patientId" value="0" /> <!-- Will be auto-resolved by controller -->
                     }
@@ -93,7 +138,8 @@
                                     <option value="@doc.Id" 
                                             data-specialty="@doc.SpecializationId" 
                                             data-fee="@doc.ConsultationFee"
-                                            data-schedules='@schedulesJson'>
+                                            data-schedules='@schedulesJson'
+                                            selected="@(doc.Id == ViewBag.SelectedDoctorId ? "selected" : null)">
                                         Dr. @doc.User.FullName (@doc.Specialization?.Name)
                                     </option>
                                 }
@@ -245,6 +291,11 @@
                 
                 validateDateTime();
             });
+
+            // Trigger initial change if doctor is pre-selected
+            if (doctorSelect.value) {
+                doctorSelect.dispatchEvent(new Event('change'));
+            }
 
             // Date validation helper
             dateTimeInput.addEventListener("change", validateDateTime);

@@ -1,0 +1,116 @@
+@{
+    Layout = "_LandingLayout";
+    ViewData["Title"] = "Contact Us — Get in Touch";
+}
+
+<!-- Header banner -->
+<section class="py-5 bg-light-primary text-center" style="background: linear-gradient(135deg, rgba(14,165,233,0.05) 0%, rgba(6,182,212,0.05) 100%); margin-top: 64px;">
+    <div class="container py-4">
+        <div class="section-badge mx-auto">Contact Info</div>
+        <h1 class="fw-bold text-dark display-5 mt-2">We Are Here to Assist You</h1>
+        <p class="text-muted col-lg-7 mx-auto leading-relaxed mt-3">Have questions about clinical appointments, optical therapies, or insurance billing? Get in touch with our receptionist staff.</p>
+    </div>
+</section>
+
+<!-- Contact Form and Details -->
+<section class="py-5">
+    <div class="container">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+                <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+
+        <div class="row g-5">
+            <!-- Contact details sidebar -->
+            <div class="col-lg-5">
+                <h3 class="fw-bold text-dark mb-4">Clinic Office</h3>
+                <p class="text-muted mb-4.5">Feel free to visit our main facility or contact us via phone/email. Our front desk is available Monday through Saturday to handle emergencies or schedule modifications.</p>
+
+                <div class="d-flex flex-column gap-3.5">
+                    <div class="d-flex gap-3 align-items-center p-3 rounded-3 bg-white border border-light shadow-sm">
+                        <div class="bg-primary text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink:0;">
+                            <i class="fa-solid fa-phone"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small d-block">Call Center Phone</span>
+                            <strong class="text-dark">+1 (555) 900-0000</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 align-items-center p-3 rounded-3 bg-white border border-light shadow-sm">
+                        <div class="bg-info text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink:0;">
+                            <i class="fa-solid fa-envelope"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small d-block">Official Email</span>
+                            <strong class="text-dark">info@smarteyeclinic.com</strong>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-3 align-items-center p-3 rounded-3 bg-white border border-light shadow-sm">
+                        <div class="bg-success text-white rounded-3 d-flex align-items-center justify-content-center" style="width: 44px; height: 44px; flex-shrink:0;">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <div>
+                            <span class="text-muted small d-block">Main Headquarters Address</span>
+                            <strong class="text-dark">101 Medical Center Way, Suite A, Downtown</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Form -->
+            <div class="col-lg-7">
+                <div class="card border-0 shadow-sm rounded-4 p-4" style="background: var(--card-bg);">
+                    <h4 class="fw-bold text-dark mb-3">Send Us an Inquiry</h4>
+                    <form asp-controller="Home" asp-action="Contact" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label class="form-label small fw-600">Full Name *</label>
+                                <input type="text" name="name" class="form-control" placeholder="John Doe" required />
+                                <div class="invalid-feedback text-xs">Name is required.</div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label small fw-600">Email Address *</label>
+                                <input type="email" name="email" class="form-control" placeholder="name@domain.com" required />
+                                <div class="invalid-feedback text-xs">A valid email is required.</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-600">Subject *</label>
+                            <input type="text" name="subject" class="form-control" placeholder="Appointment, Billing, Scan Inquiry..." required />
+                            <div class="invalid-feedback text-xs">Subject is required.</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="form-label small fw-600">Message Inquiry *</label>
+                            <textarea name="message" class="form-control" rows="5" placeholder="Explain your inquiry in detail..." required></textarea>
+                            <div class="invalid-feedback text-xs">Message is required.</div>
+                        </div>
+                        <button type="submit" class="btn btn-primary px-4 py-2" style="border-radius: 8px;">
+                            <i class="fa-solid fa-paper-plane me-1"></i> Send Message
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Google Maps Section -->
+<section class="py-0 border-top">
+    <div class="w-100" style="height: 350px;">
+        <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3451.6429532585226!2d31.3323067151152!3d30.08988638186591!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x14583e18a0a2df3d%3A0xc4c735d491f09279!2sHeliopolis%2C%20Cairo%20Governorate!5e0!3m2!1sen!2seg!4v1692120000000!5m2!1sen!2seg" 
+                class="w-100 h-100 border-0" allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+</section>

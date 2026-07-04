@@ -329,5 +329,163 @@ namespace SmartEyeClinic.Web.Controllers
             TempData["Success"] = "Password updated successfully!";
             return RedirectToAction(nameof(Profile));
         }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UploadProfilePicture(Microsoft.AspNetCore.Http.IFormFile? file)
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return RedirectToAction(nameof(Login));
+
+            int userId = int.Parse(userIdClaim.Value);
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            if (file == null || file.Length == 0)
+            {
+                TempData["Error"] = "Please select a valid image file.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+            if (!allowedExtensions.Contains(ext))
+            {
+                TempData["Error"] = "Allowed formats: .jpg, .jpeg, .png, .webp, .gif";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            if (file.Length > 4 * 1024 * 1024)
+            {
+                TempData["Error"] = "Profile picture size must be less than 4MB.";
+                return RedirectToAction(nameof(Profile));
+            }
+
+            try
+            {
+                var uploadsDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "avatars");
+                if (!Directory.Exists(uploadsDir))
+                {
+                    Directory.CreateDirectory(uploadsDir);
+                }
+
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && user.ProfilePicture.StartsWith("/uploads/avatars/"))
+                {
+                    var oldFilePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.ProfilePicture.TrimStart('/'));
+                    if (System.IO.File.Exists(oldFilePath))
+                    {
+                        System.IO.File.Delete(oldFilePath);
+                    }
+                }
+
+                var fileName = $"avatar_{userId}_{DateTime.UtcNow.Ticks}{ext}";
+                var filePath = Path.Combine(uploadsDir, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(stream);
+                }
+
+                user.ProfilePicture = $"/uploads/avatars/{fileName}";
+                user.UpdatedAt = DateTime.Now;
+                
+                // Load Role for claims refresh
+                await _context.Entry(user).Reference(u => u.Role).LoadAsync();
+                
+                await _context.SaveChangesAsync();
+                await RefreshUserClaimsAsync(user);
+
+                TempData["Success"] = "Profile picture updated successfully!";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"An error occurred: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Profile));
+        }
+
+        [Authorize]
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteProfilePicture()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return RedirectToAction(nameof(Login));
+
+            int userId = int.Parse(userIdClaim.Value);
+            var user = await _context.Users.FindAsync(userId);
+            if (user == null) return NotFound();
+
+            try
+            {
+                if (!string.IsNullOrEmpty(user.ProfilePicture) && user.ProfilePicture.StartsWith("/uploads/avatars/"))
+                {
+                    var filePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", user.ProfilePicture.TrimStart('/'));
+                    if (System.IO.File.Exists(filePath))
+                    {
+                        System.IO.File.Delete(filePath);
+                    }
+                }
+
+                user.ProfilePicture = null;
+                user.UpdatedAt = DateTime.Now;
+                
+                // Load Role for claims refresh
+                await _context.Entry(user).Reference(u => u.Role).LoadAsync();
+                
+                await _context.SaveChangesAsync();
+                await RefreshUserClaimsAsync(user);
+
+                TempData["Success"] = "Profile picture deleted successfully.";
+            }
+            catch (Exception ex)
+            {
+                TempData["Error"] = $"An error occurred: {ex.Message}";
+            }
+
+            return RedirectToAction(nameof(Profile));
+        }
+
+        private async Task RefreshUserClaimsAsync(User user)
+        {
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.Name, user.FullName),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Role, user.Role?.Name ?? "Patient")
+            };
+
+            if (user.Role?.Name == "Doctor")
+            {
+                var doc = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == user.Id);
+                if (doc != null) claims.Add(new Claim("DoctorId", doc.Id.ToString()));
+            }
+            else if (user.Role?.Name == "Patient")
+            {
+                var pat = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == user.Id);
+                if (pat != null) claims.Add(new Claim("PatientId", pat.Id.ToString()));
+            }
+            else if (user.Role?.Name == "Receptionist")
+            {
+                var recep = await _context.Receptionists.FirstOrDefaultAsync(r => r.UserId == user.Id);
+                if (recep != null) claims.Add(new Claim("ReceptionistId", recep.Id.ToString()));
+            }
+
+            if (!string.IsNullOrEmpty(user.ProfilePicture))
+            {
+                claims.Add(new Claim("ProfilePicture", user.ProfilePicture));
+            }
+
+            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var authProperties = new AuthenticationProperties
+            {
+                IsPersistent = true,
+                ExpiresUtc = DateTimeOffset.UtcNow.AddHours(8)
+            };
+
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+        }
     }
 }

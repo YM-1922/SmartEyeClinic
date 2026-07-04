@@ -37,27 +37,39 @@
 
                 <div class="row g-3 mb-4">
                     <!-- Patient Select -->
-                    <div class="col-md-6">
-                        <label class="form-label small fw-600">Patient *</label>
-                        <select name="patientId" class="form-select" required>
-                            <option value="">Select Patient...</option>
-                            @if (patients != null)
-                            {
-                                foreach (var pat in patients)
+                    @if (User.IsInRole("Patient"))
+                    {
+                        var currentPatient = patients?.FirstOrDefault(p => p.Id == selectedPatientId);
+                        <div class="col-md-6">
+                            <label class="form-label small fw-600">Patient</label>
+                            <input type="text" class="form-control" value="@(currentPatient?.User?.FullName ?? "Me")" readonly disabled />
+                            <input type="hidden" name="patientId" value="@selectedPatientId" />
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="col-md-6">
+                            <label class="form-label small fw-600">Patient *</label>
+                            <select name="patientId" class="form-select" required>
+                                <option value="">Select Patient...</option>
+                                @if (patients != null)
                                 {
-                                    if (pat.Id == selectedPatientId)
+                                    foreach (var pat in patients)
                                     {
-                                        <option value="@pat.Id" selected="selected">@pat.User.FullName (@pat.User.Email)</option>
-                                    }
-                                    else
-                                    {
-                                        <option value="@pat.Id">@pat.User.FullName (@pat.User.Email)</option>
+                                        if (pat.Id == selectedPatientId)
+                                        {
+                                            <option value="@pat.Id" selected="selected">@pat.User.FullName (@pat.User.Email)</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@pat.Id">@pat.User.FullName (@pat.User.Email)</option>
+                                        }
                                     }
                                 }
-                            }
-                        </select>
-                        <span class="text-danger small"></span>
-                    </div>
+                            </select>
+                            <span class="text-danger small"></span>
+                        </div>
+                    }
 
                     <!-- Visit Select -->
                     <div class="col-md-6">

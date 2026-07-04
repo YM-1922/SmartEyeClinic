@@ -13,6 +13,42 @@ namespace SmartEyeClinic.Web.Data
             // Ensure database is created
             context.Database.EnsureCreated();
 
+            // Cleanup existing doctor names in DB starting with "Dr. "
+            try
+            {
+                context.Database.ExecuteSqlRaw("UPDATE Users SET FullName = SUBSTRING(FullName, 5, LEN(FullName) - 4) WHERE RoleId = 2 AND FullName LIKE 'Dr. %'");
+                Console.WriteLine("SEED_LOG: Cleaned duplicate 'Dr. ' prefixes from existing doctor accounts.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SEED_LOG: Warning cleaning duplicate 'Dr. ' prefixes: {ex.Message}");
+            }
+
+            // Auto-create ReviewReplies table if missing
+            try
+            {
+                context.Database.ExecuteSqlRaw(@"
+                    IF NOT EXISTS (SELECT * FROM sys.objects WHERE object_id = OBJECT_ID(N'[dbo].[ReviewReplies]') AND type in (N'U'))
+                    BEGIN
+                        CREATE TABLE [dbo].[ReviewReplies] (
+                            [Id] INT IDENTITY(1,1) NOT NULL,
+                            [ReviewId] INT NOT NULL,
+                            [UserId] INT NOT NULL,
+                            [Content] NVARCHAR(1000) NOT NULL,
+                            [CreatedAt] DATETIME2 NOT NULL DEFAULT GETDATE(),
+                            CONSTRAINT [PK_ReviewReplies] PRIMARY KEY CLUSTERED ([Id] ASC),
+                            CONSTRAINT [FK_ReviewReplies_DoctorReviews_ReviewId] FOREIGN KEY ([ReviewId]) REFERENCES [dbo].[DoctorReviews] ([Id]) ON DELETE CASCADE,
+                            CONSTRAINT [FK_ReviewReplies_Users_UserId] FOREIGN KEY ([UserId]) REFERENCES [dbo].[Users] ([Id]) ON DELETE NO ACTION
+                        )
+                    END
+                ");
+                Console.WriteLine("SEED_LOG: Verified ReviewReplies table exists in database.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"SEED_LOG: Warning verifying ReviewReplies table: {ex.Message}");
+            }
+
             Console.WriteLine("SEED_LOG: Starting Database Seeding Routine...");
 
             // 1. Seed Roles
@@ -180,10 +216,10 @@ namespace SmartEyeClinic.Web.Data
             // 10. Seed the 10 Doctor Accounts
             var doctorsToSeed = new[]
             {
-                new { Name = "Dr. Alexander Wright", Email = "doctor1@smarteye.com", Phone = "555-9001", License = "LIC-ALEX-OPH", Specialty = "General Ophthalmologist", Bio = "Dr. Alexander Wright is highly experienced in general clinical ophthalmology and diagnostics.", Days = new[]{"Monday", "Friday"}, Start = 9, End = 17 },
-                new { Name = "Dr. Clara Oswald", Email = "doctor2@smarteye.com", Phone = "555-9002", License = "LIC-CLARA-OPH", Specialty = "Cornea Specialist", Bio = "Dr. Clara Oswald is an expert in corneal transplants and refractive anterior therapies.", Days = new[]{"Tuesday"}, Start = 10, End = 16 },
-                new { Name = "Dr. Bruce Banner", Email = "doctor3@smarteye.com", Phone = "555-9003", License = "LIC-BRUCE-OPH", Specialty = "Retina Specialist", Bio = "Dr. Bruce Banner specializes in macular degeneration and vitreoretinal operations.", Days = new[]{"Wednesday"}, Start = 8, End = 15 },
-                new { Name = "Dr. Diana Prince", Email = "doctor4@smarteye.com", Phone = "555-9004", License = "LIC-DIANA-OPH", Specialty = "Pediatric Ophthalmologist", Bio = "Dr. Diana Prince is dedicated to pediatric strabismus and childhood vision checkups.", Days = new[]{"Thursday"}, Start = 9, End = 14 },
+                new { Name = "Alexander Wright", Email = "doctor1@smarteye.com", Phone = "555-9001", License = "LIC-ALEX-OPH", Specialty = "General Ophthalmologist", Bio = "Alexander Wright is highly experienced in general clinical ophthalmology and diagnostics.", Days = new[]{"Monday", "Friday"}, Start = 9, End = 17 },
+                new { Name = "Clara Oswald", Email = "doctor2@smarteye.com", Phone = "555-9002", License = "LIC-CLARA-OPH", Specialty = "Cornea Specialist", Bio = "Clara Oswald is an expert in corneal transplants and refractive anterior therapies.", Days = new[]{"Tuesday"}, Start = 10, End = 16 },
+                new { Name = "Bruce Banner", Email = "doctor3@smarteye.com", Phone = "555-9003", License = "LIC-BRUCE-OPH", Specialty = "Retina Specialist", Bio = "Bruce Banner specializes in macular degeneration and vitreoretinal operations.", Days = new[]{"Wednesday"}, Start = 8, End = 15 },
+                new { Name = "Diana Prince", Email = "doctor4@smarteye.com", Phone = "555-9004", License = "LIC-DIANA-OPH", Specialty = "Pediatric Ophthalmologist", Bio = "Diana Prince is dedicated to pediatric strabismus and childhood vision checkups.", Days = new[]{"Thursday"}, Start = 9, End = 14 },
 
             };
 
@@ -204,7 +240,7 @@ namespace SmartEyeClinic.Web.Data
             }
 
             // 11. Seed Legacy Doctor User & Profile
-            var legacyDocUser = GetOrCreateUser(context, "Dr. Alexander Wright Legacy", "doctor@smarteye.com", "doctor123", "555-9999", doctorRole?.Id ?? 2);
+            var legacyDocUser = GetOrCreateUser(context, "Alexander Wright Legacy", "doctor@smarteye.com", "doctor123", "555-9999", doctorRole?.Id ?? 2);
             var generalSpec = context.Specializations.FirstOrDefault(s => s.Name == "General Ophthalmologist") ?? context.Specializations.FirstOrDefault();
             GetOrCreateDoctor(context, legacyDocUser.Id, generalSpec?.Id ?? 1, "LIC-LEGACY-OPH", 150.00m, "Legacy account for testing.");
 

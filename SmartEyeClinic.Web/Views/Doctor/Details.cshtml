@@ -53,6 +53,13 @@
                 <h5 class="fw-bold mb-1">Dr. @Model.User.FullName</h5>
                 <span class="badge bg-light-primary text-primary px-3 py-1.5 rounded-pill mb-3">@Model.Specialization.Name</span>
                 
+                <!-- Book Appointment Button -->
+                <div class="d-grid gap-2 mb-3">
+                    <a href="/Appointment/Create?doctorId=@Model.Id" class="btn btn-success border-0 py-2.5 rounded-3 fw-bold shadow-sm" style="background: var(--success); font-size: 0.9rem;">
+                        <i class="fa-solid fa-calendar-check me-2"></i> Book Appointment
+                    </a>
+                </div>
+                
                 <hr class="text-muted opacity-25" />
                 
                 <div class="text-start mt-3">
@@ -100,6 +107,164 @@
                 </div>
                 <div class="card-body p-4">
                     <p class="text-muted mb-0">@(string.IsNullOrEmpty(Model.Bio) ? "No biography has been updated for this specialist." : Model.Bio)</p>
+                </div>
+            </div>
+
+            <!-- Patient Reviews & Clinic Feedback -->
+            <div class="card border-0 shadow-sm rounded-4 mt-4" style="background: var(--card-bg);">
+                <div class="card-header bg-transparent border-bottom p-3">
+                    <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-star text-warning me-2"></i> Patient Reviews & Feedback</h5>
+                </div>
+                <div class="card-body p-4">
+                    <!-- Average Rating Summary -->
+                    @{
+                        var reviewsList = Model.Reviews.ToList();
+                        var hasAnyReviews = reviewsList.Any();
+                        var avgRatingVal = hasAnyReviews ? reviewsList.Average(r => r.Rating) : 0.0;
+                    }
+                    <div class="d-flex align-items-center gap-4 mb-4 p-3 rounded-3 bg-light-primary" style="background: rgba(14, 165, 233, 0.05); border-radius: var(--radius);">
+                        <div class="text-center">
+                            <h1 class="display-5 fw-bold text-dark mb-0">@(hasAnyReviews ? avgRatingVal.ToString("F1") : "—")</h1>
+                            <div class="text-warning text-xs mt-1">
+                                @for (int i = 1; i <= 5; i++)
+                                {
+                                    if (i <= Math.Round(avgRatingVal))
+                                    {
+                                        <i class="fa-solid fa-star"></i>
+                                    }
+                                    else
+                                    {
+                                        <i class="fa-regular fa-star"></i>
+                                    }
+                                }
+                            </div>
+                            <span class="text-muted small mt-1 d-block">@reviewsList.Count @(reviewsList.Count == 1 ? "review" : "reviews")</span>
+                        </div>
+                        <div class="border-start ps-4 flex-grow-1">
+                            <h6 class="fw-bold text-dark mb-1">Optical Rating Overview</h6>
+                            <p class="text-muted small mb-0">Patient feedback is audited dynamically to ensure maximum ophthalmic clinical care quality.</p>
+                        </div>
+                    </div>
+
+                    <!-- Reviews List -->
+                    <div class="d-flex flex-column gap-3 mb-4">
+                        @if (!hasAnyReviews)
+                        {
+                            <div class="text-center py-4 text-muted small">
+                                <i class="fa-regular fa-comments mb-2 fs-4 d-block opacity-50"></i>
+                                No feedback has been registered for this specialist yet.
+                            </div>
+                        }
+                        else
+                        {
+                            foreach (var rev in reviewsList)
+                            {
+                                <div class="p-3 border rounded-3 bg-light-subtle">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <div>
+                                            <strong class="text-dark">@rev.Patient?.User?.FullName</strong>
+                                            <span class="text-muted text-xs ms-2">@rev.CreatedAt?.ToString("dd MMM yyyy")</span>
+                                        </div>
+                                        <div class="text-warning text-xs">
+                                            @for (int i = 1; i <= 5; i++)
+                                            {
+                                                if (i <= rev.Rating)
+                                                {
+                                                    <i class="fa-solid fa-star"></i>
+                                                }
+                                                else
+                                                {
+                                                    <i class="fa-regular fa-star"></i>
+                                                }
+                                            }
+                                        </div>
+                                    </div>
+                                    <p class="text-dark small mb-2">@rev.Comment</p>
+
+                                    <!-- Replies Section -->
+                                    @if (rev.Replies.Any())
+                                    {
+                                        <div class="ms-4 mt-2 ps-3 border-start border-2 border-primary-subtle d-flex flex-column gap-2">
+                                            @foreach (var rep in rev.Replies)
+                                            {
+                                                <div class="p-2.5 rounded bg-white shadow-sm border border-light" style="font-size: 0.825rem;">
+                                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                                        <span class="fw-bold text-primary">@rep.User.FullName <span class="badge bg-secondary text-xs px-2 py-0.5 ms-1">@rep.User.Role.Name</span></span>
+                                                        <span class="text-muted text-xs">@rep.CreatedAt.ToString("dd MMM yyyy, hh:mm tt")</span>
+                                                    </div>
+                                                    <div class="text-dark">@rep.Content</div>
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+
+                                    <!-- Reply Form (For subjects of the review or Admins) -->
+                                    @{
+                                        bool canReply = User.IsInRole("Admin");
+                                        if (User.IsInRole("Doctor"))
+                                        {
+                                            var loggedDocId = User.FindFirst("DoctorId")?.Value;
+                                            if (loggedDocId != null && int.Parse(loggedDocId) == Model.Id)
+                                            {
+                                                canReply = true;
+                                            }
+                                        }
+                                    }
+                                    @if (canReply)
+                                    {
+                                        <div class="mt-3">
+                                            <button class="btn btn-sm btn-link text-decoration-none p-0 text-primary fw-600 shadow-none border-0 bg-transparent" type="button" data-bs-toggle="collapse" data-bs-target="#replyForm-@rev.Id" aria-expanded="false">
+                                                <i class="fa-solid fa-reply me-1"></i> Reply to review
+                                            </button>
+                                            <div class="collapse mt-2" id="replyForm-@rev.Id">
+                                                <form asp-action="AddReply" method="post" class="needs-validation" novalidate>
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="doctorId" value="@Model.Id" />
+                                                    <input type="hidden" name="reviewId" value="@rev.Id" />
+                                                    <div class="mb-2">
+                                                        <textarea name="content" class="form-control form-control-sm" rows="2" placeholder="Write clinical reply response..." required></textarea>
+                                                        <div class="invalid-feedback text-xs">Reply text is required.</div>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-sm btn-primary px-3">Submit Reply</button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    }
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <!-- Leave a Review Form (Patients only) -->
+                    @if (User.IsInRole("Patient"))
+                    {
+                        <hr class="text-muted opacity-25" />
+                        <div class="mt-4 bg-light p-3.5 rounded-3 border border-light" style="border-radius: var(--radius);">
+                            <h6 class="fw-bold text-dark mb-3"><i class="fa-solid fa-feather-pointed me-2 text-primary"></i> Leave a Specialists Review</h6>
+                            <form asp-action="AddReview" method="post" class="needs-validation" novalidate>
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="doctorId" value="@Model.Id" />
+                                <div class="row g-3 mb-3">
+                                    <div class="col-md-4">
+                                        <label class="form-label text-xs fw-600">Select Rating *</label>
+                                        <select name="rating" class="form-select form-select-sm select-custom" required>
+                                            <option value="5" selected>5 Stars (Excellent)</option>
+                                            <option value="4">4 Stars (Good)</option>
+                                            <option value="3">3 Stars (Average)</option>
+                                            <option value="2">2 Stars (Poor)</option>
+                                            <option value="1">1 Star (Very Poor)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label text-xs fw-600">Your Feedback Comment</label>
+                                    <textarea name="comment" class="form-control form-control-sm input-custom" rows="3" placeholder="Share your consultation or operation experience with this doctor..." required></textarea>
+                                    <div class="invalid-feedback text-xs">Comment is required.</div>
+                                </div>
+                                <button type="submit" class="btn btn-sm btn-primary px-4 py-1.5"><i class="fa-solid fa-paper-plane me-1"></i> Submit Review</button>
+                            </form>
+                        </div>
+                    }
                 </div>
             </div>
         </div>

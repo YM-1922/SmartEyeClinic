@@ -45,6 +45,7 @@ namespace SmartEyeClinic.Data
         public DbSet<PatientInsurance> PatientInsurances { get; set; } = null!;
         public DbSet<Notification> Notifications { get; set; } = null!;
         public DbSet<AuditLog> AuditLogs { get; set; } = null!;
+        public DbSet<ReviewReply> ReviewReplies { get; set; } = null!;
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {

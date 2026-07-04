@@ -16,6 +16,18 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 <body>
+    <!-- Floating Header Navbar with Back to Home -->
+    <header class="position-absolute top-0 start-0 end-0 p-3" style="z-index: 1000;">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <a href="/" class="text-decoration-none d-inline-flex align-items-center gap-2" style="color: rgba(255, 255, 255, 0.7); transition: var(--transition);">
+                <span class="d-flex align-items-center justify-content-center bg-white bg-opacity-10 rounded-circle" style="width: 36px; height: 36px; border: 1px solid rgba(255, 255, 255, 0.15);">
+                    <i class="fa-solid fa-arrow-left text-white text-xs"></i>
+                </span>
+                <span class="text-white fw-bold small">Back to Home</span>
+            </a>
+        </div>
+    </header>
+
     <div class="auth-page">
         <!-- Left Panel: Branding & Features -->
         <div class="auth-panel-left d-none d-lg-flex">

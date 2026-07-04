@@ -1,5 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +12,6 @@ using SmartEyeClinic.Web.Services;
 
 namespace SmartEyeClinic.Web.Controllers
 {
-    [Authorize]
     public class AppointmentController : Controller
     {
         private readonly AppointmentService _appointmentService;
@@ -22,6 +24,7 @@ namespace SmartEyeClinic.Web.Controllers
         }
 
         // List Appointments
+        [Authorize]
         public async Task<IActionResult> Index()
         {
             var appointments = await _appointmentService.GetAllAppointmentsAsync();
@@ -57,6 +60,7 @@ namespace SmartEyeClinic.Web.Controllers
         }
 
         // Appointment Details
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -90,9 +94,10 @@ namespace SmartEyeClinic.Web.Controllers
 
         // Create Appointment
         [HttpGet]
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(int? doctorId)
         {
             await PopulateDropdownsAsync();
+            ViewBag.SelectedDoctorId = doctorId;
             return View();
         }
 
@@ -106,10 +111,96 @@ namespace SmartEyeClinic.Web.Controllers
             int durationMinutes, 
             string type, 
             string status, 
-            string? notes)
+            string? notes,
+            string? guestName,
+            string? guestEmail,
+            string? guestPhone,
+            string? guestNationalId,
+            DateTime? guestDOB,
+            string? guestGender)
         {
-            // Enforcement: Patient can only create appointments for themselves
-            if (User.IsInRole("Patient"))
+            // If the user is NOT authenticated (Guest Booking)
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {
+                if (string.IsNullOrWhiteSpace(guestName) || string.IsNullOrWhiteSpace(guestEmail) || 
+                    string.IsNullOrWhiteSpace(guestPhone) || string.IsNullOrWhiteSpace(guestNationalId))
+                {
+                    TempData["Error"] = "Please fill in all patient registration fields for guest booking.";
+                    await PopulateDropdownsAsync();
+                    return View();
+                }
+
+                // Check if user already exists by email
+                var existingUser = await _context.Users
+                    .Include(u => u.Role)
+                    .FirstOrDefaultAsync(u => u.Email == guestEmail);
+
+                User targetUser;
+                Patient targetPatient;
+
+                if (existingUser != null)
+                {
+                    targetUser = existingUser;
+                    var existingPatient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == targetUser.Id);
+                    if (existingPatient == null)
+                    {
+                        // Create Patient profile for existing user
+                        existingPatient = new Patient
+                        {
+                            UserId = targetUser.Id,
+                            NationalId = guestNationalId,
+                            DateOfBirth = guestDOB.HasValue ? DateOnly.FromDateTime(guestDOB.Value) : DateOnly.FromDateTime(DateTime.Today.AddYears(-30)),
+                            Gender = guestGender ?? "Male"
+                        };
+                        _context.Patients.Add(existingPatient);
+                        await _context.SaveChangesAsync();
+                    }
+                    targetPatient = existingPatient;
+                }
+                else
+                {
+                    // Create new Patient User
+                    var patientRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Patient");
+                    targetUser = new User
+                    {
+                        FullName = guestName,
+                        Email = guestEmail,
+                        PasswordHash = "Patient@123", // Default password
+                        PhoneNumber = guestPhone,
+                        RoleId = patientRole?.Id ?? 3,
+                        IsActive = true,
+                        CreatedAt = DateTime.Now
+                    };
+                    _context.Users.Add(targetUser);
+                    await _context.SaveChangesAsync();
+
+                    targetPatient = new Patient
+                    {
+                        UserId = targetUser.Id,
+                        NationalId = guestNationalId,
+                        DateOfBirth = guestDOB.HasValue ? DateOnly.FromDateTime(guestDOB.Value) : DateOnly.FromDateTime(DateTime.Today.AddYears(-30)),
+                        Gender = guestGender ?? "Male"
+                    };
+                    _context.Patients.Add(targetPatient);
+                    await _context.SaveChangesAsync();
+                }
+
+                patientId = targetPatient.Id;
+                
+                // Automatically log the new/existing patient in
+                var claims = new List<System.Security.Claims.Claim>
+                {
+                    new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, targetUser.FullName),
+                    new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Email, targetUser.Email),
+                    new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, targetUser.Id.ToString()),
+                    new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, "Patient"),
+                    new System.Security.Claims.Claim("PatientId", targetPatient.Id.ToString())
+                };
+
+                var claimsIdentity = new System.Security.Claims.ClaimsIdentity(claims, Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme);
+                await HttpContext.SignInAsync(Microsoft.AspNetCore.Authentication.Cookies.CookieAuthenticationDefaults.AuthenticationScheme, new System.Security.Claims.ClaimsPrincipal(claimsIdentity));
+            }
+            else if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
                 if (patIdClaim == null)
@@ -126,11 +217,12 @@ namespace SmartEyeClinic.Web.Controllers
                 await PopulateDropdownsAsync();
                 return View();
             }
-            TempData["Success"] = "Appointment booked successfully!";
+            TempData["Success"] = "Appointment booked successfully! You have been logged in automatically using default password: Patient@123";
             return RedirectToAction(nameof(Index));
         }
 
         // Edit Appointment
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -160,6 +252,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(appointment);
         }
 
+        [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
@@ -208,6 +301,7 @@ namespace SmartEyeClinic.Web.Controllers
         }
 
         // Delete Appointment - GET
+        [Authorize]
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
@@ -240,6 +334,7 @@ namespace SmartEyeClinic.Web.Controllers
         }
 
         // Delete Appointment - POST
+        [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)

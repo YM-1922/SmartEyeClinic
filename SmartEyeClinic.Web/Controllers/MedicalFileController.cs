@@ -71,32 +71,76 @@ namespace SmartEyeClinic.Web.Controllers
             return View(files);
         }
 
-        // GET: Upload File — restricted to Admin, Doctor, Receptionist
-        [Authorize(Roles = "Admin,Doctor,Receptionist")]
+        // GET: Upload File
+        [Authorize(Roles = "Admin,Doctor,Receptionist,Patient")]
         [HttpGet]
         public async Task<IActionResult> Upload(int? patientId = null, int? appointmentId = null)
         {
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (string.IsNullOrEmpty(patIdClaim))
+                    return RedirectToAction("AccessDenied", "Account");
+                
+                int patId = int.Parse(patIdClaim);
+                patientId = patId;
+
+                ViewBag.Patients = await _context.Patients.Include(p => p.User)
+                    .Where(p => p.Id == patId)
+                    .AsNoTracking().ToListAsync();
+
+                ViewBag.Appointments = await _context.Appointments
+                    .Include(a => a.Patient).ThenInclude(p => p.User)
+                    .Include(a => a.Doctor).ThenInclude(d => d.User)
+                    .Where(a => a.PatientId == patId && a.Status != "Cancelled")
+                    .AsNoTracking()
+                    .OrderByDescending(a => a.AppointmentDateTime)
+                    .ToListAsync();
+            }
+            else
+            {
+                ViewBag.Patients = await _context.Patients.Include(p => p.User)
+                    .AsNoTracking().OrderBy(p => p.User.FullName).ToListAsync();
+
+                ViewBag.Appointments = await _context.Appointments
+                    .Include(a => a.Patient).ThenInclude(p => p.User)
+                    .Include(a => a.Doctor).ThenInclude(d => d.User)
+                    .Where(a => a.Status != "Cancelled")
+                    .AsNoTracking()
+                    .OrderByDescending(a => a.AppointmentDateTime)
+                    .ToListAsync();
+            }
+
             ViewBag.PatientId = patientId;
             ViewBag.AppointmentId = appointmentId;
-            
-            ViewBag.Patients = await _context.Patients.Include(p => p.User)
-                .AsNoTracking().OrderBy(p => p.User.FullName).ToListAsync();
-            ViewBag.Appointments = await _context.Appointments
-                .Include(a => a.Patient).ThenInclude(p => p.User)
-                .Where(a => a.Status != "Cancelled")
-                .AsNoTracking()
-                .OrderByDescending(a => a.AppointmentDateTime)
-                .ToListAsync();
 
             return View();
         }
 
-        // POST: Upload File — restricted to Admin, Doctor, Receptionist
-        [Authorize(Roles = "Admin,Doctor,Receptionist")]
+        // POST: Upload File
+        [Authorize(Roles = "Admin,Doctor,Receptionist,Patient")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Upload(int patientId, int? appointmentId, IFormFile file)
         {
+            if (User.IsInRole("Patient"))
+            {
+                var patIdClaim = User.FindFirst("PatientId")?.Value;
+                if (string.IsNullOrEmpty(patIdClaim))
+                    return RedirectToAction("AccessDenied", "Account");
+                
+                patientId = int.Parse(patIdClaim);
+
+                if (appointmentId.HasValue)
+                {
+                    var app = await _context.Appointments.FindAsync(appointmentId.Value);
+                    if (app == null || app.PatientId != patientId)
+                    {
+                        return RedirectToAction("AccessDenied", "Account");
+                    }
+                }
+            }
+
             if (file == null || file.Length == 0)
             {
                 TempData["Error"] = "Please select a file to upload.";

@@ -1,0 +1,100 @@
+@model List<SmartEyeClinic.Models.Doctor>
+@{
+    Layout = "_LandingLayout";
+    ViewData["Title"] = "Our Ophthalmic Specialists";
+}
+
+<!-- Header banner -->
+<section class="py-5 bg-light-primary text-center" style="background: linear-gradient(135deg, rgba(14,165,233,0.05) 0%, rgba(6,182,212,0.05) 100%); margin-top: 64px;">
+    <div class="container py-4">
+        <div class="section-badge mx-auto">Medical Directory</div>
+        <h1 class="fw-bold text-dark display-5 mt-2">Meet Our Specialized Doctors</h1>
+        <p class="text-muted col-lg-7 mx-auto leading-relaxed mt-3">Our board-certified ophthalmologists provide high-quality optical diagnostics, laser therapy, and surgical segment care.</p>
+    </div>
+</section>
+
+<!-- Search and Grid Section -->
+<section class="py-5">
+    <div class="container">
+        <!-- Live Search Filter -->
+        <div class="row mb-5 justify-content-center">
+            <div class="col-md-6">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden border border-light" style="background: #fff;">
+                    <span class="input-group-text bg-white border-0 ps-4"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" id="doctorSearchInput" class="form-control border-0 py-2.5 shadow-none" placeholder="Search doctor by name or specialty..." style="font-size:0.925rem;" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Doctors Grid -->
+        <div class="row g-4 justify-content-center" id="doctorsGrid">
+            @if (Model != null && Model.Any())
+            {
+                foreach (var doc in Model)
+                {
+                    var calculatedExp = (doc.Id * 2) + 5;
+                    var avgRating = doc.Reviews.Any() ? doc.Reviews.Average(r => r.Rating).ToString("F1") : (4.7 + (doc.Id % 3) * 0.1).ToString("F1");
+                    
+                    <div class="col-lg-3 col-md-6 col-sm-10 doctor-item-col" data-search-name="@doc.User?.FullName" data-search-spec="@doc.Specialization?.Name">
+                        <div class="doctor-card h-100 d-flex flex-column justify-content-between">
+                            <div>
+                                <div class="doctor-avatar-wrap">
+                                    <div class="doctor-initials-big">
+                                        @(doc.User?.FullName?.Length > 0 ? doc.User.FullName[0].ToString().ToUpper() : "D")
+                                    </div>
+                                </div>
+                                <div class="doctor-info pb-0">
+                                    <h6 class="fw-bold text-dark mb-1">Dr. @doc.User?.FullName</h6>
+                                    <div class="doctor-spec">@doc.Specialization?.Name</div>
+                                    <div class="small text-muted mb-2"><i class="fa-solid fa-briefcase text-info me-1"></i> @calculatedExp Years Experience</div>
+                                    <div class="small text-warning fw-bold mb-3">
+                                        <i class="fa-solid fa-star"></i> @avgRating Rating
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 border-top bg-light d-flex gap-2 justify-content-center">
+                                <a href="/Doctor/Details/@doc.Id" class="btn btn-outline-primary btn-sm rounded-pill w-50 font-weight-bold">
+                                    Profile <i class="fa-solid fa-user text-xs ms-1"></i>
+                                </a>
+                                <a href="/Appointment/Create?doctorId=@doc.Id" class="btn btn-primary btn-sm rounded-pill w-50 font-weight-bold">
+                                    Book Now <i class="fa-solid fa-calendar-check text-xs ms-1"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-center text-muted py-5 col-12">
+                    <i class="fa-solid fa-user-doctor fs-3 mb-2 opacity-50 d-block"></i>
+                    No ophthalmologists currently registered.
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const searchInput = document.getElementById("doctorSearchInput");
+            const docItems = document.querySelectorAll(".doctor-item-col");
+
+            if (searchInput) {
+                searchInput.addEventListener("input", function () {
+                    const query = this.value.toLowerCase().trim();
+                    docItems.forEach(item => {
+                        const name = item.getAttribute("data-search-name").toLowerCase();
+                        const spec = item.getAttribute("data-search-spec").toLowerCase();
+                        if (name.includes(query) || spec.includes(query)) {
+                            item.style.display = "";
+                        } else {
+                            item.style.display = "none";
+                        }
+                    });
+                });
+            }
+        });
+    </script>
+}

@@ -217,10 +217,16 @@
                     {
                         <div class="sidebar-section-label">My Health</div>
                         <ul>
-                            <li class="@(ctrl == "Appointment" ? "active" : "")">
+                            <li class="@(ctrl == "Appointment" && act == "Index" ? "active" : "")">
                                 <a asp-controller="Appointment" asp-action="Index">
                                     <i class="fa-solid fa-calendar-check nav-icon"></i>
                                     <span class="nav-label">My Appointments</span>
+                                </a>
+                            </li>
+                            <li class="@(ctrl == "Appointment" && act == "Create" ? "active" : "")">
+                                <a asp-controller="Appointment" asp-action="Create">
+                                    <i class="fa-solid fa-calendar-plus nav-icon text-info"></i>
+                                    <span class="nav-label">Book Appointment</span>
                                 </a>
                             </li>
                             <li class="@(ctrl == "Examination" ? "active" : "")">
@@ -257,6 +263,34 @@
                                 <a asp-controller="Surgery" asp-action="Index">
                                     <i class="fa-solid fa-syringe nav-icon"></i>
                                     <span class="nav-label">My Surgeries</span>
+                                </a>
+                            </li>
+                        </ul>
+
+                        <div class="sidebar-section-label">Main Site</div>
+                        <ul>
+                            <li>
+                                <a asp-controller="Home" asp-action="Landing">
+                                    <i class="fa-solid fa-house nav-icon text-warning"></i>
+                                    <span class="nav-label">Homepage</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Home" asp-action="Doctors">
+                                    <i class="fa-solid fa-user-md nav-icon text-success"></i>
+                                    <span class="nav-label">Our Doctors</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Home" asp-action="About">
+                                    <i class="fa-solid fa-info-circle nav-icon text-info"></i>
+                                    <span class="nav-label">About Us</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a asp-controller="Home" asp-action="Contact">
+                                    <i class="fa-solid fa-envelope nav-icon text-primary"></i>
+                                    <span class="nav-label">Contact Us</span>
                                 </a>
                             </li>
                         </ul>
@@ -326,6 +360,19 @@
                         <i class="fa-solid fa-magnifying-glass"></i>
                         <input type="text" placeholder="Search patients, appointments..." id="globalSearch" autocomplete="off" />
                     </div>
+
+                    <!-- Quick Navigation (For Patients) -->
+                    @if (User.IsInRole("Patient"))
+                    {
+                        <div class="d-none d-lg-flex align-items-center gap-3 ms-4">
+                            <a asp-controller="Home" asp-action="Landing" class="text-decoration-none text-muted fw-bold text-sm" style="transition: color 0.2s;">
+                                <i class="fa-solid fa-house me-1 text-primary"></i> Home
+                            </a>
+                            <a asp-controller="Home" asp-action="Doctors" class="text-decoration-none text-muted fw-bold text-sm" style="transition: color 0.2s;">
+                                <i class="fa-solid fa-user-md me-1 text-success"></i> Our Doctors
+                            </a>
+                        </div>
+                    }
                 </div>
 
                 <div class="navbar-actions">

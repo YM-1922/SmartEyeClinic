@@ -26,6 +26,14 @@ namespace SmartEyeClinic.Web.Middleware
             {
                 _logger.LogError(ex, "Unhandled exception occurred during request execution on path: {Path}", context.Request.Path);
                 
+                try
+                {
+                    var logFilePath = System.IO.Path.Combine(System.IO.Directory.GetCurrentDirectory(), "wwwroot", "error_log.txt");
+                    var logText = $"[{DateTime.Now}] Path: {context.Request.Path}\nException: {ex.Message}\nStack Trace:\n{ex.StackTrace}\n\n";
+                    System.IO.File.AppendAllText(logFilePath, logText);
+                }
+                catch { }
+
                 // Redirect to user-friendly error page
                 context.Response.Redirect("/Home/Error");
             }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SmartEyeClinic.Data;
+using SmartEyeClinic.Models;
 using SmartEyeClinic.Web.Services;
 
 namespace SmartEyeClinic.Web.Controllers
@@ -31,7 +32,13 @@ namespace SmartEyeClinic.Web.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
-            var doctor = await _doctorService.GetDoctorByIdAsync(id);
+            var doctor = await _context.Doctors
+                .Include(d => d.User)
+                .Include(d => d.Specialization)
+                .Include(d => d.Reviews).ThenInclude(r => r.Patient).ThenInclude(p => p.User)
+                .Include(d => d.Reviews).ThenInclude(r => r.Replies).ThenInclude(rep => rep.User).ThenInclude(u => u.Role)
+                .FirstOrDefaultAsync(d => d.Id == id);
+
             if (doctor == null)
             {
                 TempData["Error"] = "Doctor profile not found.";
@@ -60,12 +67,112 @@ namespace SmartEyeClinic.Web.Controllers
             int specializationId, 
             string licenseNumber, 
             decimal consultationFee, 
-            string? bio)
+            string? bio,
+            IFormFile? profilePicture,
+            List<string>? workingDays,
+            string? startTime,
+            string? endTime)
         {
             try
             {
-                await _doctorService.AddDoctorAsync(fullName, email, password, phoneNumber, specializationId, licenseNumber, consultationFee, bio);
-                TempData["Success"] = "Doctor registered successfully!";
+                if (string.IsNullOrWhiteSpace(fullName))
+                    throw new Exception("Full Name is required.");
+
+                if (string.IsNullOrWhiteSpace(email))
+                    throw new Exception("Email is required.");
+
+                if (string.IsNullOrWhiteSpace(password))
+                    throw new Exception("Password is required.");
+
+                if (string.IsNullOrWhiteSpace(licenseNumber))
+                    throw new Exception("License Number is required.");
+
+                bool licenseExists = await _context.Doctors.AnyAsync(d => d.LicenseNumber == licenseNumber);
+                if (licenseExists)
+                    throw new Exception("License Number already exists.");
+
+                bool emailExists = await _context.Users.AnyAsync(u => u.Email == email);
+                if (emailExists)
+                    throw new Exception("Email already exists.");
+
+                if (!string.IsNullOrWhiteSpace(phoneNumber))
+                {
+                    bool phoneExists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
+                    if (phoneExists)
+                        throw new Exception("Phone Number already exists.");
+                }
+
+                string? picturePath = null;
+                if (profilePicture != null && profilePicture.Length > 0)
+                {
+                    var ext = Path.GetExtension(profilePicture.FileName).ToLowerInvariant();
+                    var allowedExts = new[] { ".jpg", ".jpeg", ".png" };
+                    if (!allowedExts.Contains(ext))
+                        throw new Exception("Invalid image type. Only JPG, JPEG, and PNG are allowed.");
+
+                    var uploadDir = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+                    if (!Directory.Exists(uploadDir))
+                        Directory.CreateDirectory(uploadDir);
+
+                    var filename = $"{Guid.NewGuid()}{ext}";
+                    var filePath = Path.Combine(uploadDir, filename);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await profilePicture.CopyToAsync(stream);
+                    }
+                    picturePath = $"/uploads/{filename}";
+                }
+
+                var doctorRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Doctor");
+                if (doctorRole == null)
+                    throw new Exception("Doctor role is not initialized in the database.");
+
+                var user = new User
+                {
+                    FullName = fullName,
+                    Email = email,
+                    PasswordHash = password,
+                    PhoneNumber = phoneNumber,
+                    RoleId = doctorRole.Id,
+                    ProfilePicture = picturePath,
+                    IsActive = true,
+                    CreatedAt = DateTime.Now
+                };
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                var doctor = new Doctor
+                {
+                    UserId = user.Id,
+                    SpecializationId = specializationId,
+                    LicenseNumber = licenseNumber,
+                    ConsultationFee = consultationFee,
+                    Bio = bio
+                };
+                _context.Doctors.Add(doctor);
+                await _context.SaveChangesAsync();
+
+                if (workingDays != null && workingDays.Any())
+                {
+                    TimeOnly start = TimeOnly.Parse(startTime ?? "09:00");
+                    TimeOnly end = TimeOnly.Parse(endTime ?? "17:00");
+
+                    foreach (var day in workingDays)
+                    {
+                        var schedule = new DoctorSchedule
+                        {
+                            DoctorId = doctor.Id,
+                            DayOfWeek = day,
+                            StartTime = start,
+                            EndTime = end
+                        };
+                        _context.DoctorSchedules.Add(schedule);
+                    }
+                    await _context.SaveChangesAsync();
+                }
+
+                TempData["Success"] = "Doctor registered successfully with schedules!";
                 return RedirectToAction(nameof(Index));
             }
             catch (Exception ex)
@@ -165,6 +272,92 @@ namespace SmartEyeClinic.Web.Controllers
                 TempData["Error"] = ex.Message;
             }
             return RedirectToAction(nameof(Index));
+        }
+
+        // POST: /Doctor/AddReview
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddReview(int doctorId, int rating, string? comment)
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Challenge();
+
+            int userId = int.Parse(userIdClaim.Value);
+            var patient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == userId);
+            if (patient == null)
+            {
+                TempData["Error"] = "Only registered patients can submit reviews.";
+                return RedirectToAction(nameof(Details), new { id = doctorId });
+            }
+
+            if (rating < 1 || rating > 5)
+            {
+                TempData["Error"] = "Rating must be between 1 and 5 stars.";
+                return RedirectToAction(nameof(Details), new { id = doctorId });
+            }
+
+            var review = new DoctorReview
+            {
+                DoctorId = doctorId,
+                PatientId = patient.Id,
+                Rating = rating,
+                Comment = comment,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.DoctorReviews.Add(review);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Thank you for your feedback! Review submitted successfully.";
+            return RedirectToAction(nameof(Details), new { id = doctorId });
+        }
+
+        // POST: /Doctor/AddReply
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AddReply(int reviewId, int doctorId, string content)
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim == null) return Challenge();
+
+            int userId = int.Parse(userIdClaim.Value);
+
+            if (string.IsNullOrWhiteSpace(content))
+            {
+                TempData["Error"] = "Reply content cannot be empty.";
+                return RedirectToAction(nameof(Details), new { id = doctorId });
+            }
+
+            // Security: Check if user is Admin or the Doctor who is the subject of the review
+            bool isAuthorized = User.IsInRole("Admin");
+            if (User.IsInRole("Doctor"))
+            {
+                var docIdClaim = User.FindFirst("DoctorId")?.Value;
+                if (docIdClaim != null && int.Parse(docIdClaim) == doctorId)
+                {
+                    isAuthorized = true;
+                }
+            }
+
+            if (!isAuthorized)
+            {
+                TempData["Error"] = "You are not authorized to reply to this review.";
+                return RedirectToAction(nameof(Details), new { id = doctorId });
+            }
+
+            var reply = new ReviewReply
+            {
+                ReviewId = reviewId,
+                UserId = userId,
+                Content = content,
+                CreatedAt = DateTime.Now
+            };
+
+            _context.ReviewReplies.Add(reply);
+            await _context.SaveChangesAsync();
+
+            TempData["Success"] = "Reply posted successfully!";
+            return RedirectToAction(nameof(Details), new { id = doctorId });
         }
     }
 }

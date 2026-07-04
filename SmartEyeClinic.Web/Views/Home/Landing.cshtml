@@ -16,6 +16,11 @@
         .Include(d => d.Specialization)
         .Include(d => d.Reviews)
         .ToList();
+
+    var landingDocs = activeDocs
+        .OrderByDescending(d => d.Reviews.Any() ? d.Reviews.Average(r => r.Rating) : (4.7 + (d.Id % 3) * 0.1))
+        .Take(4)
+        .ToList();
 }
 
 <!-- Hero Section -->
@@ -165,9 +170,9 @@
         </div>
         
         <div class="row g-4 justify-content-center">
-            @if (activeDocs.Any())
+            @if (landingDocs.Any())
             {
-                @foreach (var doc in activeDocs)
+                @foreach (var doc in landingDocs)
                 {
                     var calculatedExp = (doc.Id * 2) + 5;
                     var avgRating = doc.Reviews.Any() ? doc.Reviews.Average(r => r.Rating).ToString("F1") : (4.7 + (doc.Id % 3) * 0.1).ToString("F1");
@@ -189,9 +194,12 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="p-3 border-top bg-light text-center">
-                                <a href="/Doctor/Details/@doc.Id" class="btn btn-outline-primary btn-sm rounded-pill w-100 font-weight-bold">
-                                    View Profile <i class="fa-solid fa-chevron-right text-xs ms-1"></i>
+                            <div class="p-3 border-top bg-light d-flex gap-2 justify-content-center">
+                                <a href="/Doctor/Details/@doc.Id" class="btn btn-outline-primary btn-sm rounded-pill w-50 font-weight-bold">
+                                    Profile <i class="fa-solid fa-user text-xs ms-1"></i>
+                                </a>
+                                <a href="/Appointment/Create?doctorId=@doc.Id" class="btn btn-primary btn-sm rounded-pill w-50 font-weight-bold">
+                                    Book Now <i class="fa-solid fa-calendar-check text-xs ms-1"></i>
                                 </a>
                             </div>
                         </div>
@@ -214,6 +222,12 @@
                     </div>
                 </div>
             }
+        </div>
+        
+        <div class="text-center mt-5">
+            <a asp-controller="Home" asp-action="Doctors" class="btn btn-primary px-5 py-2.5 rounded-pill shadow-sm" style="font-weight: 700; border-width: 2px;">
+                <i class="fa-solid fa-user-doctor me-2"></i> View All Doctors
+            </a>
         </div>
     </div>
 </section>
