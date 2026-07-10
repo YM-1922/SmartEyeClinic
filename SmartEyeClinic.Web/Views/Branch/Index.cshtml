@@ -3,33 +3,51 @@
     ViewData["Title"] = "Clinic Branches - Smart Eye Clinic";
 }
 
-<div class="page-header">
-    <div class="page-header-left">
-        <nav class="breadcrumb-nav">
-            <a asp-controller="Home" asp-action="Index">Dashboard</a>
-            <span class="separator">/</span>
-            <span class="current">Branches</span>
-        </nav>
-        <h3 class="page-title">Clinic Branches</h3>
-        <p class="page-subtitle">Configure medical clinics, physical locations, and reception desks</p>
+<div class="page-header py-4 mb-4 border-bottom">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb mb-0 small text-muted">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted"><i class="fa-solid fa-house"></i> Dashboard</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Branches</li>
+                </ol>
+            </nav>
+            <h1 class="page-title fw-800 text-dark mb-1"><i class="fa-solid fa-hospital text-primary me-2"></i>Clinic Branches</h1>
+            <p class="text-muted mb-0">Configure medical clinics, physical locations, and reception desks.</p>
+        </div>
+        @if (User.IsInRole("Admin"))
+        {
+            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#createModal">
+                <i class="fa-solid fa-plus me-1"></i> Add Branch
+            </button>
+        }
     </div>
-    @if (User.IsInRole("Admin"))
-    {
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="fa-solid fa-plus"></i> Add Branch
-        </a>
-    }
 </div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+        <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
 
 <div class="row g-4 animate-fade-in-up">
     @foreach (var item in Model)
     {
         <div class="col-xl-4 col-md-6">
-            <div class="card custom-card h-100">
-                <div class="card-body-clean p-4 d-flex flex-column h-100">
+            <div class="card border-0 shadow-sm rounded-4 h-100 bg-white" style="border: 1px solid var(--border) !important;">
+                <div class="card-body p-4 d-flex flex-column h-100">
                     <div class="d-flex align-items-center mb-3">
-                        <div class="avatar-initials avatar-lg me-3 bg-light-primary text-primary-custom" style="border-radius: var(--radius)">
-                            <i class="fa-solid fa-hospital fs-4"></i>
+                        <div class="avatar-sm bg-light-primary text-primary rounded-3 d-flex align-items-center justify-content-center me-3" style="width: 48px; height: 48px;">
+                            <i class="fa-solid fa-hospital fs-5"></i>
                         </div>
                         <div>
                             <h5 class="fw-bold text-dark mb-0">@item.Name</h5>
@@ -37,8 +55,8 @@
                         </div>
                     </div>
 
-                    <p class="text-muted text-xs mb-4 flex-grow-1">
-                        <i class="fa-solid fa-location-dot me-2 text-primary-custom"></i>@item.Address
+                    <p class="text-muted small mb-4 flex-grow-1">
+                        <i class="fa-solid fa-location-dot me-2 text-primary"></i>@item.Address
                     </p>
 
                     <hr class="text-muted opacity-10 my-3" />
@@ -46,25 +64,196 @@
                     <div class="d-flex justify-content-between align-items-center mt-auto">
                         <div>
                             <span class="text-muted text-xs d-block">Receptionist Staff</span>
-                            <strong class="text-dark font-size-sm">@item.Receptionists.Count Assigned</strong>
+                            <strong class="text-dark font-size-sm">@(item.Receptionists?.Count ?? 0) Assigned</strong>
                         </div>
-                        <div class="action-btns">
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light" title="View details">
-                                <i class="fa-solid fa-eye text-muted"></i> Details
-                            </a>
+                        <div class="d-flex gap-1">
+                            <button class="btn btn-sm btn-outline-primary rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#detailsModal-@item.Id">
+                                <i class="fa-solid fa-eye me-1"></i> Details
+                            </button>
                             @if (User.IsInRole("Admin"))
                             {
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-light text-primary" title="Edit branch settings">
-                                    <i class="fa-solid fa-pen-to-square"></i>
-                                </a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-custom-danger" title="Delete branch">
-                                    <i class="fa-solid fa-trash-can"></i>
-                                </a>
+                                <button class="btn btn-sm btn-light border rounded-circle" data-bs-toggle="modal" data-bs-target="#editModal-@item.Id" style="width:32px; height:32px;" title="Edit">
+                                    <i class="fa-solid fa-pen-to-square text-primary"></i>
+                                </button>
+                                <button class="btn btn-sm btn-light border rounded-circle" data-bs-toggle="modal" data-bs-target="#deleteModal-@item.Id" style="width:32px; height:32px;" title="Delete">
+                                    <i class="fa-solid fa-trash-can text-danger"></i>
+                                </button>
                             }
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- DETAILS MODAL -->
+        <div class="modal fade" id="detailsModal-@item.Id" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered modal-lg">
+                <div class="modal-content border-0 shadow-lg rounded-4">
+                    <div class="modal-header border-bottom p-4">
+                        <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-hospital text-primary me-2"></i>@item.Name Details</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <div class="row g-4">
+                            <div class="col-md-5">
+                                <div class="mb-4">
+                                    <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Branch Name</span>
+                                    <h6 class="text-dark fw-bold mb-0">@item.Name</h6>
+                                </div>
+                                <div class="mb-4">
+                                    <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Physical Address</span>
+                                    <p class="text-dark small leading-relaxed mb-0"><i class="fa-solid fa-location-dot text-primary me-1"></i> @item.Address</p>
+                                </div>
+                            </div>
+                            <div class="col-md-7">
+                                <span class="text-muted text-xs uppercase fw-bold d-block mb-2">Receptionist Staff Assigned</span>
+                                @if (item.Receptionists == null || !item.Receptionists.Any())
+                                {
+                                    <div class="alert alert-light text-center py-3 border border-dashed rounded-3">
+                                        <i class="fa-solid fa-user-minus text-muted d-block fs-4 mb-1"></i>
+                                        <span class="text-muted small">No receptionists are assigned to this branch.</span>
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="list-group rounded-3 overflow-hidden border">
+                                        @foreach (var recep in item.Receptionists)
+                                        {
+                                            <div class="list-group-item d-flex align-items-center justify-content-between p-3 bg-white">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="avatar-sm bg-light-primary text-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px; font-weight:bold;">
+                                                        @(recep.User?.FullName?.Length > 0 ? recep.User.FullName[0].ToString().ToUpper() : "R")
+                                                    </div>
+                                                    <span class="small fw-bold text-dark">@recep.User?.FullName</span>
+                                                </div>
+                                                <span class="badge bg-light text-muted border px-2 py-1.5 rounded">Recep ID: #@recep.Id</span>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top p-3 justify-content-end">
+                        <button type="button" class="btn btn-secondary px-4" style="border-radius:8px;" data-bs-dismiss="modal">Close</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (User.IsInRole("Admin"))
+        {
+            <!-- EDIT MODAL -->
+            <div class="modal fade" id="editModal-@item.Id" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                        <div class="modal-header border-bottom p-4">
+                            <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-pen-to-square text-primary me-2"></i>Edit Branch Settings</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <form asp-action="Edit" method="post" class="needs-validation" novalidate>
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="Id" value="@item.Id" />
+                            <div class="modal-body p-4">
+                                <div class="mb-3">
+                                    <label class="form-label small fw-600">Branch Name *</label>
+                                    <input type="text" name="Name" class="form-control" value="@item.Name" required />
+                                    <div class="invalid-feedback text-xs">Name is required.</div>
+                                </div>
+                                <div class="mb-0">
+                                    <label class="form-label small fw-600">Physical Address *</label>
+                                    <input type="text" name="Address" class="form-control" value="@item.Address" required />
+                                    <div class="invalid-feedback text-xs">Address is required.</div>
+                                </div>
+                            </div>
+                            <div class="modal-footer border-top p-3 d-flex gap-2">
+                                <button type="submit" class="btn btn-primary px-4" style="border-radius: 8px;">Save Changes</button>
+                                <button type="button" class="btn btn-outline-secondary px-4" style="border-radius: 8px;" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DELETE MODAL -->
+            <div class="modal fade" id="deleteModal-@item.Id" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered">
+                    <div class="modal-content border-0 shadow-lg rounded-4">
+                        <div class="modal-header border-bottom p-4 bg-light">
+                            <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-triangle-exclamation text-danger me-2"></i>Confirm Deletion</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4 text-center">
+                            <div class="text-danger display-6 mb-3"><i class="fa-solid fa-trash-can"></i></div>
+                            <p class="mb-2">Are you sure you want to delete clinic branch <strong class="text-dark">@item.Name</strong>?</p>
+                            <p class="text-muted small mb-0">This action cannot be undone, and will fail if staff or appointments are registered here.</p>
+                        </div>
+                        <div class="modal-footer border-top p-3 d-flex gap-2 justify-content-center">
+                            <form asp-action="Delete" method="post" class="w-100">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-danger w-100 py-2" style="border-radius: 8px;">Delete Branch</button>
+                                    <button type="button" class="btn btn-outline-secondary w-100 py-2" style="border-radius: 8px;" data-bs-dismiss="modal">Cancel</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
     }
 </div>
+
+@if (User.IsInRole("Admin"))
+{
+    <!-- CREATE MODAL -->
+    <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom p-4">
+                    <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-plus text-primary me-2"></i>Add Branch</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-action="Create" method="post" class="needs-validation" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-600">Branch Name *</label>
+                            <input type="text" name="Name" class="form-control" placeholder="e.g. Downtown Eye Care, North Plaza" required />
+                            <div class="invalid-feedback text-xs">Name is required.</div>
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label small fw-600">Physical Address *</label>
+                            <input type="text" name="Address" class="form-control" placeholder="e.g. 456 Broadway Ave, Suite 10" required />
+                            <div class="invalid-feedback text-xs">Address is required.</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top p-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4" style="border-radius: 8px;">Add Branch</button>
+                        <button type="button" class="btn btn-outline-secondary px-4" style="border-radius: 8px;" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    </script>
+}

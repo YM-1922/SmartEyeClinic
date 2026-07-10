@@ -31,6 +31,11 @@
             } catch (e) {}
         })();
     </script>
+    <style>
+        .notification-item-clickable:hover {
+            background-color: rgba(14, 165, 233, 0.1) !important;
+        }
+    </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body>
@@ -434,7 +439,9 @@
                                         foreach (var n in headerNotifications)
                                         {
                                             var isUnread = n.IsRead == null || !n.IsRead.Value;
-                                            <div class="p-3 border-bottom position-relative" style="font-size: 0.8rem; background: @(isUnread ? "rgba(14,165,233,0.06)" : "transparent");">
+                                            <div class="p-3 border-bottom position-relative notification-item-clickable" 
+                                                 style="font-size: 0.8rem; background: @(isUnread ? "rgba(14,165,233,0.06)" : "transparent"); cursor: pointer;"
+                                                 onclick="markNotificationAsReadAndRedirect(event, @n.Id, '@System.Web.HttpUtility.JavaScriptStringEncode(n.Title ?? "")', '@System.Web.HttpUtility.JavaScriptStringEncode(n.Type ?? "")', '@System.Web.HttpUtility.JavaScriptStringEncode(n.Message ?? "")')">
                                                 <div class="d-flex justify-content-between align-items-center mb-1">
                                                     <span class="fw-bold @(isUnread ? "text-primary" : "text-dark")">@n.Title</span>
                                                     <span class="text-muted" style="font-size:0.68rem;">@n.SentAt?.ToString("g")</span>
@@ -675,6 +682,16 @@
                     setTimeout(function () { el.remove(); }, 500);
                 });
             }, 5000);
+
+            /* ── Hash-based tab activation ── */
+            const hash = window.location.hash;
+            if (hash) {
+                const tabTrigger = document.querySelector('button[data-bs-target="' + hash + '"]');
+                if (tabTrigger) {
+                    const tab = new bootstrap.Tab(tabTrigger);
+                    tab.show();
+                }
+            }
         });
 
         function markNotificationsAsRead(event) {
@@ -698,6 +715,68 @@
                     console.error("Failed to mark notifications read", err);
                 }
             });
+        }
+
+        function markNotificationAsReadAndRedirect(event, id, title, type, message) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            var token = $('#antiForgeryForm input[name="__RequestVerificationToken"]').val();
+            $.ajax({
+                url: '/Notification/MarkAsRead/' + id,
+                type: 'POST',
+                headers: {
+                    "RequestVerificationToken": token
+                },
+                success: function(response) {
+                    handleNotificationRedirection(title, type, message);
+                },
+                error: function(err) {
+                    console.error("Failed to mark notification read", err);
+                    handleNotificationRedirection(title, type, message);
+                }
+            });
+        }
+
+        function handleNotificationRedirection(title, type, message) {
+            var lowerTitle = title.toLowerCase();
+            var lowerMessage = message.toLowerCase();
+            
+            var isAdmin = @(User.IsInRole("Admin") ? "true" : "false");
+            var isDoctor = @(User.IsInRole("Doctor") ? "true" : "false");
+            var isPatient = @(User.IsInRole("Patient") ? "true" : "false");
+            var isReceptionist = @(User.IsInRole("Receptionist") ? "true" : "false");
+
+            if (lowerTitle.includes("appointment") || lowerTitle.includes("request") || lowerTitle.includes("deposit")) {
+                if (isPatient) {
+                    window.location.href = '/Home/PatientDashboard#appointments-section';
+                } else if (isDoctor) {
+                    window.location.href = '/Home/DoctorDashboard#pending-approvals';
+                } else if (isReceptionist) {
+                    if (lowerTitle.includes("deposit") || lowerMessage.includes("deposit")) {
+                        window.location.href = '/Home/ReceptionistDashboard#deposits-pane';
+                    } else {
+                        window.location.href = '/Home/ReceptionistDashboard';
+                    }
+                } else if (isAdmin) {
+                    window.location.href = '/Home/AdminDashboard';
+                }
+            } else if (lowerTitle.includes("payment") || lowerTitle.includes("invoice")) {
+                if (isAdmin) {
+                    window.location.href = '/Home/AdminDashboard';
+                } else if (isReceptionist) {
+                    window.location.href = '/Home/ReceptionistDashboard#deposits-pane';
+                } else if (isPatient) {
+                    window.location.href = '/Home/PatientDashboard';
+                }
+            } else {
+                if (isPatient) window.location.href = '/Home/PatientDashboard';
+                else if (isDoctor) window.location.href = '/Home/DoctorDashboard';
+                else if (isReceptionist) window.location.href = '/Home/ReceptionistDashboard';
+                else if (isAdmin) window.location.href = '/Home/AdminDashboard';
+                else window.location.href = '/Home/Index';
+            }
         }
     </script>
     <form id="antiForgeryForm" style="display:none;">@Html.AntiForgeryToken()</form>

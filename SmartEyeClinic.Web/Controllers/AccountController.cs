@@ -487,5 +487,59 @@ namespace SmartEyeClinic.Web.Controllers
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
         }
+
+        // GET: /Account/CheckEmail
+        [HttpGet]
+        public async Task<IActionResult> CheckEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return Json(new { available = false, message = "Email is required." });
+            }
+
+            var exists = await _context.Users.AnyAsync(u => u.Email == email);
+            if (exists)
+            {
+                return Json(new { available = false, message = "This email address is already registered." });
+            }
+
+            return Json(new { available = true });
+        }
+
+        // GET: /Account/CheckNationalId
+        [HttpGet]
+        public async Task<IActionResult> CheckNationalId(string nationalId)
+        {
+            if (string.IsNullOrWhiteSpace(nationalId))
+            {
+                return Json(new { available = false, message = "National ID is required." });
+            }
+
+            var exists = await _context.Patients.AnyAsync(p => p.NationalId == nationalId);
+            if (exists)
+            {
+                return Json(new { available = false, message = "This National ID is already registered." });
+            }
+
+            return Json(new { available = true });
+        }
+
+        // GET: /Account/CheckPhoneNumber
+        [HttpGet]
+        public async Task<IActionResult> CheckPhoneNumber(string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+            {
+                return Json(new { available = true });
+            }
+
+            var exists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
+            if (exists)
+            {
+                return Json(new { available = false, message = "This phone number is already registered." });
+            }
+
+            return Json(new { available = true });
+        }
     }
 }

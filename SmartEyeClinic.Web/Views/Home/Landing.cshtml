@@ -19,7 +19,6 @@
 
     var landingDocs = activeDocs
         .OrderByDescending(d => d.Reviews.Any() ? d.Reviews.Average(r => r.Rating) : (4.7 + (d.Id % 3) * 0.1))
-        .Take(4)
         .ToList();
 }
 
@@ -76,7 +75,6 @@
             
             <div class="col-lg-6 d-none d-lg-block hero-visual">
                 <div class="position-relative">
-                    <!-- Glass effect visual card containing the clinic banner asset -->
                     <div class="card p-3 border-0 shadow-lg rounded-4 bg-white" style="box-shadow: 0 20px 40px rgba(15,76,129,0.06) !important;">
                         <img src="/images/eye_clinic_hero.png" alt="Smart Eye Clinic Diagnostics Room" class="img-fluid rounded-4 animate-float" style="border: 1px solid var(--border);" />
                     </div>
@@ -160,7 +158,73 @@
     </div>
 </section>
 
-<!-- Doctors Section -->
+<!-- About Us Section (Merged from About.cshtml) -->
+<section id="about" class="landing-section bg-light-primary" style="background: rgba(14,165,233,0.01); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+    <div class="container">
+        <div class="row align-items-center g-5 mb-5">
+            <div class="col-lg-6">
+                <div class="section-badge">About Us</div>
+                <h2 class="section-title text-dark">Dedicated to Optical Excellence Since 2018</h2>
+                <p class="text-muted leading-relaxed">Smart Eye Clinic began with a simple but profound mission: to deliver world-class ophthalmic care with a compassionate, patient-centered approach. Over the years, we have grown into a leading optical health network, serving thousands of families with standard diagnostic screenings, complex refractive procedures, and premium vitreoretinal surgeries.</p>
+                <p class="text-muted leading-relaxed">We believe that clear vision is a fundamental right. That is why our modern facility is equipped with state-of-the-art diagnostic imaging, advanced surgical suites, and staffed by board-certified ophthalmologists dedicated to clinical leadership and educational research.</p>
+            </div>
+            <div class="col-lg-6">
+                <!-- Mission Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 mb-4 bg-white" style="border: 1px solid var(--border) !important;">
+                    <div class="d-flex gap-3 align-items-start">
+                        <div class="bg-primary text-white rounded-3 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; flex-shrink:0;">
+                            <i class="fa-solid fa-bullseye fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1">Our Mission</h5>
+                            <p class="text-muted small mb-0">To protect and enhance patients' sight by providing premium, integrated eye care through innovative clinical practices, leading diagnostic systems, and specialized surgical therapies.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Vision Card -->
+                <div class="card border-0 shadow-sm rounded-4 p-4 bg-white" style="border: 1px solid var(--border) !important;">
+                    <div class="d-flex gap-3 align-items-start">
+                        <div class="bg-info text-white rounded-3 p-3 d-flex align-items-center justify-content-center" style="width: 48px; height: 48px; flex-shrink:0;">
+                            <i class="fa-solid fa-eye fs-5"></i>
+                        </div>
+                        <div>
+                            <h5 class="fw-bold text-dark mb-1">Our Vision</h5>
+                            <p class="text-muted small mb-0">To be the preferred premium center for ophthalmic care, recognized globally for optical diagnostic precision, advanced surgical safety records, and medical technology integration.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Why Choose Us -->
+        <div class="row g-4 mt-2">
+            <div class="col-md-4 text-center">
+                <div class="p-4 bg-white rounded-4 shadow-sm h-100 border border-light" style="border: 1px solid var(--border) !important;">
+                    <i class="fa-solid fa-user-doctor text-primary fs-1 mb-3"></i>
+                    <h5 class="fw-bold text-dark mb-2">Expert Specialists</h5>
+                    <p class="text-muted small mb-0">Our clinical team consists of board-certified ophthalmologists with fellowships in pediatric, retinal, and cornea specialties.</p>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="p-4 bg-white rounded-4 shadow-sm h-100 border border-light" style="border: 1px solid var(--border) !important;">
+                    <i class="fa-solid fa-microscope text-info fs-1 mb-3"></i>
+                    <h5 class="fw-bold text-dark mb-2">Advanced Diagnostics</h5>
+                    <p class="text-muted small mb-0">We utilize high-resolution OCT scans, topography, and visual field analysis to capture optical health markers accurately.</p>
+                </div>
+            </div>
+            <div class="col-md-4 text-center">
+                <div class="p-4 bg-white rounded-4 shadow-sm h-100 border border-light" style="border: 1px solid var(--border) !important;">
+                    <i class="fa-solid fa-heart-pulse text-success fs-1 mb-3"></i>
+                    <h5 class="fw-bold text-dark mb-2">Patient Safety Focus</h5>
+                    <p class="text-muted small mb-0">We adhere to international sterile surgical procedures and post-operative monitoring to ensure optimal safety outcomes.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Doctors Section (Merged from Doctors.cshtml) -->
 <section id="doctors" class="landing-section">
     <div class="container">
         <div class="text-center mb-5">
@@ -168,8 +232,18 @@
             <h2 class="section-title text-dark">Meet Our Specialists</h2>
             <p class="section-subtitle mx-auto text-muted">Our board-certified ophthalmologists offer premier diagnostic and surgical eye care.</p>
         </div>
+
+        <!-- Live Search Filter -->
+        <div class="row mb-5 justify-content-center">
+            <div class="col-md-6">
+                <div class="input-group shadow-sm rounded-pill overflow-hidden border border-light" style="background: #fff; border: 1px solid var(--border) !important;">
+                    <span class="input-group-text bg-white border-0 ps-4"><i class="fa-solid fa-magnifying-glass text-muted"></i></span>
+                    <input type="text" id="doctorSearchInput" class="form-control border-0 py-2.5 shadow-none" placeholder="Search doctor by name or specialty..." style="font-size:0.925rem;" />
+                </div>
+            </div>
+        </div>
         
-        <div class="row g-4 justify-content-center">
+        <div class="row g-4 justify-content-center" id="doctorsGrid">
             @if (landingDocs.Any())
             {
                 @foreach (var doc in landingDocs)
@@ -177,7 +251,7 @@
                     var calculatedExp = (doc.Id * 2) + 5;
                     var avgRating = doc.Reviews.Any() ? doc.Reviews.Average(r => r.Rating).ToString("F1") : (4.7 + (doc.Id % 3) * 0.1).ToString("F1");
                     
-                    <div class="col-lg-3 col-md-6 col-sm-10">
+                    <div class="col-lg-3 col-md-6 col-sm-10 doctor-item-col" data-search-name="@doc.User?.FullName" data-search-spec="@doc.Specialization?.Name">
                         <div class="doctor-card h-100 d-flex flex-column justify-content-between">
                             <div>
                                 <div class="doctor-avatar-wrap">
@@ -208,26 +282,11 @@
             }
             else
             {
-                <div class="col-lg-3 col-md-6">
-                    <div class="doctor-card h-100">
-                        <div class="doctor-avatar-wrap">
-                            <div class="doctor-initials-big">W</div>
-                        </div>
-                        <div class="doctor-info text-center">
-                            <h6 class="fw-bold text-dark">Dr. Alexander Wright</h6>
-                            <div class="doctor-spec text-primary">General Ophthalmology</div>
-                            <p class="small text-muted mb-2">12 Years Experience</p>
-                            <span class="small text-warning"><i class="fa-solid fa-star"></i> 4.9 Rating</span>
-                        </div>
-                    </div>
+                <div class="text-center text-muted py-5 col-12">
+                    <i class="fa-solid fa-user-doctor fs-3 mb-2 opacity-50 d-block"></i>
+                    No ophthalmologists currently registered.
                 </div>
             }
-        </div>
-        
-        <div class="text-center mt-5">
-            <a asp-controller="Home" asp-action="Doctors" class="btn btn-primary px-5 py-2.5 rounded-pill shadow-sm" style="font-weight: 700; border-width: 2px;">
-                <i class="fa-solid fa-user-doctor me-2"></i> View All Doctors
-            </a>
         </div>
     </div>
 </section>
@@ -236,7 +295,6 @@
 <section id="stats" class="stats-section">
     <div class="container">
         <div class="row g-4 justify-content-center">
-            <!-- 1. Total Patients -->
             <div class="col-lg-3 col-md-6">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-users"></i></div>
@@ -244,7 +302,6 @@
                     <div class="stat-lbl">Total Patients</div>
                 </div>
             </div>
-            <!-- 2. Total Doctors -->
             <div class="col-lg-3 col-md-6">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-user-doctor"></i></div>
@@ -252,7 +309,6 @@
                     <div class="stat-lbl">Total Doctors</div>
                 </div>
             </div>
-            <!-- 3. Successful Operations -->
             <div class="col-lg-3 col-md-6">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-laptop-medical"></i></div>
@@ -260,7 +316,6 @@
                     <div class="stat-lbl">Successful Operations</div>
                 </div>
             </div>
-            <!-- 4. Clinic Branches -->
             <div class="col-lg-3 col-md-6">
                 <div class="stat-card">
                     <div class="stat-icon"><i class="fa-solid fa-hospital"></i></div>
@@ -316,9 +371,23 @@
     </div>
 </section>
 
-<!-- Contact Form Section -->
+<!-- Contact Form Section (Merged from Contact.cshtml) -->
 <section id="contact" class="landing-section">
     <div class="container">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+                <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+                <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        }
         <div class="card border-0 shadow-lg p-5 rounded-4 bg-white" style="box-shadow: 0 10px 30px rgba(15,76,129,0.04) !important; border: 1px solid var(--border) !important;">
             <div class="row g-5">
                 <div class="col-lg-6">
@@ -347,23 +416,28 @@
                     </div>
                 </div>
                 <div class="col-lg-6">
-                    <form onsubmit="event.preventDefault(); Swal.fire('Query Sent', 'We will respond to your inquiry shortly.', 'success');">
+                    <form asp-controller="Home" asp-action="Contact" method="post" class="needs-validation" novalidate>
+                        @Html.AntiForgeryToken()
                         <div class="row g-3">
                             <div class="col-sm-6">
-                                <label class="form-label text-xs fw-600 text-muted">Full Name</label>
-                                <input type="text" class="form-control" placeholder="Jane Doe" required />
+                                <label class="form-label text-xs fw-600 text-muted">Full Name *</label>
+                                <input type="text" name="name" class="form-control" placeholder="Jane Doe" required />
+                                <div class="invalid-feedback text-xs">Name is required.</div>
                             </div>
                             <div class="col-sm-6">
-                                <label class="form-label text-xs fw-600 text-muted">Email Address</label>
-                                <input type="email" class="form-control" placeholder="jane@example.com" required />
+                                <label class="form-label text-xs fw-600 text-muted">Email Address *</label>
+                                <input type="email" name="email" class="form-control" placeholder="jane@example.com" required />
+                                <div class="invalid-feedback text-xs">A valid email is required.</div>
                             </div>
                             <div class="col-12">
-                                <label class="form-label text-xs fw-600 text-muted">Subject</label>
-                                <input type="text" class="form-control" placeholder="Clinical inquiry" required />
+                                <label class="form-label text-xs fw-600 text-muted">Subject *</label>
+                                <input type="text" name="subject" class="form-control" placeholder="Clinical inquiry" required />
+                                <div class="invalid-feedback text-xs">Subject is required.</div>
                             </div>
                             <div class="col-12">
-                                <label class="form-label text-xs fw-600 text-muted">Your Message</label>
-                                <textarea class="form-control" placeholder="Describe your query..." style="min-height: 120px;" required></textarea>
+                                <label class="form-label text-xs fw-600 text-muted">Your Message *</label>
+                                <textarea name="message" class="form-control" placeholder="Describe your query..." style="min-height: 120px;" required></textarea>
+                                <div class="invalid-feedback text-xs">Message is required.</div>
                             </div>
                             <div class="col-12">
                                 <button type="submit" class="btn btn-primary btn-lg w-100 justify-content-center">
@@ -377,3 +451,42 @@
         </div>
     </div>
 </section>
+
+@section Scripts {
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            // Live Search Filter for Doctors
+            const searchInput = document.getElementById("doctorSearchInput");
+            const docItems = document.querySelectorAll(".doctor-item-col");
+
+            if (searchInput) {
+                searchInput.addEventListener("input", function () {
+                    const query = this.value.toLowerCase().trim();
+                    docItems.forEach(item => {
+                        const name = item.getAttribute("data-search-name").toLowerCase();
+                        const spec = item.getAttribute("data-search-spec").toLowerCase();
+                        if (name.includes(query) || spec.includes(query)) {
+                            item.style.display = "";
+                        } else {
+                            item.style.display = "none";
+                        }
+                    });
+                });
+            }
+
+            // Form Validation
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        });
+    </script>
+}

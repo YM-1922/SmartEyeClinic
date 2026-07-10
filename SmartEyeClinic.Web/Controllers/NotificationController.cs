@@ -29,5 +29,19 @@ namespace SmartEyeClinic.Web.Controllers
             }
             return Json(new { success = false, message = "User not found" });
         }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> MarkAsRead(int id)
+        {
+            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier);
+            if (userIdClaim != null)
+            {
+                int userId = int.Parse(userIdClaim.Value);
+                var success = await _notificationService.MarkAsReadAsync(id, userId);
+                return Json(new { success });
+            }
+            return Json(new { success = false, message = "User not found" });
+        }
     }
 }

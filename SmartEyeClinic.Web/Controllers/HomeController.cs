@@ -124,7 +124,7 @@ public class HomeController : Controller
         var pendingApprovals = await _context.Appointments
             .Include(a => a.Patient).ThenInclude(p => p.User)
             .Include(a => a.Branch)
-            .Where(a => a.DoctorId == doctorId && a.Status == "Pending Doctor Approval")
+            .Where(a => a.DoctorId == doctorId && a.Status == "Pending Approval")
             .OrderBy(a => a.AppointmentDateTime)
             .ToListAsync();
         ViewBag.PendingApprovals = pendingApprovals;
@@ -152,7 +152,7 @@ public class HomeController : Controller
             .Distinct()
             .CountAsync();
         ViewBag.MyPendingAppointments = await _context.Appointments
-            .CountAsync(a => a.DoctorId == doctorId && a.Status == "Pending Doctor Approval");
+            .CountAsync(a => a.DoctorId == doctorId && a.Status == "Pending Approval");
         ViewBag.MySurgeries = await _context.Surgeries
             .CountAsync(s => s.DoctorId == doctorId);
 
@@ -346,14 +346,14 @@ public class HomeController : Controller
     [AllowAnonymous]
     public IActionResult About()
     {
-        return View();
+        return Redirect("/Home/Landing#about");
     }
 
     [AllowAnonymous]
     [HttpGet]
     public IActionResult Contact()
     {
-        return View();
+        return Redirect("/Home/Landing#contact");
     }
 
     [AllowAnonymous]
@@ -365,22 +365,17 @@ public class HomeController : Controller
             string.IsNullOrWhiteSpace(subject) || string.IsNullOrWhiteSpace(message))
         {
             TempData["Error"] = "All inquiry form fields are required.";
-            return View();
+            return Redirect("/Home/Landing#contact");
         }
 
         TempData["Success"] = "Your inquiry has been submitted successfully! Our staff will contact you shortly.";
-        return RedirectToAction(nameof(Contact));
+        return Redirect("/Home/Landing#contact");
     }
 
     [AllowAnonymous]
-    public async Task<IActionResult> Doctors()
+    public IActionResult Doctors()
     {
-        var doctors = await _context.Doctors
-            .Include(d => d.User)
-            .Include(d => d.Specialization)
-            .Include(d => d.Reviews)
-            .ToListAsync();
-        return View(doctors);
+        return Redirect("/Home/Landing#doctors");
     }
 
     public IActionResult Privacy()

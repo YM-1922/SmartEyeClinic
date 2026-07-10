@@ -1588,11 +1588,13 @@ textarea.form-control { resize: vertical; min-height: 100px; }
 .auth-feature-text p { font-size: 0.78rem; color: rgba(255,255,255,0.5); margin: 0; }
 
 .form-control-auth {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
   border: 1.5px solid #E2E8F0;
   border-radius: var(--radius);
   padding: 11px 14px;
   font-size: 0.875rem;
-  width: 100%;
   color: #1E293B;
   background: #fff;
   transition: border-color 0.2s, box-shadow 0.2s;
@@ -1604,7 +1606,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   box-shadow: 0 0 0 3px rgba(15,76,129,0.1);
 }
 
-.input-icon-wrap { position: relative; }
+.input-icon-wrap { position: relative; display: block; width: 100%; }
 .input-icon-wrap i {
   position: absolute;
   left: 13px;
@@ -1613,7 +1615,7 @@ textarea.form-control { resize: vertical; min-height: 100px; }
   color: #94A3B8;
   font-size: 0.9rem;
 }
-.input-icon-wrap .form-control-auth { padding-left: 38px; }
+.input-icon-wrap .form-control-auth { padding-left: 38px; padding-right: 40px; }
 .input-icon-wrap .password-toggle {
   position: absolute;
   right: 13px;

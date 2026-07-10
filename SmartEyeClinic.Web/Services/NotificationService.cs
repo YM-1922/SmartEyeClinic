@@ -102,5 +102,17 @@ namespace SmartEyeClinic.Web.Services
 
             await _context.SaveChangesAsync();
         }
+
+        public async Task<bool> MarkAsReadAsync(int id, int userId)
+        {
+            var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);
+            if (notification != null)
+            {
+                notification.IsRead = true;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            return false;
+        }
     }
 }
