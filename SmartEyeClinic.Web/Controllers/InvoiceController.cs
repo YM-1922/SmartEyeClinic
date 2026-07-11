@@ -23,7 +23,7 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Invoices (patients see only their own)
+        // GET: /Invoice/Index | عرض قائمة الفواتير وتصفيتها للمرضى لرؤية فواتيرهم الخاصة فقط
         public async Task<IActionResult> Index()
         {
             var invoices = await _invoiceService.GetAllInvoicesAsync();
@@ -45,7 +45,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(invoices);
         }
 
-        // Invoice details — IDOR protected
+        // GET: /Invoice/Details/{id} | تفاصيل الفاتورة مع حماية الحسابات من التلاعب (IDOR Protection)
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -56,7 +56,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // IDOR: patients may only view their own invoice
+            // التحقق من الصلاحيات لمنع استعراض فواتير المرضى الآخرين
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -67,7 +67,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(invoice);
         }
 
-        // Create Invoice (Receptionist or Admin only)
+        // GET: /Invoice/Create | نموذج إنشاء فاتورة جديدة (لموظف الاستقبال أو المدير فقط)
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpGet]
         public async Task<IActionResult> Create(int? appointmentId = null)
@@ -76,6 +76,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
+        // POST: /Invoice/Create | معالجة إنشاء فاتورة جديدة وحساب إجمالي المبالغ والضرائب والخصومات
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -92,7 +93,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Edit Invoice
+        // GET: /Invoice/Edit/{id} | عرض نموذج تعديل الفاتورة لموظفي الاستقبال
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -105,6 +106,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(invoice);
         }
 
+        // POST: /Invoice/Edit/{id} | معالجة تحديث الفاتورة والمبالغ المدفوعة وحالتها المالية
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -131,7 +133,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Delete Invoice - GET
+        // GET: /Invoice/Delete/{id} | عرض صفحة تأكيد حذف الفاتورة للمدير
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -145,7 +147,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(invoice);
         }
 
-        // Delete Invoice - POST
+        // POST: /Invoice/Delete/{id} | معالجة الحذف النهائي للفاتورة
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -161,6 +163,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // دالة مساعدة لتعبئة قوائم المرضى والمواعيد في نموذج الفاتورة
         private async Task PopulateDropdownsAsync(int? selectedAppointmentId = null)
         {
             ViewBag.Appointments = await _context.Appointments

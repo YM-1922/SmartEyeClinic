@@ -23,7 +23,7 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Payments — patients see only their own
+        // GET: /Payment/Index | استعراض سجل المدفوعات وتصفيتها للمرضى لرؤية دفعاتهم الخاصة فقط
         public async Task<IActionResult> Index()
         {
             var payments = await _paymentService.GetAllPaymentsAsync();
@@ -45,7 +45,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(payments);
         }
 
-        // Payment Details — IDOR protected
+        // GET: /Payment/Details/{id} | تفاصيل عملية الدفع مع حماية الحسابات من التلاعب (IDOR Protection)
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -56,7 +56,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // IDOR: patients may only view their own payment
+            // التحقق من صلاحيات المريض لمنع استعراض عمليات دفع الآخرين
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -67,7 +67,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(payment);
         }
 
-        // Create Payment (Admin or Receptionist only)
+        // GET: /Payment/Create | نموذج تسجيل عملية دفع جديدة لفاتورة معينة
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpGet]
         public async Task<IActionResult> Create(int? invoiceId = null)
@@ -76,6 +76,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
+        // POST: /Payment/Create | معالجة دفع الفاتورة وتسجيل مبلغ العملية وحفظ المرجع المالي
         [Authorize(Roles = "Admin,Receptionist")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -92,7 +93,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Delete Payment (Admin only)
+        // GET: /Payment/Delete/{id} | صفحة تأكيد إلغاء/عكس عملية دفع معينة (المدير فقط)
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -106,6 +107,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(payment);
         }
 
+        // POST: /Payment/Delete/{id} | عكس/إلغاء عملية الدفع نهائياً وتحديث حالة الفاتورة المرتبطة
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -121,13 +123,14 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Payment Methods listing
+        // GET: /Payment/Methods | استعراض طرق الدفع المتاحة في النظام
         public async Task<IActionResult> Methods()
         {
             var methods = await _paymentService.GetAllPaymentMethodsAsync();
             return View(methods);
         }
 
+        // GET: /Payment/AddMethod | نموذج إضافة طريقة دفع جديدة للادارة
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public IActionResult AddMethod()
@@ -135,6 +138,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
+        // POST: /Payment/AddMethod | معالجة إضافة وحفظ طريقة الدفع الجديدة
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -150,6 +154,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Methods));
         }
 
+        // دالة مساعدة لتعبئة قوائم الفواتير غير المدفوعة وطرق الدفع في النماذج
         private async Task PopulateDropdownsAsync(int? selectedInvoiceId = null)
         {
             ViewBag.Invoices = await _context.Invoices

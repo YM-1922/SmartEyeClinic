@@ -21,7 +21,7 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Examinations
+        // GET: /Examination/Index | استعراض سجل الفحوصات الطبية وتصفيتها للمرضى والأطباء
         public async Task<IActionResult> Index()
         {
             var examinations = await _examinationService.GetAllExaminationsAsync();
@@ -56,7 +56,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(examinations);
         }
 
-        // Examination Details (Visual Acuity sheet)
+        // GET: /Examination/Details/{id} | عرض تفاصيل فحص طبي معين (جدول حدة البصر وضغط العين)
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -67,7 +67,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // IDOR Protection
+            // التحقق من الصلاحيات والوصول لمنع التلاعب
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -88,7 +88,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(exam);
         }
 
-        // Create Examination (Doctors only)
+        // GET: /Examination/Create | عرض نموذج تسجيل فحص طبي جديد (للأطباء فقط)
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
         public async Task<IActionResult> Create(int? appointmentId = null)
@@ -97,6 +97,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
+        // POST: /Examination/Create | تسجيل فحص طبي جديد وحفظ حدة البصر وتفاصيل التشخيص والخطة العلاجية
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -122,7 +123,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Edit Examination
+        // GET: /Examination/Edit/{id} | عرض صفحة تحرير فحص طبي معين للأطباء بعد تحقق الهوية
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -131,7 +132,7 @@ namespace SmartEyeClinic.Web.Controllers
             if (exam == null)
                 return NotFound();
 
-            // IDOR Protection: Doctor can only edit their own exams
+            // التحقق من صلاحية الطبيب المعني لتعديل سجله الخاص فقط
             if (User.IsInRole("Doctor"))
             {
                 var docIdClaim = User.FindFirst("DoctorId")?.Value;
@@ -145,6 +146,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(exam);
         }
 
+        // POST: /Examination/Edit/{id} | تحديث بيانات فحص طبي معين وحفظ التعديلات
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -162,7 +164,6 @@ namespace SmartEyeClinic.Web.Controllers
             if (exam == null)
                 return NotFound();
 
-            // IDOR Protection
             if (User.IsInRole("Doctor"))
             {
                 var docIdClaim = User.FindFirst("DoctorId")?.Value;
@@ -185,7 +186,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Details), new { id });
         }
 
-        // Delete Examination - GET
+        // GET: /Examination/Delete/{id} | عرض صفحة تأكيد حذف الفحص الطبي للادارة
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -199,7 +200,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(exam);
         }
 
-        // Delete Examination - POST
+        // POST: /Examination/Delete/{id} | معالجة الحذف النهائي لسجل الفحص الطبي
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -215,6 +216,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // دالة مساعدة لتعبئة قائمة المواعيد المتاحة للفحص حسب الطبيب الجاري
         private async Task PopulateAppointmentsDropdownAsync(int? selectedId = null)
         {
             var query = _context.Appointments

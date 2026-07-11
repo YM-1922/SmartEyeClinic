@@ -1,6 +1,7 @@
 @{
     Layout = null;
 }
+@* صفحة تسجيل الدخول لنظام إدارة عيادة سمارت آي *@
 
 <!DOCTYPE html>
 <html lang="en">
@@ -14,22 +15,63 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <!-- Custom site CSS (contains auth layout properties) -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        .auth-input-group {
+            display: flex !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            border: 1.5px solid #E2E8F0 !important;
+            border-radius: var(--radius) !important;
+            background: #fff !important;
+            overflow: hidden !important;
+            transition: border-color 0.2s, box-shadow 0.2s !important;
+        }
+        .auth-input-group:focus-within {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(15,76,129,0.1) !important;
+        }
+        .auth-input-group-icon {
+            display: flex !important;
+            align-items: center !important;
+            padding-left: 14px !important;
+            padding-right: 10px !important;
+            color: #94A3B8 !important;
+            font-size: 0.9rem !important;
+            background: transparent !important;
+            pointer-events: none;
+        }
+        .auth-input-group .form-control-auth {
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 11px 14px 11px 0 !important;
+            width: 100% !important;
+            flex-grow: 1 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            outline: none !important;
+        }
+        .auth-input-group .password-toggle {
+            display: flex !important;
+            align-items: center !important;
+            padding-left: 10px !important;
+            padding-right: 14px !important;
+            color: #94A3B8 !important;
+            background: transparent !important;
+            border: none !important;
+            cursor: pointer !important;
+            font-size: 0.95rem !important;
+            outline: none !important;
+        }
+        .auth-input-group .password-toggle:hover {
+            color: #475569 !important;
+        }
+    </style>
 </head>
 <body>
-    <!-- Floating Header Navbar with Back to Home -->
-    <header class="position-absolute top-0 start-0 end-0 p-3" style="z-index: 1000;">
-        <div class="container-fluid d-flex justify-content-between align-items-center">
-            <a href="/" class="text-decoration-none d-inline-flex align-items-center gap-2" style="color: rgba(255, 255, 255, 0.7); transition: var(--transition);">
-                <span class="d-flex align-items-center justify-content-center bg-white bg-opacity-10 rounded-circle" style="width: 36px; height: 36px; border: 1px solid rgba(255, 255, 255, 0.15);">
-                    <i class="fa-solid fa-arrow-left text-white text-xs"></i>
-                </span>
-                <span class="text-white fw-bold small">Back to Home</span>
-            </a>
-        </div>
-    </header>
+
 
     <div class="auth-page">
-        <!-- Left Panel: Branding & Features -->
+        <!-- اللوحة اليسرى: الهوية والشعار ومميزات المنصة -->
         <div class="auth-panel-left d-none d-lg-flex">
             <div class="hero-grid-overlay"></div>
             <div style="max-width: 440px; position: relative; z-index: 5;">
@@ -73,9 +115,18 @@
             </div>
         </div>
 
-        <!-- Right Panel: Sign In Form -->
+        <!-- اللوحة اليمنى: نموذج تسجيل الدخول والتحقق -->
         <div class="auth-panel-right">
             <div class="auth-form-container">
+                <!-- Back to Home Link -->
+                <div class="mb-4 text-start">
+                    <a href="/" class="text-decoration-none d-inline-flex align-items-center gap-2 text-muted" style="transition: var(--transition);">
+                        <span class="d-flex align-items-center justify-content-center bg-light border rounded-circle" style="width: 32px; height: 32px;">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </span>
+                        <span class="fw-semibold small text-dark">Back to Home</span>
+                    </a>
+                </div>
                 <!-- Mobile Logo -->
                 <div class="auth-logo d-flex d-lg-none justify-content-center mb-4">
                     <div class="auth-logo-icon" style="width: 40px; height: 40px; font-size:1.15rem;">
@@ -111,22 +162,26 @@
                         </div>
                     }
 
-                    <!-- Email Input -->
+                    <!-- حقل إدخال البريد الإلكتروني -->
                     <div class="mb-3">
                         <label class="form-label text-xs">Email Address</label>
-                        <div class="input-icon-wrap">
-                            <i class="fa-regular fa-envelope"></i>
+                        <div class="auth-input-group">
+                            <span class="auth-input-group-icon">
+                                <i class="fa-regular fa-envelope"></i>
+                            </span>
                             <input type="email" name="email" id="emailInput" class="form-control-auth" placeholder="name@smarteye.com" required autocomplete="email" />
                         </div>
                     </div>
 
-                    <!-- Password Input -->
+                    <!-- حقل إدخال كلمة المرور مع زر التبديل -->
                     <div class="mb-4">
                         <div class="d-flex justify-content-between mb-1">
                             <label class="form-label text-xs mb-0">Password</label>
                         </div>
-                        <div class="input-icon-wrap">
-                            <i class="fa-solid fa-lock"></i>
+                        <div class="auth-input-group">
+                            <span class="auth-input-group-icon">
+                                <i class="fa-solid fa-lock"></i>
+                            </span>
                             <input type="password" name="password" id="passwordInput" class="form-control-auth" placeholder="••••••••" required autocomplete="current-password" />
                             <button type="button" class="password-toggle" id="togglePasswordBtn" aria-label="Toggle password visibility">
                                 <i class="fa-regular fa-eye-slash" id="togglePasswordIcon"></i>
@@ -134,33 +189,14 @@
                         </div>
                     </div>
 
-                    <!-- Submit Button -->
+                    <!-- زر تقديم النموذج لتسجيل الدخول -->
                     <button type="submit" class="btn-auth btn-auth-primary mb-3" id="signInBtn">
                         <span class="btn-text"><i class="fa-solid fa-right-to-bracket me-1"></i> Sign In</span>
                         <span class="spinner"></span>
                     </button>
 
-                    <div class="text-center small text-muted mb-4">
+                    <div class="text-center small text-muted mb-2">
                         Don't have a patient account? <a asp-action="Register" class="fw-bold text-primary-custom">Register here</a>
-                    </div>
-
-                    <!-- Demo Credentials -->
-                    <div class="demo-accounts text-center" style="background: rgba(15,76,129,0.05); border: 1px dashed rgba(15,76,129,0.25); border-radius: var(--radius); padding: 16px;">
-                        <h6 class="text-primary-custom text-xs fw-bold mb-2"><i class="fa-solid fa-key me-1"></i> Quick Test Credentials</h6>
-                        <div class="d-flex flex-wrap justify-content-center gap-1 mb-2">
-                            <span class="demo-badge text-xs" style="cursor:pointer;" onclick="fillCreds('admin@smarteye.com', 'admin123')">Admin</span>
-                            <span class="demo-badge text-xs" style="cursor:pointer;" onclick="fillCreds('doctor@smarteye.com', 'doctor123')">Doctor</span>
-                            <span class="demo-badge text-xs" style="cursor:pointer;" onclick="fillCreds('receptionist@smarteye.com', 'recep123')">Receptionist</span>
-                            <span class="demo-badge text-xs" style="cursor:pointer;" onclick="fillCreds('patient@smarteye.com', 'patient123')">Patient</span>
-                        </div>
-                        <span class="text-muted text-xs" style="font-size:0.7rem; display:block;">Click to autofill the sign-in form</span>
-                    </div>
-
-                    <!-- Back to Homepage Link -->
-                    <div class="text-center mt-4">
-                        <a asp-controller="Home" asp-action="Landing" class="text-muted small text-decoration-none hover-underline">
-                            <i class="fa-solid fa-arrow-left me-1"></i> Back to Homepage
-                        </a>
                     </div>
                 </form>
             </div>
@@ -171,11 +207,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Autofill credentials
-        function fillCreds(email, password) {
-            document.getElementById('emailInput').value = email;
-            document.getElementById('passwordInput').value = password;
-        }
+
 
         // Toggle Password visibility
         const toggleBtn = document.getElementById('togglePasswordBtn');

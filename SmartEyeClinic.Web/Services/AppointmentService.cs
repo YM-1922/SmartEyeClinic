@@ -272,7 +272,7 @@ namespace SmartEyeClinic.Web.Services
 
             appointment.DepositStatus = "Paid";
             appointment.PaymentDate = DateTime.Now;
-            appointment.Status = "Pending Doctor Approval";
+            appointment.Status = "Pending Approval";
 
             // Create Invoice
             var invoice = new Invoice
@@ -289,10 +289,20 @@ namespace SmartEyeClinic.Web.Services
             await _context.SaveChangesAsync();
 
             // Create Payment
+            var paymentMethod = await _context.PaymentMethods.FirstOrDefaultAsync(pm => pm.Name == "Credit Card")
+                                ?? await _context.PaymentMethods.FirstOrDefaultAsync();
+
+            if (paymentMethod == null)
+            {
+                paymentMethod = new PaymentMethod { Name = "Credit Card" };
+                _context.PaymentMethods.Add(paymentMethod);
+                await _context.SaveChangesAsync();
+            }
+
             var payment = new Payment
             {
                 InvoiceId = invoice.Id,
-                PaymentMethodId = 1, // Default method (e.g. Card)
+                PaymentMethodId = paymentMethod.Id,
                 Amount = appointment.DepositAmount,
                 TransactionRef = $"TXN-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}",
                 PaidAt = DateTime.Now

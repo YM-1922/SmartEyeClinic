@@ -8,7 +8,7 @@
     var doctorsList = ViewBag.Doctors as List<SmartEyeClinic.Models.Doctor>;
 }
 
-<!-- Page Header -->
+<!-- ترويسة الصفحة: ترحيب بموظف الاستقبال وإجراءات سريعة -->
 <div class="page-header py-4 mb-4 border-bottom">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
@@ -31,7 +31,7 @@
     </div>
 </div>
 
-<!-- Queue Stats -->
+<!-- إحصائيات قائمة الانتظار والفواتير غير المدفوعة -->
 <div class="row g-4 mb-5">
     <div class="col-lg-4 col-md-6">
         <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--primary) !important;">
@@ -56,7 +56,7 @@
     </div>
 </div>
 
-<!-- Tabs to Organize Front Desk Pages -->
+<!-- ألسنة التبويب لتنظيم لوحة التحكم (الانتظار، المواعيد، الودائع...) -->
 <div class="card border-0 shadow-sm rounded-4 bg-white mb-5">
     <div class="card-header bg-transparent border-0 px-4 pt-4">
         <ul class="nav nav-pills gap-2" id="receptionTab" role="tablist">
@@ -80,7 +80,7 @@
     
     <div class="card-body p-4 tab-content" id="receptionTabContent">
         
-        <!-- PANE 1: Active Clinic Queue -->
+        <!-- التبويب الأول: قائمة الانتظار النشطة لليوم الحالي -->
         <div class="tab-pane fade show active" id="queue-pane" role="tabpanel" aria-labelledby="queue-tab">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="fw-bold text-dark mb-0">Checked-In Patients (Today)</h5>
@@ -127,7 +127,7 @@
             }
         </div>
 
-        <!-- PANE 2: All Appointments -->
+        <!-- التبويب الثاني: سجل المواعيد الكامل بالعيادة -->
         <div class="tab-pane fade" id="appts-pane" role="tabpanel" aria-labelledby="appts-tab">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="fw-bold text-dark mb-0">Clinic Appointments Registry</h5>
@@ -150,7 +150,7 @@
                             var appBadge = app.Status switch
                             {
                                 "Approved" => "bg-success text-white",
-                                "Pending Doctor Approval" => "bg-warning text-dark",
+                                "Pending Approval" => "bg-warning text-dark",
                                 "Pending Deposit" => "bg-info text-white",
                                 "Completed" => "bg-secondary text-white",
                                 _ => "bg-light text-dark"
@@ -177,7 +177,7 @@
             </div>
         </div>
 
-        <!-- PANE 3: Deposits & Payments -->
+        <!-- التبويب الثالث: سجل مدفوعات الودائع المالية -->
         <div class="tab-pane fade" id="deposits-pane" role="tabpanel" aria-labelledby="deposits-tab">
             <h5 class="fw-bold text-dark mb-4">Deposit Payments Log</h5>
             <div class="table-responsive">
@@ -224,7 +224,7 @@
             </div>
         </div>
 
-        <!-- PANE 4: Patients Directory -->
+        <!-- التبويب الرابع: دليل البحث السريع في ملفات المرضى -->
         <div class="tab-pane fade" id="patients-pane" role="tabpanel" aria-labelledby="patients-tab">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="fw-bold text-dark mb-0">Registered Patients Catalog</h5>
@@ -259,7 +259,7 @@
             </div>
         </div>
 
-        <!-- PANE 5: Doctors Schedules -->
+        <!-- التبويب الخامس: جدول أعمال الأطباء والبحث في التخصصات -->
         <div class="tab-pane fade" id="doctors-pane" role="tabpanel" aria-labelledby="doctors-tab">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h5 class="fw-bold text-dark mb-0">Doctors Specialty &amp; Schedule Reference</h5>

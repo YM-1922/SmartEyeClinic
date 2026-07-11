@@ -21,7 +21,7 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List prescriptions (returns list of PrescriptionItem to match existing view contract)
+        // GET: /Prescription/Index | استعراض الوصفات الطبية الصادرة وتصفيتها للمرضى والأطباء
         public async Task<IActionResult> Index()
         {
             var prescriptions = await _prescriptionService.GetAllPrescriptionsAsync();
@@ -56,7 +56,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(prescriptions);
         }
 
-        // Prescription details (Printable Rx sheet)
+        // GET: /Prescription/Details/{id} | تفاصيل الوصفة الطبية (نموذج الطباعة الطبي Rx) مع حماية الهوية
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -67,7 +67,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // IDOR Protection
+            // التحقق من الصلاحيات والوصول العشوائي
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -88,7 +88,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(rxHeader);
         }
 
-        // Create Prescription (Doctors only)
+        // GET: /Prescription/Create | عرض صفحة إنشاء وصفة طبية جديدة للأطباء
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
         public async Task<IActionResult> Create(int? examinationId = null)
@@ -97,6 +97,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
+        // POST: /Prescription/Create | معالجة إضافة وحفظ الأدوية والجرعات والتعليمات الطبية للمريض
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -113,7 +114,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Delete Prescription - GET (Admin or prescribing Doctor)
+        // GET: /Prescription/Delete/{id} | عرض صفحة تأكيد حذف وصفة طبية للطبيب أو الإدارة
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
@@ -124,7 +125,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Security check: Only Admin or the prescribing doctor can delete
+            // التحقق الأمني: يمنع الحذف لغير المدير أو الطبيب كاتب الوصفة نفسه
             if (!User.IsInRole("Admin"))
             {
                 var docIdClaim = User.FindFirst("DoctorId")?.Value;
@@ -137,7 +138,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(rx);
         }
 
-        // Delete Prescription - POST
+        // POST: /Prescription/Delete/{id} | حذف الوصفة الطبية نهائياً من قاعدة البيانات بعد التحقق من الهوية
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -149,7 +150,6 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // Security check: Only Admin or the prescribing doctor can delete
             if (!User.IsInRole("Admin"))
             {
                 var docIdClaim = User.FindFirst("DoctorId")?.Value;
@@ -169,6 +169,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // دالة مساعدة لتعبئة قوائم الفحوصات الطبية والأدوية في النماذج
         private async Task PopulateDropdownsAsync(int? selectedExamId = null)
         {
             IQueryable<Examination> query = _context.Examinations

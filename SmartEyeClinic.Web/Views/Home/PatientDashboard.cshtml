@@ -8,7 +8,7 @@
     var medicalFiles = ViewBag.MedicalFiles as List<SmartEyeClinic.Models.MedicalFile>;
 }
 
-<!-- Page Header -->
+<!-- ترويسة الصفحة: ترحيب بالمريض وروابط سريعة -->
 <div class="page-header py-4 mb-4 border-bottom">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
@@ -21,7 +21,7 @@
             <p class="text-muted mb-0">Welcome back, <strong>@Model.User?.FullName</strong>. Access your clinical files, payments, and appointments.</p>
         </div>
         
-        <!-- Quick Actions Panel -->
+        <!-- لوحة الإجراءات السريعة (حجز موعد، استعراض الأطباء...) -->
         <div class="d-flex gap-2">
             <a asp-controller="Appointment" asp-action="Create" class="btn btn-primary rounded-pill px-4 fw-bold">
                 <i class="fa-solid fa-calendar-plus me-1"></i> Book Appointment
@@ -36,9 +36,9 @@
     </div>
 </div>
 
-<!-- Stats / KPIs -->
+<!-- إحصائيات سريعة (الاستشارة القادمة، الوصفات الطبية، الفواتير غير المدفوعة) -->
 <div class="row g-4 mb-5">
-    <!-- Next Consultation -->
+    <!-- بطاقة الاستشارة القادمة المجدولة -->
     <div class="col-lg-4 col-md-6">
         <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--primary) !important;">
             <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Next Consultation</span>
@@ -56,7 +56,7 @@
         </div>
     </div>
 
-    <!-- Active Prescriptions -->
+    <!-- بطاقة عدد الوصفات الطبية النشطة للمريض -->
     <div class="col-lg-4 col-md-6">
         <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--success) !important;">
             <span class="text-muted text-xs uppercase fw-bold d-block mb-1">My Active Prescriptions</span>
@@ -69,7 +69,7 @@
         </div>
     </div>
 
-    <!-- Deposit Summary / Unpaid balance -->
+    <!-- بطاقة الرصيد غير المدفوع / الودائع المطلوبة -->
     <div class="col-lg-4 col-md-6">
         <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--danger) !important;">
             <span class="text-muted text-xs uppercase fw-bold d-block mb-1">Unpaid Balance</span>
@@ -84,10 +84,10 @@
 </div>
 
 <div class="row g-4 mb-5" id="appointments-section">
-    <!-- Left Column: Appointments and Payments -->
+    <!-- العمود الأيسر: إدارة الاستشارات القادمة والمدفوعات وسجل المواعيد -->
     <div class="col-lg-8">
         
-        <!-- Upcoming Appointments -->
+        <!-- المواعيد القادمة الحالية وبوابة دفع الوديعة -->
         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
             <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center px-4 pt-4">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-calendar-days text-primary me-2"></i>Upcoming Consultations</h5>
@@ -123,7 +123,7 @@
                                     var statusBadge = app.Status switch
                                     {
                                         "Approved" => "bg-success text-white",
-                                        "Pending Doctor Approval" => "bg-warning text-dark",
+                                        "Pending Approval" => "bg-warning text-dark",
                                         "Pending Deposit" => "bg-info text-white",
                                         _ => "bg-secondary text-white"
                                     };
@@ -176,7 +176,7 @@
             </div>
         </div>
 
-        <!-- Deposit Payments & Transactions -->
+        <!-- دفعات الودائع والمعاملات المالية الأخيرة -->
         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
             <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center px-4 pt-4">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-wallet text-success me-2"></i>My Deposit Payments</h5>
@@ -222,7 +222,7 @@
             </div>
         </div>
 
-        <!-- Appointment History -->
+        <!-- السجل الطبي للمواعيد والاستشارات السابقة -->
         <div class="card border-0 shadow-sm rounded-4 bg-white">
             <div class="card-header bg-transparent border-0 px-4 pt-4">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-clock-rotate-left text-muted me-2"></i>Consultation History</h5>
@@ -279,10 +279,10 @@
 
     </div>
 
-    <!-- Right Column: Alerts, Prescriptions, Medical Files -->
+    <!-- العمود الأيمن: التنبيهات الأخيرة، الوصفات الطبية، والملفات الطبية المرفوعة -->
     <div class="col-lg-4">
         
-        <!-- Alerts and Notifications -->
+        <!-- التنبيهات والإشعارات الأخيرة للمريض -->
         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
             <div class="card-header bg-transparent border-0 px-4 pt-4 d-flex justify-content-between align-items-center">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-bell text-warning me-2"></i>Recent Alerts</h5>
@@ -317,7 +317,7 @@
             </div>
         </div>
 
-        <!-- Prescriptions -->
+        <!-- تفاصيل الوصفات الطبية الأخيرة والأدوية الموصوفة -->
         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
             <div class="card-header bg-transparent border-0 px-4 pt-4">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-prescription-bottle-medical text-success me-2"></i>Recent Prescriptions</h5>
@@ -363,7 +363,7 @@
             </div>
         </div>
 
-        <!-- Medical Files -->
+        <!-- ملفات وتقارير المريض الطبية المرفوعة -->
         <div class="card border-0 shadow-sm rounded-4 bg-white">
             <div class="card-header bg-transparent border-0 px-4 pt-4 d-flex justify-content-between align-items-center">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-file-pdf text-danger me-2"></i>Uploaded Medical Files</h5>

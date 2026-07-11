@@ -19,7 +19,7 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Branches
+        // GET: /Branch/Index | استعراض فروع العيادة الطبية وحساباتها
         public async Task<IActionResult> Index()
         {
             var branches = await _context.Branches
@@ -30,7 +30,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(branches);
         }
 
-        // Details of a Branch — patients only see their own appointments
+        // GET: /Branch/Details/{id} | استعراض تفاصيل فرع العيادة وتصفية المواعيد بالنسبة للمرضى
         public async Task<IActionResult> Details(int id)
         {
             var branch = await _context.Branches
@@ -43,7 +43,7 @@ namespace SmartEyeClinic.Web.Controllers
             if (branch == null)
                 return NotFound();
 
-            // IDOR: filter appointment list for patients — they should not see other patients' visits
+            // حماية خصوصية المرضى ومنع تداخل الحسابات
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -61,7 +61,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(branch);
         }
 
-        // Create Branch (Admin only)
+        // GET: /Branch/Create | عرض صفحة إضافة فرع عيادة جديد للمدير
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public IActionResult Create()
@@ -69,6 +69,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
+        // POST: /Branch/Create | معالجة طلب إضافة فرع جديد وحفظه
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -84,7 +85,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(branch);
         }
 
-        // Edit Branch (Admin only)
+        // GET: /Branch/Edit/{id} | عرض صفحة تعديل بيانات فرع معين
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -96,6 +97,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(branch);
         }
 
+        // POST: /Branch/Edit/{id} | معالجة تحديث بيانات الفرع في قاعدة البيانات
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -111,7 +113,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(branch);
         }
 
-        // Delete Branch (Admin only)
+        // GET: /Branch/Delete/{id} | عرض صفحة تأكيد حذف الفرع
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -123,6 +125,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(branch);
         }
 
+        // POST: /Branch/Delete/{id} | معالجة الحذف النهائي لفرع العيادة بعد التأكد من قيود المواعيد والاستقبال
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -132,7 +135,7 @@ namespace SmartEyeClinic.Web.Controllers
             if (branch == null)
                 return NotFound();
 
-            // Constraint checks
+            // التحقق من سلامة القيود المرجعية قبل الحذف (وجود مواعيد أو موظفي استقبال)
             if (await _context.Appointments.AnyAsync(a => a.BranchId == id))
             {
                 TempData["Error"] = "Cannot delete branch because it has associated patient appointments scheduled.";

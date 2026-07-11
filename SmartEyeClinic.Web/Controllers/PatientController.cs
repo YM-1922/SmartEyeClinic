@@ -16,20 +16,21 @@ public class PatientController : Controller
         _patientService = patientService;
     }
 
-    // List
+    // GET: /Patient/Index | عرض قائمة المرضى المسجلين في النظام
     public async Task<IActionResult> Index()
     {
         var patients = await _patientService.GetAllPatientsAsync();
         return View(patients);
     }
 
-    // Add Patient
+    // GET: /Patient/Create | عرض صفحة إضافة مريض جديد
     [HttpGet]
     public IActionResult Create()
     {
         return View();
     }
 
+    // POST: /Patient/Create | معالجة طلب إضافة مريض جديد في النظام وإنشاء حساب له
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(
@@ -62,7 +63,7 @@ public class PatientController : Controller
         }
     }
 
-    // Edit Patient
+    // GET: /Patient/Edit/{id} | عرض صفحة تعديل بيانات مريض معين
     [HttpGet]
     public async Task<IActionResult> Edit(int id)
     {
@@ -74,6 +75,7 @@ public class PatientController : Controller
         return View(patient);
     }
 
+    // POST: /Patient/Edit/{id} | معالجة طلب تعديل بيانات مريض معين وحفظ التغييرات
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(
@@ -108,7 +110,7 @@ public class PatientController : Controller
         }
     }
 
-    // Delete Patient - GET (Confirmation Page)
+    // GET: /Patient/Delete/{id} | عرض صفحة تأكيد حذف المريض (صفحة التأكيد)
     [HttpGet]
     public async Task<IActionResult> Delete(int id)
     {
@@ -121,7 +123,7 @@ public class PatientController : Controller
         return View(patient);
     }
 
-    // Delete Patient - POST
+    // POST: /Patient/Delete/{id} | معالجة الحذف النهائي للمريض من قاعدة البيانات
     [HttpPost, ActionName("Delete")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> DeleteConfirmed(int id)
@@ -138,7 +140,7 @@ public class PatientController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    // Patient 360 Details
+    // GET: /Patient/Details/{id} | عرض الملف الطبي الشامل للمريض (سجل 360 درجة) للتحليل السريري
     [Authorize]
     [HttpGet]
     public async Task<IActionResult> Details(int id)

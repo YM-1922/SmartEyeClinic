@@ -38,7 +38,7 @@ namespace SmartEyeClinic.Web.Controllers
             _env = env;
         }
 
-        // List files (Admin / Doctor can see all, Patients see only their own)
+        // GET: /MedicalFile/Index | استعراض الملفات الطبية المرفوعة وتصفيتها للمريض أو الطبيب
         public async Task<IActionResult> Index(int? patientId = null)
         {
             IQueryable<MedicalFile> query = _context.MedicalFiles
@@ -71,7 +71,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(files);
         }
 
-        // GET: Upload File
+        // GET: /MedicalFile/Upload | عرض نموذج رفع ملف طبي جديد مع تحديد المريض أو الموعد
         [Authorize(Roles = "Admin,Doctor,Receptionist,Patient")]
         [HttpGet]
         public async Task<IActionResult> Upload(int? patientId = null, int? appointmentId = null)
@@ -117,7 +117,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
-        // POST: Upload File
+        // POST: /MedicalFile/Upload | معالجة رفع الملف والتحقق من الحجم والامتداد ونوع الـ MIME أمنياً وحفظ الملف
         [Authorize(Roles = "Admin,Doctor,Receptionist,Patient")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -147,14 +147,14 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Upload), new { patientId, appointmentId });
             }
 
-            // --- Security: Size check ---
+            // فحص أمني لحجم الملف
             if (file.Length > MaxFileSizeBytes)
             {
                 TempData["Error"] = "File size exceeds the maximum allowed limit of 5 MB.";
                 return RedirectToAction(nameof(Upload), new { patientId, appointmentId });
             }
 
-            // --- Security: Extension whitelist ---
+            // فحص أمني لامتداد الملف المسموح
             var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
             if (!AllowedTypes.ContainsKey(ext))
             {
@@ -162,7 +162,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Upload), new { patientId, appointmentId });
             }
 
-            // --- Security: MIME type validation ---
+            // فحص أمني لنوع الـ MIME وتطابقه مع الامتداد لمنع الاختراقات
             var allowedMimes = AllowedTypes[ext];
             if (!allowedMimes.Contains(file.ContentType, StringComparer.OrdinalIgnoreCase))
             {
@@ -172,26 +172,24 @@ namespace SmartEyeClinic.Web.Controllers
 
             try
             {
-                // Ensure upload folder exists
                 var uploadDir = Path.Combine(_env.WebRootPath, "uploads");
                 if (!Directory.Exists(uploadDir))
                     Directory.CreateDirectory(uploadDir);
 
-                // Generate unique filename to avoid duplicates / path traversal
+                // توليد اسم فريد لتفادي التكرار وتجنب هجمات تعديل المسار (Path Traversal)
                 var safeFilename = $"{Guid.NewGuid()}{ext}";
                 var filePath = Path.Combine(uploadDir, safeFilename);
 
-                // Save file to disk
+                // حفظ الملف على القرص
                 using (var stream = new FileStream(filePath, FileMode.Create))
                 {
                     await file.CopyToAsync(stream);
                 }
 
-                // Get current logged-in user ID
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
                 int? uploaderId = userIdClaim != null ? int.Parse(userIdClaim.Value) : null;
 
-                // Save file info in Database
+                // حفظ السجل في قاعدة البيانات
                 var medicalFile = new MedicalFile
                 {
                     PatientId     = patientId,
@@ -216,7 +214,7 @@ namespace SmartEyeClinic.Web.Controllers
             }
         }
 
-        // Delete File — GET (Admin or uploader)
+        // GET: /MedicalFile/Delete/{id} | عرض صفحة تأكيد حذف ملف طبي معين
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
         {
@@ -228,11 +226,10 @@ namespace SmartEyeClinic.Web.Controllers
             if (file == null)
                 return NotFound();
 
-            // Patients cannot delete; Admin and original uploader (Doctor/Receptionist) can
+            // يمنع المرضى من حذف ملفاتهم، الحذف مسموح فقط للمدير ورافع الملف الأصلي
             if (User.IsInRole("Patient"))
                 return RedirectToAction("AccessDenied", "Account");
 
-            // Non-admin users can only delete files they uploaded
             if (!User.IsInRole("Admin"))
             {
                 var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
@@ -243,6 +240,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(file);
         }
 
+        // POST: /MedicalFile/Delete/{id} | حذف الملف الطبي من القرص وقاعدة البيانات بعد التحقق من صلاحية الحذف
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
@@ -251,7 +249,6 @@ namespace SmartEyeClinic.Web.Controllers
             if (file == null)
                 return NotFound();
 
-            // Re-check authorization on POST as well (defense in depth)
             if (User.IsInRole("Patient"))
                 return RedirectToAction("AccessDenied", "Account");
 
@@ -262,7 +259,7 @@ namespace SmartEyeClinic.Web.Controllers
                     return RedirectToAction("AccessDenied", "Account");
             }
 
-            // Remove file from disk
+            // حذف الملف الفعلي من القرص الصلب
             var diskPath = Path.Combine(_env.WebRootPath, file.FilePath.TrimStart('/'));
             if (System.IO.File.Exists(diskPath))
                 System.IO.File.Delete(diskPath);

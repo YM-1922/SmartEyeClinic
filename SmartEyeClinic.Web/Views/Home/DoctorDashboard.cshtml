@@ -7,7 +7,7 @@
     var surgeries = ViewBag.UpcomingSurgeries as List<SmartEyeClinic.Models.Surgery>;
 }
 
-<!-- Page Header -->
+<!-- ترويسة الصفحة: ترحيب بالطبيب وإجراءات سريعة -->
 <div class="page-header py-4 mb-4 border-bottom">
     <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
         <div>
@@ -30,7 +30,7 @@
     </div>
 </div>
 
-<!-- KPIs -->
+<!-- مؤشرات الأداء الرئيسية (الإحصائيات السريعة للطبيب) -->
 <div class="row g-4 mb-5">
     <div class="col-lg-4 col-md-6">
         <div class="card border-0 shadow-sm p-4 h-100 bg-white" style="border-radius: var(--radius-lg); border-left: 5px solid var(--primary) !important;">
@@ -56,10 +56,10 @@
 </div>
 
 <div class="row g-4 mb-5">
-    <!-- Left Column: Tasks, Approvals, Deposits -->
+    <!-- العمود الأيسر: الاستشارات، الموافقات المعلقة، دفعات الودائع، وسجل الحالات -->
     <div class="col-lg-8">
         
-        <!-- Today's Consultations -->
+        <!-- جدول استشارات اليوم المقررة -->
         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
             <div class="card-header bg-transparent border-0 d-flex justify-content-between align-items-center px-4 pt-4">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-user-injured text-primary me-2"></i>Today's Consultations</h5>
@@ -92,7 +92,7 @@
                                     {
                                         "Completed" => "bg-success text-white",
                                         "Approved" => "bg-primary text-white",
-                                        "Pending Doctor Approval" => "bg-warning text-dark",
+                                        "Pending Approval" => "bg-warning text-dark",
                                         _ => "bg-secondary text-white"
                                     };
                                     <tr>
@@ -130,8 +130,8 @@
             </div>
         </div>
 
-        <!-- Pending Approvals (Requires Accept/Reject) -->
-        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
+        <!-- الطلبات المعلقة التي تتطلب قبول أو رفض الطبيب -->
+        <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white" id="pending-approvals">
             <div class="card-header bg-transparent border-0 px-4 pt-4">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-user-plus text-warning me-2"></i>Pending Approvals (Deposit Paid)</h5>
             </div>
@@ -191,7 +191,7 @@
             </div>
         </div>
 
-        <!-- Deposit Confirmations -->
+        <!-- تأكيدات دفع الودائع الخاصة بحالات الطبيب -->
         <div class="card border-0 shadow-sm rounded-4 bg-white mb-4">
             <div class="card-header bg-transparent border-0 px-4 pt-4">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-wallet text-success me-2"></i>My Deposit Payments Activity</h5>
@@ -232,7 +232,7 @@
             </div>
         </div>
 
-        <!-- Patient History -->
+        <!-- سجل الحالات الاستشارية المكتملة للطبيب -->
         <div class="card border-0 shadow-sm rounded-4 bg-white">
             <div class="card-header bg-transparent border-0 px-4 pt-4">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-folder-open text-info me-2"></i>My Consultation Cases History</h5>
@@ -275,10 +275,10 @@
 
     </div>
 
-    <!-- Right Column: Sidebar Alerts, Surgeries, Calendar -->
+    <!-- العمود الأيمن: التنبيهات السريرية، جدول العمليات القادمة، والمخطط -->
     <div class="col-lg-4">
         
-        <!-- Alerts -->
+        <!-- التنبيهات والإشعارات الطبية الأخيرة -->
         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
             <div class="card-header bg-transparent border-0 px-4 pt-4 d-flex justify-content-between align-items-center">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-bell text-warning me-2"></i>Clinical Alerts</h5>
@@ -313,7 +313,7 @@
             </div>
         </div>
 
-        <!-- Surgery Schedule -->
+        <!-- جدول العمليات الجراحية القادمة المجدولة للعيونة -->
         <div class="card border-0 shadow-sm rounded-4 mb-4 bg-white">
             <div class="card-header bg-transparent border-0 px-4 pt-4">
                 <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-laptop-medical text-danger me-2"></i>Upcoming Surgeries</h5>
@@ -345,7 +345,7 @@
             </div>
         </div>
 
-        <!-- Planner link -->
+        <!-- رابط المخطط والجدول السريري للطبيب -->
         <div class="card border-0 shadow-sm rounded-4 overflow-hidden bg-white">
             <div class="p-4 text-white" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);">
                 <div class="d-flex align-items-center justify-content-between mb-3">

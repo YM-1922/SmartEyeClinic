@@ -23,7 +23,7 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Appointments
+        // GET: /Appointment/Index | استعراض قائمة المواعيد وتصفيتها حسب صلاحية المستخدم (طبيب أو مريض)
         [Authorize]
         public async Task<IActionResult> Index()
         {
@@ -59,7 +59,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(appointments);
         }
 
-        // Appointment Details
+        // GET: /Appointment/Details/{id} | عرض تفاصيل موعد معين مع حماية الحسابات من الاختراق (IDOR Protection)
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Details(int id)
@@ -71,7 +71,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // IDOR Protection
+            // حماية الوصول العشوائي وتفادي تخطي الصلاحيات
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -92,7 +92,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(appointment);
         }
 
-        // Create Appointment
+        // GET: /Appointment/Create | عرض صفحة حجز موعد جديد
         [HttpGet]
         public async Task<IActionResult> Create(int? doctorId)
         {
@@ -101,6 +101,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
+        // POST: /Appointment/Create | معالجة طلب حجز موعد جديد، يدعم الحجز الفوري للزوار غير المسجلين وإنشاء حسابات تلقائية لهم
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(
@@ -119,7 +120,7 @@ namespace SmartEyeClinic.Web.Controllers
             DateTime? guestDOB,
             string? guestGender)
         {
-            // If the user is NOT authenticated (Guest Booking)
+            // التحقق من صحة بيانات الزائر في حال لم يكن المستخدم مسجلاً دخوله
             if (User.Identity == null || !User.Identity.IsAuthenticated)
             {
                 if (string.IsNullOrWhiteSpace(guestName) || string.IsNullOrWhiteSpace(guestEmail) || 
@@ -130,7 +131,7 @@ namespace SmartEyeClinic.Web.Controllers
                     return View();
                 }
 
-                // Check if user already exists by email
+                // التحقق من وجود مستخدم مسجل مسبقاً بنفس البريد الإلكتروني
                 var existingUser = await _context.Users
                     .Include(u => u.Role)
                     .FirstOrDefaultAsync(u => u.Email == guestEmail);
@@ -144,7 +145,7 @@ namespace SmartEyeClinic.Web.Controllers
                     var existingPatient = await _context.Patients.FirstOrDefaultAsync(p => p.UserId == targetUser.Id);
                     if (existingPatient == null)
                     {
-                        // Create Patient profile for existing user
+                        // إنشاء ملف مريض للمستخدم المسجل مسبقاً
                         existingPatient = new Patient
                         {
                             UserId = targetUser.Id,
@@ -159,13 +160,13 @@ namespace SmartEyeClinic.Web.Controllers
                 }
                 else
                 {
-                    // Create new Patient User
+                    // إنشاء حساب مستخدم مريض جديد للزائر
                     var patientRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Patient");
                     targetUser = new User
                     {
                         FullName = guestName,
                         Email = guestEmail,
-                        PasswordHash = "Patient@123", // Default password
+                        PasswordHash = "Patient@123", // كلمة مرور افتراضية مبدئية للمريض
                         PhoneNumber = guestPhone,
                         RoleId = patientRole?.Id ?? 3,
                         IsActive = true,
@@ -187,7 +188,7 @@ namespace SmartEyeClinic.Web.Controllers
 
                 patientId = targetPatient.Id;
                 
-                // Automatically log the new/existing patient in
+                // تسجيل دخول المريض الجديد أو المسترد تلقائياً بعد الحجز
                 var claims = new List<System.Security.Claims.Claim>
                 {
                     new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Name, targetUser.FullName),
@@ -221,7 +222,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Edit Appointment
+        // GET: /Appointment/Edit/{id} | عرض صفحة تعديل موعد معين للتحرير
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -230,7 +231,7 @@ namespace SmartEyeClinic.Web.Controllers
             if (appointment == null)
                 return NotFound();
 
-            // IDOR Check
+            // التحقق من الصلاحيات لمنع التلاعب بالمعرفات (IDOR Check)
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -252,6 +253,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(appointment);
         }
 
+        // POST: /Appointment/Edit/{id} | معالجة تحديث بيانات موعد معين بعد التحقق من الصلاحيات
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -270,7 +272,7 @@ namespace SmartEyeClinic.Web.Controllers
             if (appointment == null)
                 return NotFound();
 
-            // IDOR Check
+            // حماية المريض من تغيير معرف المرضى الآخرين
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -278,7 +280,7 @@ namespace SmartEyeClinic.Web.Controllers
                 {
                     return RedirectToAction("AccessDenied", "Account");
                 }
-                patientId = appointment.PatientId; // Patients can't shift patient ID
+                patientId = appointment.PatientId;
             }
             else if (User.IsInRole("Doctor"))
             {
@@ -300,7 +302,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // Delete Appointment - GET
+        // GET: /Appointment/Delete/{id} | عرض صفحة تأكيد حذف الموعد
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -312,7 +314,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // IDOR Check
+            // التحقق من الصلاحيات لمنع التلاعب بالحذف (IDOR Check)
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -333,7 +335,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(appointment);
         }
 
-        // Delete Appointment - POST
+        // POST: /Appointment/Delete/{id} | تأكيد حذف موعد نهائياً من قاعدة البيانات
         [Authorize]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -346,7 +348,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Index));
             }
 
-            // IDOR Check
+            // التحقق النهائي من الهوية قبل الحذف الإلزامي
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -374,6 +376,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // POST: /Appointment/Approve/{id} | الموافقة على طلب الموعد وتأكيده
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Receptionist,Doctor")]
@@ -396,6 +399,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // POST: /Appointment/Reject/{id} | رفض طلب الموعد
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Doctor")]
@@ -418,6 +422,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // POST: /Appointment/Complete/{id} | وضع علامة مكتمل على الاستشارة الطبية بعد انتهائها
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Receptionist,Doctor")]
@@ -440,6 +445,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // POST: /Appointment/PayDeposit/{id} | دفع مبلغ الوديعة المطلوب لتفعيل الموعد وبدء معالجة موافقة الطبيب
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize]
@@ -462,6 +468,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // POST: /Appointment/Cancel/{id} | إلغاء الموعد المجدد
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = "Admin,Receptionist,Doctor")]
@@ -501,6 +508,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // دالة مساعدة لتعبئة القوائم المنسدلة (المرضى، الأطباء، الفروع، التخصصات) في النماذج
         private async Task PopulateDropdownsAsync(DateTime? selectedDate = null, int? appointmentId = null)
         {
             ViewBag.Patients = await _context.Patients

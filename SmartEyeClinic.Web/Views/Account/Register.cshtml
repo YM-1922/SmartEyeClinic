@@ -1,6 +1,7 @@
 @{
     Layout = null;
 }
+@* صفحة تسجيل مريض جديد لنظام عيادة سمارت آي *@
 
 <!DOCTYPE html>
 <html lang="en">
@@ -14,22 +15,69 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
     <!-- Custom site CSS -->
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <style>
+        .auth-input-group {
+            display: flex !important;
+            align-items: stretch !important;
+            width: 100% !important;
+            border: 1.5px solid #E2E8F0 !important;
+            border-radius: var(--radius) !important;
+            background: #fff !important;
+            overflow: hidden !important;
+            transition: border-color 0.2s, box-shadow 0.2s !important;
+        }
+        .auth-input-group:focus-within {
+            border-color: var(--primary) !important;
+            box-shadow: 0 0 0 3px rgba(15,76,129,0.1) !important;
+        }
+        .auth-input-group:has(.is-invalid) {
+            border-color: #dc3545 !important;
+        }
+        .auth-input-group:has(.is-valid) {
+            border-color: #198754 !important;
+        }
+        .auth-input-group-icon {
+            display: flex !important;
+            align-items: center !important;
+            padding-left: 14px !important;
+            padding-right: 10px !important;
+            color: #94A3B8 !important;
+            font-size: 0.9rem !important;
+            background: transparent !important;
+            pointer-events: none;
+        }
+        .auth-input-group .form-control-auth {
+            border: none !important;
+            border-radius: 0 !important;
+            padding: 11px 14px 11px 0 !important;
+            width: 100% !important;
+            flex-grow: 1 !important;
+            box-shadow: none !important;
+            background: transparent !important;
+            outline: none !important;
+        }
+        .auth-input-group .password-toggle {
+            display: flex !important;
+            align-items: center !important;
+            padding-left: 10px !important;
+            padding-right: 14px !important;
+            color: #94A3B8 !important;
+            background: transparent !important;
+            border: none !important;
+            cursor: pointer !important;
+            font-size: 0.95rem !important;
+            outline: none !important;
+        }
+        .auth-input-group .password-toggle:hover {
+            color: #475569 !important;
+        }
+    </style>
 </head>
 <body>
-    <!-- Floating Header Navbar with Back to Home -->
-    <header class="position-absolute top-0 start-0 end-0 p-3" style="z-index: 1000;">
-        <div class="container-fluid d-flex justify-content-between align-items-center">
-            <a href="/" class="text-decoration-none d-inline-flex align-items-center gap-2" style="color: rgba(255, 255, 255, 0.7); transition: var(--transition);">
-                <span class="d-flex align-items-center justify-content-center bg-white bg-opacity-10 rounded-circle" style="width: 36px; height: 36px; border: 1px solid rgba(255, 255, 255, 0.15);">
-                    <i class="fa-solid fa-arrow-left text-white text-xs"></i>
-                </span>
-                <span class="text-white fw-bold small">Back to Home</span>
-            </a>
-        </div>
-    </header>
+
 
     <div class="auth-page">
-        <!-- Left Panel: Branding & Features -->
+        <!-- اللوحة اليسرى: الهوية والشعار ومميزات المنصة -->
         <div class="auth-panel-left d-none d-lg-flex">
             <div class="hero-grid-overlay"></div>
             <div style="max-width: 440px; position: relative; z-index: 5;">
@@ -65,9 +113,18 @@
             </div>
         </div>
 
-        <!-- Right Panel: Step-by-Step Register Form -->
+        <!-- اللوحة اليمنى: نموذج التسجيل المتعدد الخطوات -->
         <div class="auth-panel-right">
             <div class="auth-form-container" style="max-width: 420px;">
+                <!-- Back to Home Link -->
+                <div class="mb-4 text-start">
+                    <a href="/" class="text-decoration-none d-inline-flex align-items-center gap-2 text-muted" style="transition: var(--transition);">
+                        <span class="d-flex align-items-center justify-content-center bg-light border rounded-circle" style="width: 32px; height: 32px;">
+                            <i class="fa-solid fa-arrow-left text-xs"></i>
+                        </span>
+                        <span class="fw-semibold small text-dark">Back to Home</span>
+                    </a>
+                </div>
                 <!-- Mobile Logo -->
                 <div class="auth-logo d-flex d-lg-none justify-content-center mb-4">
                     <div class="auth-logo-icon" style="width: 40px; height: 40px; font-size:1.15rem;">
@@ -84,7 +141,7 @@
                     <p class="auth-subtitle">Register a new patient profile</p>
                 </div>
 
-                <!-- Step Progress Indicators -->
+                <!-- مؤشرات التقدم للخطوات الجارية -->
                 <div class="step-indicator">
                     <div class="step-dot active" id="dot1">1</div>
                     <div class="step-line" id="line1"></div>
@@ -104,30 +161,37 @@
                         </div>
                     }
 
-                    <!-- STEP 1: Account Information -->
+                    <!-- الخطوة الأولى: معلومات الحساب الأساسية -->
                     <div class="register-step active" id="step1">
                         <h6 class="fw-bold mb-3 text-primary-custom text-xs uppercase tracking-wide">Step 1: Account Details</h6>
                         
                         <div class="mb-3">
                             <label class="form-label text-xs">Full Name *</label>
-                            <div class="input-icon-wrap">
-                                <i class="fa-regular fa-user"></i>
+                            <div class="auth-input-group">
+                                <span class="auth-input-group-icon">
+                                    <i class="fa-regular fa-user"></i>
+                                </span>
                                 <input type="text" name="fullName" id="fullNameInput" class="form-control-auth" placeholder="John Doe" required />
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label text-xs">Email Address *</label>
-                            <div class="input-icon-wrap">
-                                <i class="fa-regular fa-envelope"></i>
+                            <div class="auth-input-group">
+                                <span class="auth-input-group-icon">
+                                    <i class="fa-regular fa-envelope"></i>
+                                </span>
                                 <input type="email" name="email" id="emailInput" class="form-control-auth" placeholder="john@example.com" required />
                             </div>
+                            <div class="invalid-feedback text-xs" id="emailFeedback">A valid email address is required.</div>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label text-xs">Password *</label>
-                            <div class="input-icon-wrap">
-                                <i class="fa-solid fa-lock"></i>
+                            <div class="auth-input-group">
+                                <span class="auth-input-group-icon">
+                                    <i class="fa-solid fa-lock"></i>
+                                </span>
                                 <input type="password" name="password" id="passwordInput" class="form-control-auth" placeholder="••••••••" required minlength="6" />
                                 <button type="button" class="password-toggle" id="togglePasswordBtn">
                                     <i class="fa-regular fa-eye-slash" id="togglePasswordIcon"></i>
@@ -143,16 +207,19 @@
                         </div>
                     </div>
 
-                    <!-- STEP 2: Identification & Demographics -->
+                    <!-- الخطوة الثانية: إثبات الهوية والبيانات الشخصية -->
                     <div class="register-step" id="step2">
                         <h6 class="fw-bold mb-3 text-primary-custom text-xs uppercase tracking-wide">Step 2: Profile Identification</h6>
 
                         <div class="mb-3">
                             <label class="form-label text-xs">National ID / Passport *</label>
-                            <div class="input-icon-wrap">
-                                <i class="fa-regular fa-id-card"></i>
+                            <div class="auth-input-group">
+                                <span class="auth-input-group-icon">
+                                    <i class="fa-regular fa-id-card"></i>
+                                </span>
                                 <input type="text" name="nationalId" id="nidInput" class="form-control-auth" placeholder="NID-8877" required />
                             </div>
+                            <div class="invalid-feedback text-xs" id="nidFeedback">National ID is required.</div>
                         </div>
 
                         <div class="mb-3">
@@ -180,22 +247,27 @@
                         </div>
                     </div>
 
-                    <!-- STEP 3: Contact Details & Confirmation -->
+                    <!-- الخطوة الثالثة: تفاصيل الاتصال والتأكيد النهائي -->
                     <div class="register-step" id="step3">
                         <h6 class="fw-bold mb-3 text-primary-custom text-xs uppercase tracking-wide">Step 3: Contact details</h6>
 
                         <div class="mb-3">
                             <label class="form-label text-xs">Phone Number</label>
-                            <div class="input-icon-wrap">
-                                <i class="fa-solid fa-phone"></i>
-                                <input type="tel" name="phoneNumber" class="form-control-auth" placeholder="555-0199" />
+                            <div class="auth-input-group">
+                                <span class="auth-input-group-icon">
+                                    <i class="fa-solid fa-phone"></i>
+                                </span>
+                                <input type="tel" name="phoneNumber" id="phoneInput" class="form-control-auth" placeholder="555-0199" />
                             </div>
+                            <div class="invalid-feedback text-xs" id="phoneFeedback">This phone number is already registered.</div>
                         </div>
 
                         <div class="mb-4">
                             <label class="form-label text-xs">Home Address</label>
-                            <div class="input-icon-wrap">
-                                <i class="fa-solid fa-house"></i>
+                            <div class="auth-input-group">
+                                <span class="auth-input-group-icon">
+                                    <i class="fa-solid fa-house"></i>
+                                </span>
                                 <input type="text" name="address" class="form-control-auth" placeholder="123 Maple St" />
                             </div>
                         </div>
@@ -223,7 +295,7 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Toggle Password visibility
+        // تبديل إظهار/إخفاء كلمة المرور
         const toggleBtn = document.getElementById('togglePasswordBtn');
         const passInput = document.getElementById('passwordInput');
         const toggleIcon = document.getElementById('togglePasswordIcon');
@@ -237,7 +309,7 @@
 
         // Wizard steps navigation
         let currentStep = 1;
-        function goToStep(step) {
+        async function goToStep(step) {
             if (step > currentStep) {
                 // Validate fields in current step before moving forward
                 let isValid = true;
@@ -256,6 +328,73 @@
 
                 if (!isValid) {
                     return; // block navigation
+                }
+
+                // Database Uniqueness AJAX Checks
+                if (currentStep === 1) {
+                    const emailInput = document.getElementById('emailInput');
+                    const emailVal = emailInput.value;
+                    const emailFeedback = document.getElementById('emailFeedback');
+                    
+                    // Show button loading spinner and disable next step button
+                    const nextBtn = container.querySelector('button[onclick="goToStep(2)"]');
+                    const originalHtml = nextBtn.innerHTML;
+                    nextBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Validating...';
+                    nextBtn.disabled = true;
+                    emailInput.disabled = true;
+
+                    try {
+                        const response = await $.get('/Account/CheckEmail', { email: emailVal });
+                        if (!response.available) {
+                            emailInput.classList.remove('is-valid');
+                            emailInput.classList.add('is-invalid');
+                            emailFeedback.textContent = response.message || "This email is already registered.";
+                            isValid = false;
+                        } else {
+                            emailInput.classList.remove('is-invalid');
+                            emailInput.classList.add('is-valid');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                    } finally {
+                        nextBtn.innerHTML = originalHtml;
+                        nextBtn.disabled = false;
+                        emailInput.disabled = false;
+                    }
+
+                    if (!isValid) return;
+                }
+                else if (currentStep === 2) {
+                    const nidInput = document.getElementById('nidInput');
+                    const nidVal = nidInput.value;
+                    const nidFeedback = document.getElementById('nidFeedback');
+
+                    const nextBtn = container.querySelector('button[onclick="goToStep(3)"]');
+                    const originalHtml = nextBtn.innerHTML;
+                    nextBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span> Validating...';
+                    nextBtn.disabled = true;
+                    nidInput.disabled = true;
+
+                    try {
+                        const response = await $.get('/Account/CheckNationalId', { nationalId: nidVal });
+                        if (!response.available) {
+                            nidInput.classList.remove('is-valid');
+                            nidInput.classList.add('is-invalid');
+                            nidFeedback.textContent = response.message || "This National ID is already registered.";
+                            isValid = false;
+                        } else {
+                            nidInput.classList.remove('is-invalid');
+                            nidInput.classList.add('is-valid');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                    } finally {
+                        nextBtn.innerHTML = originalHtml;
+                        nextBtn.disabled = false;
+                        nidInput.disabled = false;
+                    }
+
+                    if (!isValid) return;
                 }
             }
 
@@ -281,21 +420,58 @@
             currentStep = step;
         }
 
-        // Form submit spinner
+        // Form submit spinner & phone number check
         (function () {
             'use strict'
             const form = document.getElementById('registerForm');
             const btn = document.getElementById('registerBtn');
             if (form && btn) {
-                form.addEventListener('submit', function (event) {
+                form.addEventListener('submit', async function (event) {
+                    event.preventDefault();
+                    event.stopPropagation();
+
                     if (!form.checkValidity()) {
-                        event.preventDefault();
-                        event.stopPropagation();
                         form.classList.add('was-validated');
-                    } else {
+                        return;
+                    }
+
+                    // Perform phone number check
+                    const phoneInput = document.getElementById('phoneInput');
+                    const phoneVal = phoneInput.value;
+                    const phoneFeedback = document.getElementById('phoneFeedback');
+                    
+                    if (phoneVal) {
                         btn.classList.add('loading');
                         btn.disabled = true;
+                        phoneInput.disabled = true;
+
+                        try {
+                            const response = await $.get('/Account/CheckPhoneNumber', { phoneNumber: phoneVal });
+                            if (!response.available) {
+                                phoneInput.classList.remove('is-valid');
+                                phoneInput.classList.add('is-invalid');
+                                phoneFeedback.textContent = response.message || "This phone number is already registered.";
+                                btn.classList.remove('loading');
+                                btn.disabled = false;
+                                phoneInput.disabled = false;
+                                return; // Block submit
+                            } else {
+                                phoneInput.classList.remove('is-invalid');
+                                phoneInput.classList.add('is-valid');
+                            }
+                        } catch (err) {
+                            console.error(err);
+                            btn.classList.remove('loading');
+                            btn.disabled = false;
+                            phoneInput.disabled = false;
+                            return; // Block submit on error
+                        }
                     }
+
+                    // If all validation passed, submit the form!
+                    btn.classList.add('loading');
+                    btn.disabled = true;
+                    form.submit();
                 }, false);
             }
         })();

@@ -124,7 +124,7 @@ public class HomeController : Controller
         var pendingApprovals = await _context.Appointments
             .Include(a => a.Patient).ThenInclude(p => p.User)
             .Include(a => a.Branch)
-            .Where(a => a.DoctorId == doctorId && a.Status == "Pending Doctor Approval")
+            .Where(a => a.DoctorId == doctorId && a.Status == "Pending Approval")
             .OrderBy(a => a.AppointmentDateTime)
             .ToListAsync();
         ViewBag.PendingApprovals = pendingApprovals;
@@ -152,7 +152,7 @@ public class HomeController : Controller
             .Distinct()
             .CountAsync();
         ViewBag.MyPendingAppointments = await _context.Appointments
-            .CountAsync(a => a.DoctorId == doctorId && a.Status == "Pending Doctor Approval");
+            .CountAsync(a => a.DoctorId == doctorId && a.Status == "Pending Approval");
         ViewBag.MySurgeries = await _context.Surgeries
             .CountAsync(s => s.DoctorId == doctorId);
 

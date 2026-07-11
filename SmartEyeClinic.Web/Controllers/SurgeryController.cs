@@ -20,7 +20,7 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Surgeries — patients see only their own, doctors see only their own
+        // GET: /Surgery/Index | استعراض العمليات الجراحية الجارية وتصفيتها للمرضى والأطباء
         public async Task<IActionResult> Index()
         {
             var query = _context.Surgeries
@@ -49,7 +49,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(surgeries);
         }
 
-        // Details — IDOR protected
+        // GET: /Surgery/Details/{id} | عرض تفاصيل العملية الجراحية مع حماية البيانات من التلاعب (IDOR Protection)
         public async Task<IActionResult> Details(int id)
         {
             var surgery = await _context.Surgeries
@@ -63,7 +63,7 @@ namespace SmartEyeClinic.Web.Controllers
             if (surgery == null)
                 return NotFound();
 
-            // IDOR Protection
+            // التحقق من الصلاحيات لمنع التطفل والتلاعب ببيانات العمليات
             if (User.IsInRole("Patient"))
             {
                 var patIdClaim = User.FindFirst("PatientId")?.Value;
@@ -80,7 +80,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(surgery);
         }
 
-        // Create (Doctors & Admin only)
+        // GET: /Surgery/Create | عرض صفحة جدولة عملية جراحية جديدة (للأطباء والمدراء)
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
         public async Task<IActionResult> Create(int? appointmentId = null)
@@ -89,6 +89,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
+        // POST: /Surgery/Create | معالجة إضافة وجدولة العملية الجراحية الجديدة
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -105,7 +106,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(surgery);
         }
 
-        // Edit (Doctors & Admin only) — doctor can only edit their own
+        // GET: /Surgery/Edit/{id} | عرض صفحة تعديل بيانات عملية جراحية معينة للأطباء بعد تحقق الهوية
         [Authorize(Roles = "Doctor,Admin")]
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
@@ -114,7 +115,7 @@ namespace SmartEyeClinic.Web.Controllers
             if (surgery == null)
                 return NotFound();
 
-            // IDOR: Doctor can only edit their own surgeries
+            // التحقق الأمني: يمنع الطبيب من تعديل عمليات غيره
             if (User.IsInRole("Doctor"))
             {
                 var docIdClaim = User.FindFirst("DoctorId")?.Value;
@@ -126,12 +127,12 @@ namespace SmartEyeClinic.Web.Controllers
             return View(surgery);
         }
 
+        // POST: /Surgery/Edit/{id} | معالجة تحديث بيانات العملية الجراحية
         [Authorize(Roles = "Doctor,Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(Surgery surgery)
         {
-            // IDOR: Doctor can only edit their own surgeries
             if (User.IsInRole("Doctor"))
             {
                 var docIdClaim = User.FindFirst("DoctorId")?.Value;
@@ -150,7 +151,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(surgery);
         }
 
-        // Delete (Admin only)
+        // GET: /Surgery/Delete/{id} | عرض صفحة تأكيد حذف العملية الجراحية للادارة
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -168,6 +169,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(surgery);
         }
 
+        // POST: /Surgery/Delete/{id} | معالجة الحذف النهائي لجدول العملية الجراحية
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -183,6 +185,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        // دالة مساعدة لتعبئة قوائم المواعيد والمرضى والأطباء وأنواع العمليات
         private async Task PopulateDropdownsAsync(int? selectedAppId = null)
         {
             ViewBag.Appointments = await _context.Appointments

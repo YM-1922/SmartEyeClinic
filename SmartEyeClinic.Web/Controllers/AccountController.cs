@@ -21,7 +21,7 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // GET: /Account/Login
+        // GET: /Account/Login | عرض صفحة تسجيل الدخول
         [HttpGet]
         public IActionResult Login(string? returnUrl = null)
         {
@@ -33,7 +33,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
-        // POST: /Account/Login
+        // POST: /Account/Login | معالجة طلب تسجيل الدخول والتحقق من الحساب
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(string email, string password, string? returnUrl = null)
@@ -50,13 +50,13 @@ namespace SmartEyeClinic.Web.Controllers
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
 
-            if (user == null || user.PasswordHash != password) // Plaintext comparison for simplicity & existing seed data
+            if (user == null || user.PasswordHash != password) // مقارنة بكلمة المرور النصية البسيطة المتوافقة مع بذور البيانات الافتراضية
             {
                 ModelState.AddModelError(string.Empty, "Invalid email or password.");
                 return View();
             }
 
-            // Create claims list
+            // إنشاء قائمة الادعاءات (Claims) لتخزين بيانات هوية المستخدم في الكوكيز
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.Name, user.FullName),
@@ -65,7 +65,7 @@ namespace SmartEyeClinic.Web.Controllers
                 new Claim(ClaimTypes.Role, user.Role.Name)
             };
 
-            // Retrieve profile ID depending on role to store as claims for fast lookup
+            // جلب معرف الملف الشخصي بناءً على الدور وتخزينه كادعاء ليسهل التحقق منه لاحقاً
             if (user.Role.Name == "Doctor")
             {
                 var doc = await _context.Doctors.FirstOrDefaultAsync(d => d.UserId == user.Id);
@@ -91,7 +91,7 @@ namespace SmartEyeClinic.Web.Controllers
                 }
             }
 
-            // Profile Picture claim
+            // إضافة صورة الملف الشخصي للادعاءات إن وجدت
             if (!string.IsNullOrEmpty(user.ProfilePicture))
             {
                 claims.Add(new Claim("ProfilePicture", user.ProfilePicture));
@@ -114,7 +114,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-        // GET: /Account/Register
+        // GET: /Account/Register | عرض صفحة إنشاء حساب جديد للمريض
         [HttpGet]
         public IActionResult Register()
         {
@@ -125,7 +125,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
-        // POST: /Account/Register
+        // POST: /Account/Register | معالجة طلب تسجيل مريض جديد والتحقق من فرادة البيانات
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Register(string fullName, string email, string password, string phoneNumber, string nationalId, string gender, string address, DateOnly dob)
@@ -136,7 +136,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return View();
             }
 
-            // Check email uniqueness
+            // التحقق من عدم تكرار البريد الإلكتروني
             var emailExists = await _context.Users.AnyAsync(u => u.Email == email);
             if (emailExists)
             {
@@ -144,7 +144,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return View();
             }
 
-            // Check phone uniqueness
+            // التحقق من عدم تكرار رقم الهاتف
             if (!string.IsNullOrWhiteSpace(phoneNumber))
             {
                 var phoneExists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
@@ -155,7 +155,7 @@ namespace SmartEyeClinic.Web.Controllers
                 }
             }
 
-            // Check national ID uniqueness
+            // التحقق من عدم تكرار الرقم القومي
             var nidExists = await _context.Patients.AnyAsync(p => p.NationalId == nationalId);
             if (nidExists)
             {
@@ -163,7 +163,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return View();
             }
 
-            // Get Patient Role
+            // الحصول على صلاحية المريض من قاعدة البيانات
             var patientRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Patient");
             if (patientRole == null)
             {
@@ -171,7 +171,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return View();
             }
 
-            // Create User
+            // إنشاء كائن مستخدم جديد
             var user = new User
             {
                 FullName = fullName,
@@ -186,7 +186,7 @@ namespace SmartEyeClinic.Web.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            // Create Patient Profile
+            // إنشاء الملف الشخصي للمريض
             var patient = new Patient
             {
                 UserId = user.Id,
@@ -203,7 +203,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Login));
         }
 
-        // GET: /Account/Logout
+        // GET: /Account/Logout | تسجيل الخروج وإبطال جلسة الكوكيز
         [HttpGet]
         public async Task<IActionResult> Logout()
         {
@@ -211,14 +211,14 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Login));
         }
 
-        // GET: /Account/AccessDenied
+        // GET: /Account/AccessDenied | عرض صفحة رفض الوصول عند عدم كفاية الصلاحيات
         [HttpGet]
         public IActionResult AccessDenied()
         {
             return View();
         }
 
-        // GET: /Account/Profile
+        // GET: /Account/Profile | عرض صفحة الملف الشخصي للمستخدم الحالي
         [Authorize]
         [HttpGet]
         public async Task<IActionResult> Profile()
@@ -239,7 +239,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(user);
         }
 
-        // POST: /Account/EditProfile
+        // POST: /Account/EditProfile | تعديل بيانات الملف الشخصي
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -261,7 +261,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Profile));
             }
 
-            // Check phone uniqueness
+            // التحقق من عدم تكرار رقم الهاتف المحدث
             if (!string.IsNullOrWhiteSpace(phoneNumber) && phoneNumber != user.PhoneNumber)
             {
                 var phoneExists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber && u.Id != userId);
@@ -283,7 +283,7 @@ namespace SmartEyeClinic.Web.Controllers
 
             await _context.SaveChangesAsync();
             
-            // Re-sign in to refresh cookie claims
+            // إعادة تسجيل الدخول لتحديث ادعاءات الكوكيز بالبيانات الجديدة
             var identity = (ClaimsIdentity)User.Identity!;
             var nameClaim = identity.FindFirst(ClaimTypes.Name);
             if (nameClaim != null) identity.RemoveClaim(nameClaim);
@@ -296,7 +296,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
-        // POST: /Account/ChangePassword
+        // POST: /Account/ChangePassword | تغيير كلمة المرور للمستخدم
         [Authorize]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -389,7 +389,7 @@ namespace SmartEyeClinic.Web.Controllers
                 user.ProfilePicture = $"/uploads/avatars/{fileName}";
                 user.UpdatedAt = DateTime.Now;
                 
-                // Load Role for claims refresh
+                // تحميل الكائن المرتبط لضمان سلامة الادعاءات المحدثة
                 await _context.Entry(user).Reference(u => u.Role).LoadAsync();
                 
                 await _context.SaveChangesAsync();
@@ -431,7 +431,7 @@ namespace SmartEyeClinic.Web.Controllers
                 user.ProfilePicture = null;
                 user.UpdatedAt = DateTime.Now;
                 
-                // Load Role for claims refresh
+                // تحميل الدور لتحديث الكوكيز
                 await _context.Entry(user).Reference(u => u.Role).LoadAsync();
                 
                 await _context.SaveChangesAsync();
@@ -447,6 +447,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Profile));
         }
 
+        // دالة مساعدة لإعادة بناء وتحديث ادعاءات المستخدم الحالي في الكوكيز
         private async Task RefreshUserClaimsAsync(User user)
         {
             var claims = new List<Claim>
@@ -486,6 +487,60 @@ namespace SmartEyeClinic.Web.Controllers
             };
 
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
+        }
+
+        // GET: /Account/CheckEmail | التحقق الفوري عبر أجاكس من توفر البريد الإلكتروني
+        [HttpGet]
+        public async Task<IActionResult> CheckEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+            {
+                return Json(new { available = false, message = "Email is required." });
+            }
+
+            var exists = await _context.Users.AnyAsync(u => u.Email == email);
+            if (exists)
+            {
+                return Json(new { available = false, message = "This email address is already registered." });
+            }
+
+            return Json(new { available = true });
+        }
+
+        // GET: /Account/CheckNationalId | التحقق الفوري عبر أجاكس من توفر الرقم القومي
+        [HttpGet]
+        public async Task<IActionResult> CheckNationalId(string nationalId)
+        {
+            if (string.IsNullOrWhiteSpace(nationalId))
+            {
+                return Json(new { available = false, message = "National ID is required." });
+            }
+
+            var exists = await _context.Patients.AnyAsync(p => p.NationalId == nationalId);
+            if (exists)
+            {
+                return Json(new { available = false, message = "This National ID is already registered." });
+            }
+
+            return Json(new { available = true });
+        }
+
+        // GET: /Account/CheckPhoneNumber | التحقق الفوري عبر أجاكس من توفر رقم الهاتف
+        [HttpGet]
+        public async Task<IActionResult> CheckPhoneNumber(string phoneNumber)
+        {
+            if (string.IsNullOrWhiteSpace(phoneNumber))
+            {
+                return Json(new { available = true });
+            }
+
+            var exists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber);
+            if (exists)
+            {
+                return Json(new { available = false, message = "This phone number is already registered." });
+            }
+
+            return Json(new { available = true });
         }
     }
 }

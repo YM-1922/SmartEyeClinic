@@ -15,12 +15,14 @@ public class MedicineController : Controller
         _medicineService = medicineService;
     }
 
+    // GET: /Medicine/Index | استعراض قائمة الأدوية المسجلة في النظام
     public async Task<IActionResult> Index()
     {
         var medicines = await _medicineService.GetAllMedicinesAsync();
         return View(medicines);
     }
 
+    // GET: /Medicine/Create | عرض صفحة إضافة دواء جديد للأطباء والمدراء
     [Authorize(Roles = "Admin,Doctor")]
     [HttpGet]
     public IActionResult Create()
@@ -28,6 +30,7 @@ public class MedicineController : Controller
         return View();
     }
 
+    // POST: /Medicine/Create | معالجة طلب إضافة دواء جديد وحفظه
     [Authorize(Roles = "Admin,Doctor")]
     [HttpPost]
     [ValidateAntiForgeryToken]

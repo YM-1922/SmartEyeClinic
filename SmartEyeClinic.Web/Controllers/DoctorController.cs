@@ -21,14 +21,14 @@ namespace SmartEyeClinic.Web.Controllers
             _context = context;
         }
 
-        // List Doctors (Accessible to all authenticated users)
+        // GET: /Doctor/Index | عرض قائمة الأطباء في النظام
         public async Task<IActionResult> Index()
         {
             var doctors = await _doctorService.GetAllDoctorsAsync();
             return View(doctors);
         }
 
-        // Doctor 360 profile Details
+        // GET: /Doctor/Details/{id} | عرض ملف الطبيب مع المراجعات والردود (ملف 360 درجة)
         [HttpGet]
         public async Task<IActionResult> Details(int id)
         {
@@ -47,7 +47,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(doctor);
         }
 
-        // Create Doctor (Admin only)
+        // GET: /Doctor/Create | عرض نموذج تسجيل طبيب جديد وجدولة العمل للادارة
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Create()
@@ -56,6 +56,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View();
         }
 
+        // POST: /Doctor/Create | معالجة تسجيل طبيب جديد، التحقق من عدم التكرار، رفع الصورة، وبذور الجدولة
         [Authorize(Roles = "Admin")]
         [HttpPost]
         [ValidateAntiForgeryToken]
@@ -183,7 +184,7 @@ namespace SmartEyeClinic.Web.Controllers
             }
         }
 
-        // Edit Doctor (Admin or the Doctor themselves)
+        // GET: /Doctor/Edit/{id} | عرض نموذج تعديل بيانات الطبيب
         [HttpGet]
         public async Task<IActionResult> Edit(int id)
         {
@@ -191,7 +192,7 @@ namespace SmartEyeClinic.Web.Controllers
             if (doctor == null)
                 return NotFound();
 
-            // Security check: Only Admins or the Doctor themselves can edit
+            // التحقق من الهوية والأمن: تعديل البيانات مسموح للمدير أو الطبيب المعني فقط
             if (!User.IsInRole("Admin"))
             {
                 var docIdClaim = User.FindFirst("DoctorId")?.Value;
@@ -205,6 +206,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(doctor);
         }
 
+        // POST: /Doctor/Edit/{id} | معالجة تعديل بيانات الطبيب بعد التحقق من الهوية
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(
@@ -218,7 +220,6 @@ namespace SmartEyeClinic.Web.Controllers
             decimal consultationFee,
             string? bio)
         {
-            // Security check: Only Admins or the Doctor themselves can edit
             if (!User.IsInRole("Admin"))
             {
                 var docIdClaim = User.FindFirst("DoctorId")?.Value;
@@ -243,7 +244,7 @@ namespace SmartEyeClinic.Web.Controllers
             }
         }
 
-        // Delete Doctor (Admin only)
+        // GET: /Doctor/Delete/{id} | عرض صفحة تأكيد حذف الطبيب
         [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> Delete(int id)
@@ -257,6 +258,7 @@ namespace SmartEyeClinic.Web.Controllers
             return View(doctor);
         }
 
+        // POST: /Doctor/Delete/{id} | حذف حساب الطبيب نهائياً من قاعدة البيانات
         [Authorize(Roles = "Admin")]
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
@@ -274,7 +276,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        // POST: /Doctor/AddReview
+        // POST: /Doctor/AddReview | إضافة تقييم ومراجعة من مريض للطبيب
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddReview(int doctorId, int rating, string? comment)
@@ -312,7 +314,7 @@ namespace SmartEyeClinic.Web.Controllers
             return RedirectToAction(nameof(Details), new { id = doctorId });
         }
 
-        // POST: /Doctor/AddReply
+        // POST: /Doctor/AddReply | إضافة رد على مراجعة المريض من قبل الطبيب المعني أو المدير
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AddReply(int reviewId, int doctorId, string content)
@@ -328,7 +330,7 @@ namespace SmartEyeClinic.Web.Controllers
                 return RedirectToAction(nameof(Details), new { id = doctorId });
             }
 
-            // Security: Check if user is Admin or the Doctor who is the subject of the review
+            // التحقق الأمني: السماح للمدير أو الطبيب المعني فقط بالرد
             bool isAuthorized = User.IsInRole("Admin");
             if (User.IsInRole("Doctor"))
             {
