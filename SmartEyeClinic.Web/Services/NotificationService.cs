@@ -8,6 +8,9 @@ using SmartEyeClinic.Models;
 
 namespace SmartEyeClinic.Web.Services
 {
+    /// <summary>
+    /// خدمة إدارة وإرسال الإشعارات للمستخدمين والموظفين والمديرين
+    /// </summary>
     public class NotificationService
     {
         private readonly AppDbContext _context;
@@ -17,6 +20,7 @@ namespace SmartEyeClinic.Web.Services
             _context = context;
         }
 
+        // إنشاء إشعار جديد لمستخدم معين وحفظه بقاعدة البيانات
         public async Task CreateNotificationAsync(int userId, string title, string message, string type)
         {
             var notification = new Notification
@@ -33,6 +37,7 @@ namespace SmartEyeClinic.Web.Services
             await _context.SaveChangesAsync();
         }
 
+        // إرسال إشعار لكافة موظفي الاستقبال الفعالين بالعيادة
         public async Task NotifyAllReceptionistsAsync(string title, string message, string type)
         {
             var receptionists = await _context.Receptionists.Include(r => r.User).ToListAsync();
@@ -55,6 +60,7 @@ namespace SmartEyeClinic.Web.Services
             await _context.SaveChangesAsync();
         }
 
+        // إرسال إشعار لكافة مديري النظام (Admins) المسجلين
         public async Task NotifyAllAdminsAsync(string title, string message, string type)
         {
             var admins = await _context.Users.Include(u => u.Role).Where(u => u.Role.Name == "Admin").ToListAsync();
@@ -74,6 +80,7 @@ namespace SmartEyeClinic.Web.Services
             await _context.SaveChangesAsync();
         }
 
+        // جلب قائمة الإشعارات الخاصة بمستخدم معين بترتيب تنازلي (آخر 15 إشعاراً)
         public async Task<List<Notification>> GetNotificationsForUserAsync(int userId)
         {
             return await _context.Notifications
@@ -83,12 +90,14 @@ namespace SmartEyeClinic.Web.Services
                 .ToListAsync();
         }
 
+        // جلب عدد الإشعارات غير المقروءة الخاصة بمستخدم معين
         public async Task<int> GetUnreadNotificationsCountAsync(int userId)
         {
             return await _context.Notifications
                 .CountAsync(n => n.UserId == userId && (n.IsRead == null || !n.IsRead.Value));
         }
 
+        // تعيين كافة إشعارات مستخدم معين كإشعارات مقروءة دفعة واحدة
         public async Task MarkAllAsReadAsync(int userId)
         {
             var unread = await _context.Notifications
@@ -103,6 +112,7 @@ namespace SmartEyeClinic.Web.Services
             await _context.SaveChangesAsync();
         }
 
+        // تعيين إشعار محدد كإشعار مقروء بعد التحقق من ملكيته للمستخدم المحدد
         public async Task<bool> MarkAsReadAsync(int id, int userId)
         {
             var notification = await _context.Notifications.FirstOrDefaultAsync(n => n.Id == id && n.UserId == userId);

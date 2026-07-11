@@ -13,7 +13,7 @@ public class PatientService
         _context = context;
     }
 
-    // Get All Patients
+    // جلب قائمة بجميع المرضى المسجلين في العيادة مع تفاصيل حساباتهم الشخصية
     public async Task<List<Patient>> GetAllPatientsAsync()
     {
         return await _context.Patients
@@ -23,7 +23,7 @@ public class PatientService
             .ToListAsync();
     }
 
-    // Get Patient By Id
+    // جلب ملف مريض معين باستخدام معرفه الفريد مع تفاصيل الحساب
     public async Task<Patient?> GetPatientByIdAsync(int id)
     {
         return await _context.Patients
@@ -32,7 +32,7 @@ public class PatientService
             .FirstOrDefaultAsync(p => p.Id == id);
     }
 
-    // Add Patient
+    // إضافة مريض جديد وإنشاء حساب مستخدم مرتبط به في النظام
     public async Task AddPatientAsync(
         string? fullName,
         string? email,
@@ -98,7 +98,7 @@ public class PatientService
         await _context.SaveChangesAsync();
     }
 
-    // Update Patient
+    // تحديث بيانات ملف المريض وتعديل بيانات حسابه الشخصي المرتبط
     public async Task UpdatePatientAsync(
         int id,
         string fullName,
@@ -131,17 +131,17 @@ public class PatientService
         if (string.IsNullOrWhiteSpace(nationalId))
             throw new Exception("National ID is required.");
 
-        // Check if national ID exists on another patient
+        // التحقق من عدم تكرار الرقم القومي لمريض آخر مسجل بالعيادة
         bool exists = await _context.Patients.AnyAsync(p => p.NationalId == nationalId && p.Id != id);
         if (exists)
             throw new Exception("This National ID already exists.");
 
-        // Check if phone number exists on another user
+        // التحقق من عدم استخدام رقم الهاتف من قبل مستخدم آخر في النظام
         bool phoneExists = await _context.Users.AnyAsync(u => u.PhoneNumber == phoneNumber && u.Id != patient.UserId);
         if (phoneExists)
             throw new Exception("Phone Number already exists.");
 
-        // Check if email exists on another user
+        // التحقق من عدم استخدام البريد الإلكتروني من قبل مستخدم آخر في النظام
         bool emailExists = await _context.Users.AnyAsync(u => u.Email == email && u.Id != patient.UserId);
         if (emailExists)
             throw new Exception("Email already exists.");
@@ -158,7 +158,7 @@ public class PatientService
         await _context.SaveChangesAsync();
     }
 
-    // Delete Patient
+    // حذف ملف المريض وحسابه الشخصي بعد التأكد من عدم وجود أي ارتباطات طبية أو مالية نشطة له
     public async Task DeletePatientAsync(int id)
     {
         var patient = await _context.Patients
@@ -170,7 +170,7 @@ public class PatientService
 
         var user = patient.User;
 
-        // Check if patient has any dependent records that will break deletion
+        // التحقق من كافة القيود والملفات والارتباطات النشطة للمريض (مواعيد، فواتير، ملفات طبية، مراجعات) قبل الحذف لحماية البيانات من التلف المعلق
         if (await _context.Appointments.AnyAsync(a => a.PatientId == id))
             throw new Exception("Cannot delete patient because they have associated appointments.");
 

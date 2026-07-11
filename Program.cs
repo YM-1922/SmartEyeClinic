@@ -9,7 +9,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        // Read connection string from appsettings.json
+        // قراءة سلسلة الاتصال بقاعدة البيانات من ملف الإعدادات appsettings.json
         var config = new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
             .AddJsonFile("appsettings.json")
@@ -17,14 +17,14 @@ class Program
 
         var connectionString = config.GetConnectionString("DefaultConnection");
 
-        // Setup DbContext
+        // تهيئة سياق قاعدة البيانات (DbContext)
         var options = new DbContextOptionsBuilder<AppDbContext>()
             .UseSqlServer(connectionString)
             .Options;
 
         using var context = new AppDbContext(options);
 
-        // Create services
+        // إنشاء كائنات الخدمات لإدارة العمليات المختلفة
         var patientService     = new PatientService(context);
         var doctorService      = new DoctorService(context);
         var appointmentService = new AppointmentService(context);

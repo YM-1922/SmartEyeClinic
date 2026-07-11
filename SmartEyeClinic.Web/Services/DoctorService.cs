@@ -16,7 +16,7 @@ namespace SmartEyeClinic.Web.Services
             _context = context;
         }
 
-        // Get All Doctors
+        // جلب قائمة بجميع الأطباء المسجلين في النظام مع تفاصيل حساباتهم وتخصصاتهم
         public async Task<List<Doctor>> GetAllDoctorsAsync()
         {
             return await _context.Doctors
@@ -27,7 +27,7 @@ namespace SmartEyeClinic.Web.Services
                 .ToListAsync();
         }
 
-        // Get Doctor by Id
+        // جلب بيانات طبيب معين باستخدام المعرف الفريد الخاص به
         public async Task<Doctor?> GetDoctorByIdAsync(int id)
         {
             return await _context.Doctors
@@ -37,7 +37,7 @@ namespace SmartEyeClinic.Web.Services
                 .FirstOrDefaultAsync(d => d.Id == id);
         }
 
-        // Add Doctor
+        // إضافة طبيب جديد وإنشاء حساب مستخدم مرتبط به في النظام
         public async Task AddDoctorAsync(
             string fullName,
             string email,
@@ -106,7 +106,7 @@ namespace SmartEyeClinic.Web.Services
             await _context.SaveChangesAsync();
         }
 
-        // Update Doctor
+        // تحديث بيانات ملف الطبيب وبيانات حسابه الشخصي المرتبط
         public async Task UpdateDoctorAsync(
             int id,
             string fullName,
@@ -137,7 +137,7 @@ namespace SmartEyeClinic.Web.Services
             if (string.IsNullOrWhiteSpace(licenseNumber))
                 throw new Exception("License Number is required.");
 
-            // Unique Checks
+            // التحقق من عدم تكرار البريد الإلكتروني ورقم الهاتف ورقم الرخصة لطبيب آخر
             bool licenseExists = await _context.Doctors.AnyAsync(d => d.LicenseNumber == licenseNumber && d.Id != id);
             if (licenseExists)
                 throw new Exception("License Number already exists.");
@@ -166,7 +166,7 @@ namespace SmartEyeClinic.Web.Services
             await _context.SaveChangesAsync();
         }
 
-        // Delete Doctor
+        // حذف طبيب من النظام وحذف حسابه المرتبط به بعد التأكد من خلوه من أي ارتباطات نشطة
         public async Task DeleteDoctorAsync(int id)
         {
             var doctor = await _context.Doctors
@@ -176,7 +176,7 @@ namespace SmartEyeClinic.Web.Services
             if (doctor == null)
                 throw new Exception("Doctor not found.");
 
-            // Dependency constraint checks before deleting
+            // التحقق من القيود والارتباطات (مواعيد أو عمليات مجدولة) لمنع حذف طبيب نشط
             if (await _context.Appointments.AnyAsync(a => a.DoctorId == id))
                 throw new Exception("Cannot delete doctor because they have associated patient appointments.");
 

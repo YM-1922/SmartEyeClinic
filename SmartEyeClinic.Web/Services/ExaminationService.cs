@@ -16,7 +16,7 @@ namespace SmartEyeClinic.Web.Services
             _context = context;
         }
 
-        // Get All Examinations
+        // جلب كافة الفحوصات الطبية المسجلة بالنظام مع تفاصيل الموعد والطبيب والمريض
         public async Task<List<Examination>> GetAllExaminationsAsync()
         {
             return await _context.Examinations
@@ -27,7 +27,7 @@ namespace SmartEyeClinic.Web.Services
                 .ToListAsync();
         }
 
-        // Get Examination By Id
+        // جلب تفاصيل فحص طبي معين باستخدام معرفه الفريد
         public async Task<Examination?> GetExaminationByIdAsync(int id)
         {
             return await _context.Examinations
@@ -37,7 +37,7 @@ namespace SmartEyeClinic.Web.Services
                 .FirstOrDefaultAsync(e => e.Id == id);
         }
 
-        // Add Examination
+        // إضافة فحص طبي جديد للمريض وتحديث حالة الموعد تلقائياً
         public async Task<ServiceResult> AddExaminationAsync(
             int appointmentId, 
             string diagnosis, 
@@ -67,7 +67,7 @@ namespace SmartEyeClinic.Web.Services
 
             _context.Examinations.Add(examination);
 
-            // Automatically set the corresponding Appointment status to 'Completed' upon examination
+            // تغيير حالة الموعد المرتبط تلقائياً إلى 'Completed' عند إجراء الفحص الطبي
             var appointment = await _context.Appointments.FindAsync(appointmentId);
             if (appointment != null)
             {
@@ -78,7 +78,7 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Update Examination
+        // تحديث بيانات فحص طبي مسجل مسبقاً في النظام
         public async Task<ServiceResult> UpdateExaminationAsync(
             int id,
             int appointmentId,
@@ -111,14 +111,14 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Delete Examination
+        // حذف سجل الفحص الطبي بعد التأكد من عدم وجود وصفات طبية مرتبطة به
         public async Task<ServiceResult> DeleteExaminationAsync(int id)
         {
             var exam = await _context.Examinations.FindAsync(id);
             if (exam == null)
                 return ServiceResult.Fail("Examination record not found.");
 
-            // Check if patient has dependent prescriptions generated from this examination
+            // التحقق من وجود وصفات طبية صادرة بناءً على هذا الفحص لمنع الحذف العشوائي وتلف البيانات
             if (await _context.PrescriptionHeaders.AnyAsync(ph => ph.ExaminationId == id))
                 return ServiceResult.Fail("Cannot delete this examination because prescriptions have been issued based on it.");
 

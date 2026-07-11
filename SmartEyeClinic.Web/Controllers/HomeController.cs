@@ -53,7 +53,7 @@ public class HomeController : Controller
     [Authorize(Roles = "Admin")]
     public async Task<IActionResult> AdminDashboard()
     {
-        // System Statistics
+        // إحصائيات النظام العامة لإدارة العيادة (المرضى، الأطباء، الإيرادات، إلخ)
         ViewBag.TotalPatients = await _context.Patients.CountAsync();
         ViewBag.TotalDoctors = await _context.Doctors.CountAsync();
         ViewBag.TotalAppointments = await _context.Appointments.CountAsync();
@@ -62,7 +62,7 @@ public class HomeController : Controller
         ViewBag.TodayAppointmentsCount = await _context.Appointments.CountAsync(a => a.AppointmentDateTime.Date == DateTime.Today);
         ViewBag.UnpaidInvoicesCount = await _context.Invoices.CountAsync(i => i.Status != "Paid");
 
-        // Lists to manage
+        // القوائم اللازمة للإدارة والبحث في النظام
         ViewBag.DoctorsList = await _context.Doctors.Include(d => d.User).Include(d => d.Specialization).ToListAsync();
         ViewBag.PatientsList = await _context.Patients.Include(p => p.User).Take(30).ToListAsync();
         ViewBag.AppointmentsList = await _context.Appointments
@@ -76,7 +76,7 @@ public class HomeController : Controller
             .OrderByDescending(a => a.CreatedAt)
             .Take(30).ToListAsync();
 
-        // Recent Audit Logs
+        // سجل العمليات والتدقيق الأخير (Audit Logs) لضمان أمان النظام وبورصة البيانات
         var auditLogs = await _context.AuditLogs
             .Include(al => al.User)
             .OrderByDescending(al => al.CreatedAt)
@@ -84,7 +84,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.RecentAudits = auditLogs;
 
-        // Recent Payments
+        // المدفوعات الأخيرة المستلمة لتتبع الحركة المالية بالعيادة
         var recentPayments = await _context.Payments
             .Include(p => p.Invoice).ThenInclude(i => i.Patient).ThenInclude(pat => pat.User)
             .Include(p => p.PaymentMethod)
@@ -93,7 +93,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.RecentPayments = recentPayments;
 
-        // System Notifications
+        // الإشعارات العامة الأخيرة المرسلة بالنظام لمتابعة الأحداث النشطة
         ViewBag.RecentNotifications = await _context.Notifications
             .OrderByDescending(n => n.SentAt)
             .Take(15)
@@ -111,7 +111,7 @@ public class HomeController : Controller
 
         int doctorId = int.Parse(docIdClaim);
 
-        // Fetch Doctor today's appointments
+        // جلب قائمة بمواعيد الطبيب المقررة لليوم الحالي للبدء بالمعاينة والملاحظات الطبية
         var todayAppointments = await _context.Appointments
             .Include(a => a.Patient).ThenInclude(p => p.User)
             .Include(a => a.Branch)
@@ -120,7 +120,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.TodayAppointments = todayAppointments;
 
-        // Fetch Pending Approvals (Pending Doctor Approval status)
+        // جلب طلبات حجز المواعيد الجديدة المعلقة التي تحتاج لمراجعة وقبول/رفض الطبيب المختص
         var pendingApprovals = await _context.Appointments
             .Include(a => a.Patient).ThenInclude(p => p.User)
             .Include(a => a.Branch)
@@ -129,7 +129,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.PendingApprovals = pendingApprovals;
 
-        // Fetch Deposit Confirmations (where deposit is Paid)
+        // جلب قائمة المواعيد التي تم سداد مبلغ العربون الخاص بها بنجاح لتأكيد الحجز المبدئي للعيادة
         var confirmedDeposits = await _context.Appointments
             .Include(a => a.Patient).ThenInclude(p => p.User)
             .Where(a => a.DoctorId == doctorId && a.DepositStatus == "Paid")
@@ -137,7 +137,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.ConfirmedDeposits = confirmedDeposits;
 
-        // Fetch Patient History (completed appointments)
+        // جلب سجل زيارات المرضى السابقة المكتملة لدى هذا الطبيب للرجوع للفحوصات الطبية
         var patientHistory = await _context.Appointments
             .Include(a => a.Patient).ThenInclude(p => p.User)
             .Where(a => a.DoctorId == doctorId && a.Status == "Completed")
@@ -145,7 +145,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.PatientHistory = patientHistory;
 
-        // Stats for Doctor
+        // إحصائيات عامة خاصة بالطبيب الحالي (عدد المرضى، المواعيد المعلقة، العمليات الجراحية)
         ViewBag.TotalMyPatients = await _context.Appointments
             .Where(a => a.DoctorId == doctorId)
             .Select(a => a.PatientId)
@@ -156,7 +156,7 @@ public class HomeController : Controller
         ViewBag.MySurgeries = await _context.Surgeries
             .CountAsync(s => s.DoctorId == doctorId);
 
-        // Upcoming surgeries
+        // العمليات الجراحية القادمة المجدولة للطبيب الحالي لمراجعة الترتيبات والتحضيرات الطبية بالعيادة
         var upcomingSurgeries = await _context.Surgeries
             .Include(s => s.Patient).ThenInclude(p => p.User)
             .Include(s => s.SurgeryType)
@@ -166,7 +166,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.UpcomingSurgeries = upcomingSurgeries;
 
-        // Doctor's Notifications
+        // جلب آخر 10 إشعارات واردة للطبيب للتعامل الفوري مع أي تحديثات موعد أو إلغاء
         var doctorUserClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!string.IsNullOrEmpty(doctorUserClaim))
         {
@@ -190,12 +190,12 @@ public class HomeController : Controller
 
         int patientId = int.Parse(patIdClaim);
 
-        // Retrieve patient
+        // استرداد ملف المريض الحالي وعرض بياناته الشخصية في لوحة التحكم لمراجعة الملف الطبي وعمليات الدفع
         var patient = await _context.Patients
             .Include(p => p.User)
             .FirstOrDefaultAsync(p => p.Id == patientId);
 
-        // Fetch upcoming appointments
+        // جلب المواعيد المستقبلية القادمة للمريض لمتابعة التواريخ وسداد العربون للعيادة للقبول المبدئي من الطبيب
         var upcomingAppointments = await _context.Appointments
             .Include(a => a.Doctor).ThenInclude(d => d.User)
             .Include(a => a.Branch)
@@ -204,7 +204,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.UpcomingAppointments = upcomingAppointments;
 
-        // Fetch appointment history
+        // جلب سجل الزيارات السابقة للمريض (مكتمل، ملغى، مرفوض) للمراجعة التاريخية والاطلاع على الفحوصات الطبية للعيون والوصفات المعطاة
         var appointmentHistory = await _context.Appointments
             .Include(a => a.Doctor).ThenInclude(d => d.User)
             .Include(a => a.Branch)
@@ -213,7 +213,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.AppointmentHistory = appointmentHistory;
 
-        // Fetch prescriptions
+        // جلب آخر 5 وصفات طبية (Rx) صادرة للمريض لمراجعة الأدوية الموصوفة والجرعات والتعليمات الطبية المحددة من الأطباء المعالجين بالعيادة
         var prescriptions = await _context.PrescriptionHeaders
             .Include(ph => ph.Examination).ThenInclude(e => e.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
             .Include(ph => ph.PrescriptionItems).ThenInclude(pi => pi.Medicine)
@@ -223,7 +223,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.Prescriptions = prescriptions;
 
-        // Fetch Invoices
+        // جلب الفواتير الصادرة للمريض لتتبع الوضع المالي للمدفوعات الطبية والعمليات والمدفوع جزئياً وكلياً أو المتبقي سداده للعيادة
         var invoices = await _context.Invoices
             .Where(i => i.PatientId == patientId)
             .OrderByDescending(i => i.IssuedAt)
@@ -231,14 +231,14 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.Invoices = invoices;
 
-        // Fetch Medical Files
+        // جلب قائمة بالملفات الطبية والتقارير المرفوعة بواسطة المريض (الأشعة العينية، الفحوصات الخارجية، التقارير) لسهولة اطلاع الأطباء بالعيادة
         var medicalFiles = await _context.MedicalFiles
             .Where(m => m.PatientId == patientId)
             .OrderByDescending(m => m.UploadedAt)
             .ToListAsync();
         ViewBag.MedicalFiles = medicalFiles;
 
-        // Patient's Notifications
+        // جلب الإشعارات الأخيرة الخاصة بحساب المريض لمتابعة حالة المواعيد والموافقة عليها والتنبيهات الهامة بالدفع للأطباء بالعيادة
         var patientUserClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!string.IsNullOrEmpty(patientUserClaim))
         {
@@ -256,7 +256,7 @@ public class HomeController : Controller
     [Authorize(Roles = "Receptionist")]
     public async Task<IActionResult> ReceptionistDashboard()
     {
-        // Real-time Queue
+        // جلب قائمة الانتظار الحالية والمباشرة لليوم الحالي لتنظيم دخول المرضى لعيادات الأطباء العيون بالترتيب المسجل بالاستقبال بالعيادة
         var queue = await _context.Queues
             .Include(q => q.Appointment).ThenInclude(a => a.Patient).ThenInclude(p => p.User)
             .Include(q => q.Appointment).ThenInclude(a => a.Doctor).ThenInclude(d => d.User)
@@ -265,7 +265,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.ActiveQueue = queue;
 
-        // Today's appointments for receptionist to manage
+        // جلب قائمة بمواعيد اليوم لمساعد الاستقبال على مراجعة الحضور وسداد العربون وتفعيل الدخول لقائمة الانتظار بالعيادة
         var todayApps = await _context.Appointments
             .Include(a => a.Patient).ThenInclude(p => p.User)
             .Include(a => a.Doctor).ThenInclude(d => d.User)
@@ -274,7 +274,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.TodayAppointments = todayApps;
 
-        // Fetch all appointments (paged/recent)
+        // جلب كافة المواعيد الأخيرة المضافة لمراجعة الحجوزات السابقة والمستقبلية وتعديلها وإلغائها حسب الحاجة بالعيادة لموظف الاستقبال
         var allAppointments = await _context.Appointments
             .Include(a => a.Patient).ThenInclude(p => p.User)
             .Include(a => a.Doctor).ThenInclude(d => d.User)
@@ -284,7 +284,7 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.AllAppointments = allAppointments;
 
-        // Fetch recent payments and deposits
+        // جلب المواعيد التي تتطلب سداد دفعة مقدمة (العربون) لمراجعة وصول التحويلات وتأكيد الدفع المالي تمهيداً لإحالة الموعد للأطباء للقبول بالعيادة
         var deposits = await _context.Appointments
             .Include(a => a.Patient).ThenInclude(p => p.User)
             .Where(a => a.DepositAmount > 0)
@@ -293,26 +293,26 @@ public class HomeController : Controller
             .ToListAsync();
         ViewBag.RecentDeposits = deposits;
 
-        // Fetch patients directory for search
+        // جلب دليل المرضى الأخير للبحث السريع وتحديث البيانات الشخصية للمريض أو الحجز المباشر بالعيادة لموظف الاستقبال لسهولة التنقل بالنظام
         var patients = await _context.Patients
             .Include(p => p.User)
             .Take(30)
             .ToListAsync();
         ViewBag.Patients = patients;
 
-        // Fetch doctors directory for search
+        // جلب قائمة الأطباء في النظام مع تخصصاتهم لتسهيل الرد على الاستفسارات وإرشاد المرضى بالعيادة لموظف الاستقبال ومحرك البحث للخدمة
         var doctors = await _context.Doctors
             .Include(d => d.User)
             .Include(d => d.Specialization)
             .ToListAsync();
         ViewBag.Doctors = doctors;
 
-        // Stats
+        // إحصائيات عامة للوحة التحكم لموظف الاستقبال لمتابعة أعداد الحضور والانتظار والفواتير غير المسددة اليوم بالعيادة للسيطرة الكاملة
         ViewBag.QueueTotal = await _context.Queues.CountAsync(q => q.CheckInTime.HasValue && q.CheckInTime.Value.Date == DateTime.Today);
         ViewBag.QueueWaiting = await _context.Queues.CountAsync(q => q.CheckInTime.HasValue && q.CheckInTime.Value.Date == DateTime.Today && q.Status == "Waiting");
         ViewBag.UnpaidInvoices = await _context.Invoices.CountAsync(i => i.Status == "Unpaid");
 
-        // Receptionist's Notifications
+        // إشعارات موظف الاستقبال الأخيرة للتنبيه التلقائي عن المواعيد المنشأة من البوابة الخارجية أو عمليات السداد الجديدة للمرضى بالعيادة
         var recepUserClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
         if (!string.IsNullOrEmpty(recepUserClaim))
         {
@@ -334,7 +334,7 @@ public class HomeController : Controller
 
     public IActionResult PatientPortal()
     {
-        return RedirectToAction("Index"); // Redirects to proper patient dashboard
+        return RedirectToAction("Index"); // إعادة توجيه المستخدم إلى لوحة التحكم المناسبة تبعا لدور حسابه بالعيادة لعدم التداخل بالروابط وتأمين الوصول للخدمات الكلية للنظام
     }
 
     [Authorize]

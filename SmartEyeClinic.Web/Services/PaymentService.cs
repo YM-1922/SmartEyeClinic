@@ -16,7 +16,7 @@ namespace SmartEyeClinic.Web.Services
             _context = context;
         }
 
-        // Add Payment Method
+        // إضافة طريقة دفع جديدة في النظام (مثل: بطاقة ائتمان، كاش، إلخ) مع التحقق من عدم التكرار
         public async Task<ServiceResult> AddPaymentMethodAsync(string? name)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -37,13 +37,13 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Get All Payment Methods
+        // جلب قائمة بكافة طرق الدفع المتاحة والمسجلة في النظام
         public async Task<List<PaymentMethod>> GetAllPaymentMethodsAsync()
         {
             return await _context.PaymentMethods.AsNoTracking().ToListAsync();
         }
 
-        // Add Payment
+        // تسجيل عملية دفع جديدة وتحديث القيمة المدفوعة وحالة الفاتورة المرتبطة بها تلقائياً
         public async Task<ServiceResult> AddPaymentAsync(int invoiceId, int paymentMethodId,
             decimal amount, string? transactionRef)
         {
@@ -70,7 +70,7 @@ namespace SmartEyeClinic.Web.Services
 
             _context.Payments.Add(payment);
 
-            // Update invoice paid amount and status
+            // تحديث إجمالي المبالغ المدفوعة على الفاتورة وتغيير حالتها (مدفوعة كلياً أو جزئياً)
             invoice.PaidAmount = (invoice.PaidAmount ?? 0) + amount;
             if (invoice.PaidAmount >= invoice.TotalAmount)
                 invoice.Status = "Paid";
@@ -82,7 +82,7 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Get All Payments
+        // جلب قائمة بكافة عمليات الدفع المسجلة بالنظام مع تفاصيل الفواتير والمرضى
         public async Task<List<Payment>> GetAllPaymentsAsync()
         {
             return await _context.Payments
@@ -93,7 +93,7 @@ namespace SmartEyeClinic.Web.Services
                 .ToListAsync();
         }
 
-        // Get Payment By Id
+        // جلب تفاصيل عملية دفع محددة باستخدام المعرف الفريد الخاص بها
         public async Task<Payment?> GetPaymentByIdAsync(int id)
         {
             return await _context.Payments
@@ -103,7 +103,7 @@ namespace SmartEyeClinic.Web.Services
                 .FirstOrDefaultAsync(p => p.Id == id);
         }
 
-        // Delete Payment (with Invoice refund/reversal logic)
+        // حذف عملية دفع وتعديل المبالغ المدفوعة في الفاتورة المرتبطة بها (عكس وإرجاع عملية الدفع)
         public async Task<ServiceResult> DeletePaymentAsync(int id)
         {
             var payment = await _context.Payments
@@ -116,7 +116,7 @@ namespace SmartEyeClinic.Web.Services
             var invoice = payment.Invoice;
             if (invoice != null)
             {
-                // Revert paid amount
+                // إرجاع قيمة الدفعة وتعديل حالة الفاتورة تبعا للمبالغ المتبقية بعد الحذف
                 invoice.PaidAmount = Math.Max(0, (invoice.PaidAmount ?? 0) - payment.Amount);
                 if (invoice.PaidAmount == 0)
                     invoice.Status = "Unpaid";

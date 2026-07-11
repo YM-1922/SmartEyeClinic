@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace SmartEyeClinic.Web.Services;
 
+/// <summary>
+/// خدمة إدارة الأدوية والعقاقير الطبية المسجلة بالعيادة
+/// </summary>
 public class MedicineService
 {
     private readonly AppDbContext _context;
@@ -15,6 +18,7 @@ public class MedicineService
         _context = context;
     }
 
+    // إضافة دواء طبي جديد إلى قائمة الأدوية في قاعدة البيانات
     public async Task AddMedicineAsync(string name, string? description, string? manufacturer)
     {
         var medicine = new Medicine();
@@ -27,6 +31,7 @@ public class MedicineService
         await _context.SaveChangesAsync();
     }
 
+    // جلب قائمة بجميع الأدوية المسجلة في العيادة
     public async Task<List<Medicine>> GetAllMedicinesAsync()
     {
         return await _context.Medicines.AsNoTracking().ToListAsync();

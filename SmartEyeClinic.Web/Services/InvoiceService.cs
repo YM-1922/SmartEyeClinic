@@ -16,7 +16,7 @@ namespace SmartEyeClinic.Web.Services
             _context = context;
         }
 
-        // Get All Invoices
+        // جلب كافة الفواتير المسجلة في النظام مع تفاصيل المرضى والأطباء المرتبطين
         public async Task<List<Invoice>> GetAllInvoicesAsync()
         {
             return await _context.Invoices
@@ -27,7 +27,7 @@ namespace SmartEyeClinic.Web.Services
                 .ToListAsync();
         }
 
-        // Get Invoice By Id
+        // جلب تفاصيل فاتورة معينة باستخدام معرفها الفريد مع كافة المدفوعات وطرق السداد المرتبطة بها
         public async Task<Invoice?> GetInvoiceByIdAsync(int id)
         {
             return await _context.Invoices
@@ -39,7 +39,7 @@ namespace SmartEyeClinic.Web.Services
                 .FirstOrDefaultAsync(i => i.Id == id);
         }
 
-        // Add Invoice
+        // إضافة فاتورة جديدة للمريض مرتبطة بالموعد المحدد
         public async Task<ServiceResult> AddInvoiceAsync(int appointmentId, int patientId,
             decimal totalAmount, decimal? tax, decimal? discount)
         {
@@ -71,7 +71,7 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Update Invoice
+        // تحديث بيانات فاتورة مسجلة مسبقاً في النظام
         public async Task<ServiceResult> UpdateInvoiceAsync(
             int id,
             int appointmentId,
@@ -106,14 +106,14 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Delete Invoice
+        // حذف فاتورة من النظام بعد التحقق من عدم وجود قيود
         public async Task<ServiceResult> DeleteInvoiceAsync(int id)
         {
             var invoice = await _context.Invoices.FindAsync(id);
             if (invoice == null)
                 return ServiceResult.Fail("Invoice not found.");
 
-            // Check if invoice has associated payment records
+            // منع حذف الفاتورة في حال وجود سجلات دفع مسددة عليها لحماية السجلات المالية من التلف
             if (await _context.Payments.AnyAsync(p => p.InvoiceId == id))
                 return ServiceResult.Fail("Cannot delete invoice because payments have already been settled against it.");
 

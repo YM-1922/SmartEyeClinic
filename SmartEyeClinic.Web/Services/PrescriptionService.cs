@@ -16,7 +16,7 @@ namespace SmartEyeClinic.Web.Services
             _context = context;
         }
 
-        // Create Prescription
+        // إنشاء وصفة طبية جديدة للمريض وربطها بالفحص الطبي المسجل
         public async Task<ServiceResult> CreatePrescriptionAsync(int examinationId, int medicineId,
             string? dosage, int durationDays, string? instructions)
         {
@@ -53,7 +53,7 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Get All Prescription Items (used for listing)
+        // جلب قائمة بجميع عناصر الوصفات الطبية المسجلة في النظام مع تفاصيل الفحص الطبي والأطباء والمرضى والدواء
         public async Task<List<PrescriptionItem>> GetAllPrescriptionsAsync()
         {
             return await _context.PrescriptionItems
@@ -65,7 +65,7 @@ namespace SmartEyeClinic.Web.Services
                 .ToListAsync();
         }
 
-        // Get Prescription Header By ID (used for details sheet)
+        // جلب الترويسة الرئيسية للوصفة الطبية باستخدام معرفها الفريد مع كافة الأدوية الموصوفة فيها
         public async Task<PrescriptionHeader?> GetPrescriptionHeaderByIdAsync(int id)
         {
             return await _context.PrescriptionHeaders
@@ -76,14 +76,14 @@ namespace SmartEyeClinic.Web.Services
                 .FirstOrDefaultAsync(h => h.Id == id);
         }
 
-        // Delete Prescription
+        // حذف وصفة طبية كاملة مع الأدوية المرتبطة بها من النظام
         public async Task<ServiceResult> DeletePrescriptionAsync(int id)
         {
             var header = await _context.PrescriptionHeaders.FindAsync(id);
             if (header == null)
                 return ServiceResult.Fail("Prescription not found.");
 
-            // Remove associated prescription items first
+            // إزالة كافة الأدوية الموصوفة التابعة لهذه الوصفة أولاً لضمان عدم وجود أيتام بقاعدة البيانات
             var items = _context.PrescriptionItems.Where(pi => pi.PrescriptionId == id);
             _context.PrescriptionItems.RemoveRange(items);
 

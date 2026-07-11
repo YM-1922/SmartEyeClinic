@@ -18,7 +18,7 @@ namespace SmartEyeClinic.Web.Services
             _notificationService = notificationService;
         }
 
-        // Get All Appointments
+        // جلب جميع المواعيد مع تفاصيل المرضى والأطباء والفروع بترتيب تنازلي
         public async Task<List<Appointment>> GetAllAppointmentsAsync()
         {
             return await _context.Appointments
@@ -30,7 +30,7 @@ namespace SmartEyeClinic.Web.Services
                 .ToListAsync();
         }
 
-        // Get Appointment By Id
+        // جلب موعد معين باستخدام المعرف الفريد الخاص به
         public async Task<Appointment?> GetAppointmentByIdAsync(int id)
         {
             return await _context.Appointments
@@ -41,7 +41,7 @@ namespace SmartEyeClinic.Web.Services
                 .FirstOrDefaultAsync(a => a.Id == id);
         }
 
-        // Add Appointment with Full Details
+        // إضافة موعد جديد مع التحقق من صحة البيانات ومواعيد الطبيب المتوفرة
         public async Task<ServiceResult> AddAppointmentAsync(
             int patientId, 
             int doctorId, 
@@ -64,7 +64,7 @@ namespace SmartEyeClinic.Web.Services
             if (!await _context.Branches.AnyAsync(b => b.Id == branchId))
                 return ServiceResult.Fail("Branch not found!");
 
-            // Doctor schedule validation
+            // التحقق من جدول عمل الطبيب وأيام تواجده بالعيادة
             var dayOfWeekName = appointmentDateTime.DayOfWeek.ToString();
             var timeOfDay = TimeOnly.FromDateTime(appointmentDateTime);
             
@@ -87,7 +87,7 @@ namespace SmartEyeClinic.Web.Services
                 return ServiceResult.Fail($"The selected time is outside the doctor's working hours on {dayOfWeekName} ({matchingSchedule.StartTime:hh\\:mm\\ tt} - {matchingSchedule.EndTime:hh\\:mm\\ tt}).");
             }
 
-            // Double booking validation (Doctor)
+            // التحقق من عدم وجود تعارض في مواعيد الطبيب (حجز مزدوج في نفس الوقت)
             var endTime = appointmentDateTime.AddMinutes(durationMinutes);
             bool docBusy = await _context.Appointments.AnyAsync(a => 
                 a.DoctorId == doctorId && 
@@ -116,7 +116,7 @@ namespace SmartEyeClinic.Web.Services
             _context.Appointments.Add(appointment);
             await _context.SaveChangesAsync();
 
-            // Notify users
+            // إرسال إشعارات للمستخدمين المعنيين بالطلب (المريض، موظف الاستقبال، المدير)
             var patient = await _context.Patients.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == patientId);
             var doctor = await _context.Doctors.Include(d => d.User).FirstOrDefaultAsync(d => d.Id == doctorId);
             if (patient != null && doctor != null)
@@ -130,7 +130,7 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Update Appointment
+        // تحديث بيانات موعد موجود مسبقاً والتحقق من التغييرات وتضارب المواعيد الجديد
         public async Task<ServiceResult> UpdateAppointmentAsync(
             int id,
             int patientId,
@@ -158,7 +158,7 @@ namespace SmartEyeClinic.Web.Services
             if (!await _context.Branches.AnyAsync(b => b.Id == branchId))
                 return ServiceResult.Fail("Branch not found!");
 
-            // Doctor schedule validation
+            // التحقق من جدول عمل الطبيب وأيام تواجده المتاحة
             var dayOfWeekName = appointmentDateTime.DayOfWeek.ToString();
             var timeOfDay = TimeOnly.FromDateTime(appointmentDateTime);
             
@@ -181,7 +181,7 @@ namespace SmartEyeClinic.Web.Services
                 return ServiceResult.Fail($"The selected time is outside the doctor's working hours on {dayOfWeekName} ({matchingSchedule.StartTime:hh\\:mm\\ tt} - {matchingSchedule.EndTime:hh\\:mm\\ tt}).");
             }
 
-            // Check doctor conflict for other appointments
+            // التحقق من عدم وجود تعارض مع مواعيد أخرى للطبيب (حجز مزدوج)
             var endTime = appointmentDateTime.AddMinutes(durationMinutes);
             bool docBusy = await _context.Appointments.AnyAsync(a => 
                 a.Id != id &&
@@ -207,7 +207,7 @@ namespace SmartEyeClinic.Web.Services
 
             await _context.SaveChangesAsync();
 
-            // Notify users of changes
+            // إرسال إشعارات للمستخدمين (المريض والطبيب) بالتعديلات الجديدة أو حالة الحجز
             var patient = await _context.Patients.Include(p => p.User).FirstOrDefaultAsync(p => p.Id == patientId);
             var doctor = await _context.Doctors.Include(d => d.User).FirstOrDefaultAsync(d => d.Id == doctorId);
             if (patient != null && doctor != null)
@@ -231,14 +231,14 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Delete Appointment
+        // حذف موعد من النظام
         public async Task<ServiceResult> DeleteAppointmentAsync(int id)
         {
             var appointment = await _context.Appointments.FindAsync(id);
             if (appointment == null)
                 return ServiceResult.Fail("Appointment not found!");
 
-            // Check constraints
+            // التحقق من القيود المانعة للحذف (وجود كشوفات أو فواتير مرتبطة بالموعد لمنع فقد البيانات)
             if (await _context.Examinations.AnyAsync(e => e.AppointmentId == id))
                 return ServiceResult.Fail("Cannot delete appointment because it has clinical examination records associated.");
 
@@ -256,7 +256,7 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Pay Deposit
+        // دفع مبلغ العربون/الدفعة المقدمة وتغيير حالة الموعد إلى قيد الموافقة
         public async Task<ServiceResult> PayDepositAsync(int id)
         {
             var appointment = await _context.Appointments
@@ -274,7 +274,7 @@ namespace SmartEyeClinic.Web.Services
             appointment.PaymentDate = DateTime.Now;
             appointment.Status = "Pending Approval";
 
-            // Create Invoice
+            // إنشاء فاتورة بقيمة الدفعة المقدمة المسددة
             var invoice = new Invoice
             {
                 AppointmentId = appointment.Id,
@@ -288,7 +288,7 @@ namespace SmartEyeClinic.Web.Services
             _context.Invoices.Add(invoice);
             await _context.SaveChangesAsync();
 
-            // Create Payment
+            // تسجيل عملية الدفع وربطها بالفاتورة المنشأة وبوابة الدفع المستخدمة
             var paymentMethod = await _context.PaymentMethods.FirstOrDefaultAsync(pm => pm.Name == "Credit Card")
                                 ?? await _context.PaymentMethods.FirstOrDefaultAsync();
 
@@ -310,24 +310,24 @@ namespace SmartEyeClinic.Web.Services
             _context.Payments.Add(payment);
             await _context.SaveChangesAsync();
 
-            // Notify Patient
+            // إشعار المريض باستلام الدفعة المقدمة وتأكيد العملية
             if (appointment.Patient?.User != null)
             {
                 await _notificationService.CreateNotificationAsync(appointment.Patient.User.Id, "Deposit Received", $"We have received your deposit of ${appointment.DepositAmount:F2} for your appointment on {appointment.AppointmentDateTime:f}.", "Success");
             }
-            // Notify Doctor
+            // إشعار الطبيب بجاهزية الموعد للمراجعة بعد سداد العربون
             if (appointment.Doctor?.User != null)
             {
                 await _notificationService.CreateNotificationAsync(appointment.Doctor.User.Id, "New Request Received", $"Deposit paid. New appointment request from {appointment.Patient?.User?.FullName} for {appointment.AppointmentDateTime:f} is ready for your review.", "Info");
             }
-            // Notify Receptionist & Admin
+            // إرسال إشعارات لموظفي الاستقبال والمديرين بخصوص نشاط الدفع والدفعة المستلمة
             await _notificationService.NotifyAllReceptionistsAsync("Deposit Paid", $"Deposit of ${appointment.DepositAmount:F2} paid by patient {appointment.Patient?.User?.FullName}.", "Info");
             await _notificationService.NotifyAllAdminsAsync("Payment Activity", $"Deposit of ${appointment.DepositAmount:F2} paid for appointment #{appointment.Id}.", "Payment");
 
             return ServiceResult.Ok();
         }
 
-        // Approve Appointment
+        // قبول واعتماد الموعد من قبل الطبيب المختص
         public async Task<ServiceResult> ApproveAppointmentAsync(int id)
         {
             var appointment = await _context.Appointments
@@ -344,18 +344,18 @@ namespace SmartEyeClinic.Web.Services
             appointment.Status = "Approved";
             await _context.SaveChangesAsync();
 
-            // Notify Patient
+            // إشعار المريض بقبول الطبيب لموعد الكشف وتأكيده
             if (appointment.Patient?.User != null)
             {
                 await _notificationService.CreateNotificationAsync(appointment.Patient.User.Id, "Appointment Approved", $"Your appointment with Dr. {appointment.Doctor?.User?.FullName} has been approved.", "Success");
             }
-            // Notify Receptionist
+            // إشعار موظفي الاستقبال بقبول وتأكيد الموعد للمتابعة بالعيادة
             await _notificationService.NotifyAllReceptionistsAsync("Appointment Approved", $"Appointment #{appointment.Id} approved by Dr. {appointment.Doctor?.User?.FullName}.", "Info");
 
             return ServiceResult.Ok();
         }
 
-        // Reject Appointment
+        // رفض طلب الموعد من قبل الطبيب
         public async Task<ServiceResult> RejectAppointmentAsync(int id)
         {
             var appointment = await _context.Appointments
@@ -369,7 +369,7 @@ namespace SmartEyeClinic.Web.Services
             appointment.Status = "Rejected";
             await _context.SaveChangesAsync();
 
-            // Notify Patient
+            // إشعار المريض برفض طلب حجز الموعد ومطالبته باختيار وقت بديل
             if (appointment.Patient?.User != null)
             {
                 await _notificationService.CreateNotificationAsync(appointment.Patient.User.Id, "Appointment Rejected", "Your appointment request was rejected. Please choose another available time.", "Warning");
@@ -378,7 +378,7 @@ namespace SmartEyeClinic.Web.Services
             return ServiceResult.Ok();
         }
 
-        // Complete Appointment
+        // إكمال الموعد وتحديث حالته بعد إتمام الكشف الطبي بنجاح
         public async Task<ServiceResult> CompleteAppointmentAsync(int id)
         {
             var appointment = await _context.Appointments
@@ -392,7 +392,7 @@ namespace SmartEyeClinic.Web.Services
             appointment.Status = "Completed";
             await _context.SaveChangesAsync();
 
-            // Notify Patient
+            // إشعار المريض بإتمام الكشف الطبي بنجاح وشكره لثقته بالعيادة
             if (appointment.Patient?.User != null)
             {
                 await _notificationService.CreateNotificationAsync(appointment.Patient.User.Id, "Appointment Completed", "Your appointment has been marked as completed. Thank you for choosing Smart Eye Clinic.", "Success");
