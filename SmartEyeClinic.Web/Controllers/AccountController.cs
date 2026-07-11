@@ -489,7 +489,7 @@ namespace SmartEyeClinic.Web.Controllers
             await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, new ClaimsPrincipal(claimsIdentity), authProperties);
         }
 
-        // GET: /Account/CheckEmail | التحقق الفوري عبر أجاكس من توفر البريد الإلكتروني
+        // GET: /Account/CheckEmail
         [HttpGet]
         public async Task<IActionResult> CheckEmail(string email)
         {
@@ -507,7 +507,7 @@ namespace SmartEyeClinic.Web.Controllers
             return Json(new { available = true });
         }
 
-        // GET: /Account/CheckNationalId | التحقق الفوري عبر أجاكس من توفر الرقم القومي
+        // GET: /Account/CheckNationalId
         [HttpGet]
         public async Task<IActionResult> CheckNationalId(string nationalId)
         {
@@ -525,7 +525,7 @@ namespace SmartEyeClinic.Web.Controllers
             return Json(new { available = true });
         }
 
-        // GET: /Account/CheckPhoneNumber | التحقق الفوري عبر أجاكس من توفر رقم الهاتف
+        // GET: /Account/CheckPhoneNumber
         [HttpGet]
         public async Task<IActionResult> CheckPhoneNumber(string phoneNumber)
         {

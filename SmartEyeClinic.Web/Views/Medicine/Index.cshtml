@@ -3,49 +3,67 @@
     ViewData["Title"] = "Medicines - Smart Eye Clinic";
 }
 
-<div class="page-header">
-    <div class="page-header-left">
-        <nav class="breadcrumb-nav">
-            <a asp-controller="Home" asp-action="Index">Home</a>
-            <span class="separator">/</span>
-            <span class="current">Pharmacy Catalog</span>
-        </nav>
-        <h3 class="page-title">Pharmacy & Medicines</h3>
-        <p class="page-subtitle">Track prescription drug inventory, manufacturers, and usage directions</p>
+<div class="page-header py-4 mb-4 border-bottom">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <nav aria-label="breadcrumb" class="mb-2">
+                <ol class="breadcrumb mb-0 small text-muted">
+                    <li class="breadcrumb-item"><a asp-controller="Home" asp-action="Index" class="text-decoration-none text-muted"><i class="fa-solid fa-house"></i> Home</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Pharmacy Catalog</li>
+                </ol>
+            </nav>
+            <h1 class="page-title fw-800 text-dark mb-1"><i class="fa-solid fa-pills text-primary me-2"></i>Pharmacy & Medicines</h1>
+            <p class="text-muted mb-0">Track prescription drug inventory, manufacturers, and usage directions.</p>
+        </div>
+        @if (User.IsInRole("Admin") || User.IsInRole("Doctor"))
+        {
+            <button class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#createModal">
+                <i class="fa-solid fa-plus me-1"></i> Add Medicine
+            </button>
+        }
     </div>
-    @if (User.IsInRole("Admin") || User.IsInRole("Doctor"))
-    {
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="fa-solid fa-pills"></i> Add Medicine
-        </a>
-    }
 </div>
 
-<div class="table-card">
-    <div class="table-card-header">
-        <h5 class="table-title">
-            <i class="fa-solid fa-pills text-primary"></i> Medicine Database
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show rounded-3 mb-4" role="alert">
+        <i class="fa-solid fa-circle-check me-2"></i> @TempData["Success"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show rounded-3 mb-4" role="alert">
+        <i class="fa-solid fa-triangle-exclamation me-2"></i> @TempData["Error"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+}
+
+<div class="card border-0 shadow-sm rounded-4 bg-white" style="border: 1px solid var(--border) !important;">
+    <div class="card-header bg-transparent border-bottom p-3">
+        <h5 class="fw-bold text-dark mb-0">
+            <i class="fa-solid fa-database text-primary me-2"></i> Medicine Database
         </h5>
     </div>
-    <div class="card-body-clean p-4">
+    <div class="card-body p-4">
         @if (!Model.Any())
         {
-            <div class="empty-state">
-                <div class="empty-state-icon">
+            <div class="text-center py-5">
+                <div class="text-muted display-4 mb-3">
                     <i class="fa-solid fa-capsules"></i>
                 </div>
-                <h5>No Medicines Cataloged</h5>
-                <p>The pharmacy medicine database is currently empty.</p>
+                <h5 class="fw-bold text-dark">No Medicines Cataloged</h5>
+                <p class="text-muted small">The pharmacy medicine database is currently empty.</p>
                 @if (User.IsInRole("Admin") || User.IsInRole("Doctor"))
                 {
-                    <a asp-action="Create" class="btn btn-primary"><i class="fa-solid fa-pills"></i> Add Medicine</a>
+                    <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createModal"><i class="fa-solid fa-plus me-1"></i> Add Medicine</button>
                 }
             </div>
         }
         else
         {
-            <div class="table-responsive-custom">
-                <table class="table datatable custom-table">
+            <div class="table-responsive">
+                <table class="table custom-table small">
                     <thead>
                         <tr>
                             <th>Medicine</th>
@@ -59,18 +77,18 @@
                             <tr>
                                 <td>
                                     <div class="d-flex align-items-center">
-                                        <div class="avatar-initials avatar-sm me-3 bg-light-warning text-warning" style="border-radius: var(--radius-sm)">
+                                        <div class="avatar-sm bg-light-warning text-warning rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                                             <i class="fa-solid fa-capsules"></i>
                                         </div>
-                                        <span class="fw-bold text-dark">@m.Name</span>
+                                        <strong class="text-dark">@m.Name</strong>
                                     </div>
                                 </td>
                                 <td>
-                                    <span class="fw-500 text-dark">@(m.Manufacturer ?? "—")</span>
+                                    <span class="text-dark font-weight-500">@(m.Manufacturer ?? "—")</span>
                                 </td>
                                 <td>
-                                    <span class="text-muted text-xs" title="@m.Description">
-                                        @(m.Description?.Length > 100 ? m.Description.Substring(0, 100) + "..." : (m.Description ?? "—"))
+                                    <span class="text-muted" title="@m.Description">
+                                        @(m.Description?.Length > 120 ? m.Description.Substring(0, 117) + "..." : (m.Description ?? "—"))
                                     </span>
                                 </td>
                             </tr>
@@ -81,3 +99,59 @@
         }
     </div>
 </div>
+
+@if (User.IsInRole("Admin") || User.IsInRole("Doctor"))
+{
+    <!-- CREATE MODAL -->
+    <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+                <div class="modal-header border-bottom p-4">
+                    <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-pills text-primary me-2"></i>Add Medicine</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <form asp-action="Create" method="post" class="needs-validation" novalidate>
+                    @Html.AntiForgeryToken()
+                    <div class="modal-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label small fw-600">Medicine Brand Name *</label>
+                            <input type="text" name="name" class="form-control" placeholder="e.g. Vigamox Eye Drops" required />
+                            <div class="invalid-feedback text-xs">Name is required.</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-600">Pharmaceutical Manufacturer</label>
+                            <input type="text" name="manufacturer" class="form-control" placeholder="e.g. Alcon Laboratories" />
+                        </div>
+                        <div class="mb-0">
+                            <label class="form-label small fw-600">Description & Usage Guidelines</label>
+                            <textarea name="description" class="form-control" rows="3" placeholder="Describe dosage form, indications, active ingredients..."></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top p-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary px-4" style="border-radius: 8px;">Save Medicine</button>
+                        <button type="button" class="btn btn-outline-secondary px-4" style="border-radius: 8px;" data-bs-dismiss="modal">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict'
+            var forms = document.querySelectorAll('.needs-validation')
+            Array.prototype.slice.call(forms)
+                .forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault()
+                            event.stopPropagation()
+                        }
+                        form.classList.add('was-validated')
+                    }, false)
+                })
+        })()
+    </script>
+}
